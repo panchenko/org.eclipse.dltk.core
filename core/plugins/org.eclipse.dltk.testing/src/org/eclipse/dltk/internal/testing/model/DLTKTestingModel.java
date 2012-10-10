@@ -72,7 +72,8 @@ public final class DLTKTestingModel implements ITestingModel {
 		 * a TestRunner once to a launch. Once a test runner is connected, it is
 		 * removed from the set.
 		 */
-		private final HashSet<ILaunch> fTrackedLaunches = new HashSet<ILaunch>(20);
+		private final HashSet<ILaunch> fTrackedLaunches = new HashSet<ILaunch>(
+				20);
 
 		protected void initialize(ILaunchManager launchManager) {
 			fTrackedLaunches.clear();
@@ -173,11 +174,13 @@ public final class DLTKTestingModel implements ITestingModel {
 			// asyncExec())
 			int maxCount = DLTKTestingPlugin.getDefault().getPreferenceStore()
 					.getInt(DLTKTestingPreferencesConstants.MAX_TEST_RUNS);
-			int toDelete = fTestRunSessions.size() - maxCount;
-			while (toDelete > 0) {
-				toDelete--;
-				TestRunSession session = fTestRunSessions.removeLast();
-				notifyTestRunSessionRemoved(session);
+			synchronized (fTestRunSessions) {
+				int toDelete = fTestRunSessions.size() - maxCount;
+				while (toDelete > 0) {
+					toDelete--;
+					TestRunSession session = fTestRunSessions.removeLast();
+					notifyTestRunSessionRemoved(session);
+				}
 			}
 		}
 
@@ -340,14 +343,18 @@ public final class DLTKTestingModel implements ITestingModel {
 	 *         youngest first.
 	 */
 	public List<TestRunSession> getTestRunSessions() {
-		return new ArrayList<TestRunSession>(fTestRunSessions);
+		synchronized (fTestRunSessions) {
+			return new ArrayList<TestRunSession>(fTestRunSessions);
+		}
 	}
 
 	public ITestRunSession getTestRunSession(ILaunch launch) {
-		for (final TestRunSession session : fTestRunSessions) {
-			final ILaunch sessionLaunch = session.getLaunch();
-			if (sessionLaunch != null && sessionLaunch.equals(launch)) {
-				return session;
+		Assert.isNotNull(launch);
+		synchronized (fTestRunSessions) {
+			for (final TestRunSession session : fTestRunSessions) {
+				if (launch.equals(session.getLaunch())) {
+					return session;
+				}
 			}
 		}
 		return null;
@@ -365,8 +372,10 @@ public final class DLTKTestingModel implements ITestingModel {
 	 */
 	public void addTestRunSession(TestRunSession testRunSession) {
 		Assert.isNotNull(testRunSession);
-		Assert.isLegal(!fTestRunSessions.contains(testRunSession));
-		fTestRunSessions.addFirst(testRunSession);
+		synchronized (fTestRunSessions) {
+			Assert.isLegal(!fTestRunSessions.contains(testRunSession));
+			fTestRunSessions.addFirst(testRunSession);
+		}
 		notifyTestRunSessionAdded(testRunSession);
 	}
 
@@ -508,7 +517,10 @@ public final class DLTKTestingModel implements ITestingModel {
 	 *            the session to remove
 	 */
 	public void removeTestRunSession(TestRunSession testRunSession) {
-		boolean existed = fTestRunSessions.remove(testRunSession);
+		final boolean existed;
+		synchronized (fTestRunSessions) {
+			existed = fTestRunSessions.remove(testRunSession);
+		}
 		if (existed) {
 			notifyTestRunSessionRemoved(testRunSession);
 		}
