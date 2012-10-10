@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -66,7 +67,6 @@ import org.eclipse.dltk.internal.launching.DefaultProjectBuildpathEntry;
 import org.eclipse.dltk.internal.launching.InterpreterContainerInitializer;
 import org.eclipse.dltk.internal.launching.InterpreterDefinitionsContainer;
 import org.eclipse.dltk.internal.launching.InterpreterListener;
-import org.eclipse.dltk.internal.launching.ListenerList;
 import org.eclipse.dltk.internal.launching.RuntimeBuildpathEntry;
 import org.eclipse.dltk.internal.launching.RuntimeBuildpathEntryResolver;
 import org.eclipse.dltk.internal.launching.RuntimeBuildpathProvider;
@@ -310,7 +310,7 @@ public final class ScriptRuntime {
 	/**
 	 * Interpreter change listeners
 	 */
-	private static ListenerList fgInterpreterListeners = new ListenerList(5);
+	private static ListenerList fgInterpreterListeners = new ListenerList(ListenerList.IDENTITY);
 
 	/**
 	 * Cache of already resolved projects in container entries. Used to avoid
