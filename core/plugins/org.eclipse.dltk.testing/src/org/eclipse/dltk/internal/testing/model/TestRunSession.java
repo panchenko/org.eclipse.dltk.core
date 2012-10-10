@@ -228,6 +228,7 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 		fErrorCount= 0; 
 		fIgnoredCount= 0; 
 		fTotalCount= 0;
+		fCreatedTestCaseCount=0;
 		
 		fTestRoot= new TestRoot(this);
 		fTestResult= null;
