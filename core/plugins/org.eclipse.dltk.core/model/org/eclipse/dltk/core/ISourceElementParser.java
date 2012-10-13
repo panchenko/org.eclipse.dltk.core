@@ -12,6 +12,37 @@ import org.eclipse.dltk.compiler.ISourceElementRequestor;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
 
+/**
+ * A source element parser extracts structural and reference information from a
+ * piece of source.
+ * 
+ * <p>
+ * The structural investigation includes:
+ * </p>
+ * <ul>
+ * <li>the package statement
+ * <li>import statements
+ * <li>types
+ * <li>fields
+ * <li>methods
+ * </ul>
+ * 
+ * <p>
+ * If reference information is requested, then all source constructs are
+ * investigated and type, field & method references are provided as well.
+ * </p>
+ * 
+ * <p>
+ * Any (parsing) problem encountered is also provided.
+ * </p>
+ * 
+ * <p>
+ * Language specific implementation is contributed via
+ * <code>org.eclipse.dltk.core.sourceElementParsers</code>.
+ * </p>
+ * 
+ * @see ISourceElementRequestor
+ */
 public interface ISourceElementParser {
 	/**
 	 * Parses contents of the module and report all information to the
