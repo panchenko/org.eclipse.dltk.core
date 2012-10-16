@@ -96,10 +96,6 @@ public class SourceElementRequestorDelegate implements ISourceElementRequestor {
 
 	}
 
-	public void updateField(FieldInfo fieldInfo, int flags) {
-		target.updateField(translate(fieldInfo), flags);
-	}
-
 	public void enterMethod(MethodInfo info) {
 		target.enterMethod(translate(info));
 	}

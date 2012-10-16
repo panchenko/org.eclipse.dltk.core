@@ -50,9 +50,6 @@ public class StructureModelProcessor extends AbstractDataLoader implements
 				case TAG_ENTER_FIELD:
 					enterField();
 					break;
-				case TAG_UPDATE_FIELD:
-					updateField();
-					break;
 				case TAG_ENTER_FIELD_DUPL:
 					enterFieldCheckDuplicates();
 					break;
@@ -206,16 +203,6 @@ public class StructureModelProcessor extends AbstractDataLoader implements
 			FieldInfo info = new FieldInfo();
 			readFieldInfo(info);
 			this.requestor.enterField(info);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void updateField() {
-		try {
-			FieldInfo info = new FieldInfo();
-			readFieldInfo(info);
-			this.requestor.updateField(info, in.readInt());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -80,19 +80,4 @@ public interface ISourceElementRequestor extends IElementRequestor {
 	 */
 	boolean enterTypeAppend(String fullName, String delimiter);
 
-	static int UPDATE_TYPE = 1;
-
-	/**
-	 * Updates the field information. The particular details to be updated are
-	 * specified via <code>flags</code> parameter. To be used in cases when you
-	 * can't evaluate all the details at once.
-	 * 
-	 * EXPERIMENTAL
-	 * 
-	 * @param fieldInfo
-	 * @param flags
-	 *            the bit-wise or of update constants {@link #UPDATE_TYPE}
-	 */
-	void updateField(FieldInfo fieldInfo, int flags);
-
 }

@@ -35,6 +35,7 @@ public interface IStructureConstants {
 	/**
 	 * @since 3.0
 	 */
+	@Deprecated
 	static final int TAG_UPDATE_FIELD = 23;
 
 }

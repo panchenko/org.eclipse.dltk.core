@@ -127,23 +127,6 @@ public class SourceModuleStructureRequestor implements ISourceElementRequestor,
 		this.handleStack.push(handle);
 	}
 
-	/*
-	 * @see ISourceElementRequestor#updateField(FieldInfo, int)
-	 */
-	public void updateField(FieldInfo fieldInfo, int flags) {
-		final ModelElement handle = this.handleStack.peek();
-		if (handle instanceof SourceField) {
-			final SourceField field = (SourceField) handle;
-			if (fieldInfo.name.equals(field.getElementName())) {
-				final SourceFieldElementInfo info = (SourceFieldElementInfo) this.infoStack
-						.peek();
-				if ((flags & UPDATE_TYPE) != 0) {
-					info.setType(fieldInfo.type);
-				}
-			}
-		}
-	}
-
 	public boolean enterFieldCheckDuplicates(FieldInfo fieldInfo,
 			ModelElementInfo parentInfo, ModelElement parentHandle) {
 		IModelElement[] childrens = parentInfo.getChildren();

@@ -171,12 +171,6 @@ public class SourceIndexerRequestor implements ISourceElementRequestor,
 		this.methodDepth++;
 	}
 
-	public void updateField(FieldInfo fieldInfo, int flags) {
-		if ((flags & UPDATE_TYPE) != 0 && fieldInfo.type != null) {
-			this.indexer.addTypeReference(fieldInfo.type);
-		}
-	}
-
 	/**
 	 * @see ISourceElementRequestor#enterMethod(MethodInfo)
 	 * @since 2.0

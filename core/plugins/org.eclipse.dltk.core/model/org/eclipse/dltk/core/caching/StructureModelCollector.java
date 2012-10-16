@@ -22,25 +22,6 @@ public class StructureModelCollector extends AbstractDataSaver implements
 		out.writeInt(tag);
 	}
 
-	private void writeString(char[] fieldName) throws IOException {
-		if (fieldName == null) {
-			writeString((String) null);
-		} else {
-			writeString(new String(fieldName));
-		}
-	}
-
-	private void writeString(char[][] typeName) throws IOException {
-		if (typeName == null) {
-			out.writeInt(0);
-		} else {
-			out.writeInt(typeName.length);
-			for (int i = 0; i < typeName.length; i++) {
-				writeString(typeName[i]);
-			}
-		}
-	}
-
 	private void writeString(String[] strs) throws IOException {
 		if (strs == null) {
 			out.writeInt(0);
@@ -120,17 +101,6 @@ public class StructureModelCollector extends AbstractDataSaver implements
 		try {
 			writeTag(TAG_ENTER_FIELD);
 			writeFieldInfo(info);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void updateField(FieldInfo fieldInfo, int flags) {
-		this.baseRequestor.updateField(fieldInfo, flags);
-		try {
-			writeTag(TAG_UPDATE_FIELD);
-			writeFieldInfo(fieldInfo);
-			out.writeInt(flags);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
