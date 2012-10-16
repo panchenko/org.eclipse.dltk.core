@@ -10,28 +10,27 @@
 package org.eclipse.dltk.ast;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.dltk.utils.CorePrinter;
 
 public class ASTListNode extends ASTNode {
 
-	private final List nodes;
+	private final List<ASTNode> nodes;
 
-	public ASTListNode(int start, int end, List nodes) {
+	public ASTListNode(int start, int end, List<ASTNode> nodes) {
 		super(start, end);
 		this.nodes = nodes;
 	}
 
 	public ASTListNode(int start, int end) {
 		super(start, end);
-		this.nodes = new ArrayList();
+		this.nodes = new ArrayList<ASTNode>();
 	}
 
 	public ASTListNode() {
 		super(0, -1);
-		this.nodes = new ArrayList();
+		this.nodes = new ArrayList<ASTNode>();
 	}
 
 	public void addNode(ASTNode s) {
@@ -40,29 +39,11 @@ public class ASTListNode extends ASTNode {
 		}
 	}
 
-	public List getChilds() {
+	public List<ASTNode> getChilds() {
 		return nodes;
 	}
 
-	/**
-	 * 
-	 * @deprecated use getChilds(), this method are present only for
-	 *             compatiblity with old code
-	 */
-	public List getExpressions() {
-		return nodes;
-	}
-
-	/**
-	 * 
-	 * @deprecated use getChilds(), this method are present only for
-	 *             compatiblity with old code
-	 */
-	public List getStatements() {
-		return nodes;
-	}
-
-	public void setChilds(List l) {
+	public void setChilds(List<ASTNode> l) {
 		this.nodes.clear();
 		this.nodes.addAll(l);
 	}
@@ -75,8 +56,7 @@ public class ASTListNode extends ASTNode {
 	public void traverse(ASTVisitor visitor) throws Exception {
 		if (visitor.visit(this)) {
 			if (nodes != null) {
-				for (Iterator iter = nodes.iterator(); iter.hasNext();) {
-					ASTNode s = (ASTNode) iter.next();
+				for (ASTNode s : nodes) {
 					s.traverse(visitor);
 				}
 			}
@@ -87,8 +67,7 @@ public class ASTListNode extends ASTNode {
 	public void printNode(CorePrinter output) {
 		if (this.nodes != null) {
 			output.print('[');
-			for (Iterator iter = nodes.iterator(); iter.hasNext();) {
-				ASTNode s = (ASTNode) iter.next();
+			for (ASTNode s : nodes) {
 				s.printNode(output);
 			}
 			output.print(']');

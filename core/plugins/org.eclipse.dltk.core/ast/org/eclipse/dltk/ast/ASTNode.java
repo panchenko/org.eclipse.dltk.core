@@ -251,7 +251,7 @@ public abstract class ASTNode implements ISourceNode {
 	 * 
 	 * @return
 	 */
-	public List getChilds() {
+	public List<ASTNode> getChilds() {
 		final List<ASTNode> result = new ArrayList<ASTNode>();
 		ASTVisitor visitor = new ASTVisitor() {
 
