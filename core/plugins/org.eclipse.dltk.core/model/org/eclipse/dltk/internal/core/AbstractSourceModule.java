@@ -757,4 +757,7 @@ public abstract class AbstractSourceModule extends Openable implements
 		return false;
 	}
 
+	public ISourceRange getNameRange() throws ModelException {
+		return null;
+	}
 }

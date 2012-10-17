@@ -49,4 +49,40 @@ public interface ISourceReference {
 	 * @exception ModelException if an exception occurs while accessing its corresponding resource
 	 */
 	String getSource() throws ModelException;
+
+	/**
+	 * Returns the name range associated with this element.
+	 * 
+	 * <p>
+	 * If the element is an {@link IMember}, it returns the source range of this
+	 * member's simple name, or <code>null</code> if this member does not have a
+	 * name (for example, an initializer), or if this member does not have
+	 * associated source code (for example, a binary type).
+	 * </p>
+	 * 
+	 * <p>
+	 * If this element is an {@link IImportDeclaration}, the source range of
+	 * this import declaration's name, or <code>null</code> if this import
+	 * declaration does not have associated source code (for example, a binary
+	 * type). <br>
+	 * The source range for the name includes the trailing '*' if the call to
+	 * {@link IImportDeclaration#isOnDemand()} returns true.
+	 * </p>
+	 * 
+	 * <p>
+	 * If this element is an {@link IPackageDeclaration}, the source range of
+	 * this package declaration's name, or <code>null</code> if this package
+	 * declaration does not have associated source code (for example, a binary
+	 * type).
+	 * </p>
+	 * 
+	 * <p>
+	 * If this element is an {@link IImportContainer}, it returns null.
+	 * </p>
+	 * 
+	 * @return the name range associated with this element, or <code>null</code>
+	 *         if not available
+	 * @since 5.0
+	 */
+	ISourceRange getNameRange() throws ModelException;
 }

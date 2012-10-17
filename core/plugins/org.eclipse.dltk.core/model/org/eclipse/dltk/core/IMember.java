@@ -13,21 +13,6 @@ package org.eclipse.dltk.core;
  * Common protocol for model elements that can be members of modules.
  */
 public interface IMember extends IModelElement, ISourceReference, IParent {
-	/**
-	 * Returns the source range of this member's simple name, or
-	 * <code>null</code> if this member does not have a name (for example, an
-	 * initializer), or if this member does not have associated source code (for
-	 * example, a binary type).
-	 * 
-	 * @exception ModelException
-	 *                if this element does not exist or if an exception occurs
-	 *                while accessing its corresponding resource.
-	 * @return the source range of this member's simple name, or
-	 *         <code>null</code> if this member does not have a name (for
-	 *         example, an initializer), or if this member does not have
-	 *         associated source code (for example, a binary type)
-	 */
-	ISourceRange getNameRange() throws ModelException;
 
 	/**
 	 * Returns the modifier flags for this member.

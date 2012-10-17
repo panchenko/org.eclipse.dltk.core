@@ -13,6 +13,7 @@ package org.eclipse.dltk.internal.core;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.dltk.core.IImportDeclaration;
 import org.eclipse.dltk.core.IModelElement;
+import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.utils.CorePrinter;
 
@@ -132,5 +133,9 @@ public class ImportDeclaration extends SourceRefElement implements
 	@Override
 	public void printNode(CorePrinter output) {
 		output.formatPrint(getElementName());
+	}
+
+	public ISourceRange getNameRange() throws ModelException {
+		return getSourceRange();
 	}
 }

@@ -189,4 +189,8 @@ public class ImportContainer extends SourceRefElement implements
 		}
 		output.dedent();
 	}
+
+	public ISourceRange getNameRange() throws ModelException {
+		return null;
+	}
 }

@@ -12,6 +12,7 @@ package org.eclipse.dltk.internal.core;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.IPackageDeclaration;
 import org.eclipse.dltk.core.ISourceModule;
+import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.utils.CorePrinter;
 
@@ -78,5 +79,9 @@ import org.eclipse.dltk.utils.CorePrinter;
 	}
 
 	public void printNode(CorePrinter output) {
+	}
+
+	public ISourceRange getNameRange() throws ModelException {
+		return getSourceRange();
 	}
 }
