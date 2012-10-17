@@ -536,19 +536,19 @@ public abstract class AbstractSourceModule extends Openable implements
 						.getModificationStamp();
 			}
 			// We need to update children contents using model providers
-			List<IModelElement> childrenSet = new ArrayList<IModelElement>(
-					moduleInfo.getChildrenAsList());
 			// Call for extra model providers
-			IDLTKLanguageToolkit toolkit = DLTKLanguageManager
+			final IDLTKLanguageToolkit toolkit = DLTKLanguageManager
 					.getLanguageToolkit(this);
-			IModelProvider[] providers = ModelProviderManager
+			final IModelProvider[] providers = ModelProviderManager
 					.getProviders(toolkit.getNatureId());
 			if (providers != null) {
+				final List<IModelElement> childrenSet = new ArrayList<IModelElement>(
+						moduleInfo.getChildrenAsList());
 				for (int i = 0; i < providers.length; i++) {
 					providers[i].provideModelChanges(this, childrenSet);
 				}
+				moduleInfo.setChildren(childrenSet);
 			}
-			moduleInfo.setChildren(childrenSet);
 
 			return moduleInfo.isStructureKnown();
 		} catch (CoreException e) {
