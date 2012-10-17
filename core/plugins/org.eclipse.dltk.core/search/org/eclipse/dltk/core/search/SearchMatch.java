@@ -344,7 +344,7 @@ public class SearchMatch {
 	 */
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("Search match"); //$NON-NLS-1$
+		buffer.append(getClass().getSimpleName());
 		buffer.append("\n  accuracy="); //$NON-NLS-1$
 		buffer.append(this.accuracy == A_ACCURATE ? "ACCURATE" : "INACCURATE"); //$NON-NLS-1$ //$NON-NLS-2$
 		buffer.append("\n  rule="); //$NON-NLS-1$

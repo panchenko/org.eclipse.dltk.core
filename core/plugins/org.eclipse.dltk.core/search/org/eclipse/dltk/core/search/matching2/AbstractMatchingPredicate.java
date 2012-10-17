@@ -109,4 +109,10 @@ public abstract class AbstractMatchingPredicate<E> implements
 		return null;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "("
+				+ (namePattern != null ? new String(namePattern) : "*") + ")";
+	}
+
 }

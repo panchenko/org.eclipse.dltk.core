@@ -91,4 +91,8 @@ public class TestSearchResults extends SearchRequestor {
 		return null;
 	}
 
+	@Override
+	public String toString() {
+		return matches.toString();
+	}
 }
