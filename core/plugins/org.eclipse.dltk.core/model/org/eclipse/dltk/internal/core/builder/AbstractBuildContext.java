@@ -106,11 +106,16 @@ public abstract class AbstractBuildContext implements IBuildContext,
 		return (IFile) module.getResource();
 	}
 
+	private String sourceContents;
+
 	/*
 	 * @see org.eclipse.dltk.compiler.env.IModuleSource#getSourceContents()
 	 */
 	public String getSourceContents() {
-		return new String(getContents());
+		if (sourceContents == null) {
+			sourceContents = new String(getContents());
+		}
+		return sourceContents;
 	}
 
 	/*
