@@ -17,10 +17,6 @@ package org.eclipse.dltk.compiler;
 public interface ISourceElementRequestorExtension extends
 		ISourceElementRequestor {
 
-	int MODE_UNKNOWN = 0;
-	int MODE_STRUCTURE = 1;
-	int MODE_INDEX = 2;
-
-	int getMode();
+	SourceElementRequestorMode getMode();
 
 }

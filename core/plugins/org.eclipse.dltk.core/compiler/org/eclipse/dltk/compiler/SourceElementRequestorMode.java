@@ -11,27 +11,19 @@
  *******************************************************************************/
 package org.eclipse.dltk.compiler;
 
-public enum SourceElementRequestorKind {
-	STRUCTURE {
-		@Override
-		public boolean matches(ISourceElementRequestor requestor) {
-			return getMode(requestor) == ISourceElementRequestorExtension.MODE_STRUCTURE;
-		}
-	},
-	INDEXER {
-		@Override
-		public boolean matches(ISourceElementRequestor requestor) {
-			return getMode(requestor) == ISourceElementRequestorExtension.MODE_INDEX;
-		}
-	};
+public enum SourceElementRequestorMode {
+	STRUCTURE, INDEX;
 
-	public abstract boolean matches(ISourceElementRequestor requestor);
+	public boolean matches(ISourceElementRequestor requestor) {
+		return of(requestor) == this;
+	}
 
-	private static int getMode(ISourceElementRequestor requestor) {
+	public static SourceElementRequestorMode of(
+			ISourceElementRequestor requestor) {
 		if (requestor instanceof ISourceElementRequestorExtension) {
 			return ((ISourceElementRequestorExtension) requestor).getMode();
 		} else {
-			return ISourceElementRequestorExtension.MODE_UNKNOWN;
+			return null;
 		}
 	}
 }

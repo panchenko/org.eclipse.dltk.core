@@ -16,6 +16,7 @@ import java.util.Stack;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.dltk.compiler.ISourceElementRequestor;
 import org.eclipse.dltk.compiler.ISourceElementRequestorExtension;
+import org.eclipse.dltk.compiler.SourceElementRequestorMode;
 import org.eclipse.dltk.compiler.util.Util;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.INamespace;
@@ -499,8 +500,8 @@ public class SourceModuleStructureRequestor implements ISourceElementRequestor,
 		return new ImportDeclaration(parent, name, version);
 	}
 
-	public int getMode() {
-		return MODE_STRUCTURE;
+	public SourceElementRequestorMode getMode() {
+		return SourceElementRequestorMode.STRUCTURE;
 	}
 
 }
