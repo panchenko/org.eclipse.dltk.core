@@ -23,11 +23,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IBuffer;
@@ -55,6 +57,7 @@ import org.eclipse.dltk.internal.ui.IDLTKStatusConstants;
 import org.eclipse.dltk.internal.ui.InitializeJob;
 import org.eclipse.dltk.internal.ui.editor.DocumentAdapter;
 import org.eclipse.dltk.internal.ui.editor.EditorUtility;
+import org.eclipse.dltk.internal.ui.editor.IScriptEditor;
 import org.eclipse.dltk.internal.ui.editor.ISourceModuleDocumentProvider;
 import org.eclipse.dltk.internal.ui.editor.SourceModuleDocumentProvider;
 import org.eclipse.dltk.internal.ui.editor.WorkingCopyManager;
@@ -203,13 +206,26 @@ public class DLTKUIPlugin extends AbstractUIPlugin {
 		new InitializeJob().schedule();
 	}
 
-	private static class ShutdownCloseRemoteEditorsListener implements
+	static class ShutdownCloseRemoteEditorsListener implements
 			IWorkbenchListener {
 		public void postShutdown(IWorkbench workbench) {
 			// empty
 		}
 
-		public boolean preShutdown(IWorkbench workbench, boolean forced) {
+		public boolean preShutdown(final IWorkbench workbench, boolean forced) {
+			SafeRunner.run(new ISafeRunnable() {
+				public void run() throws Exception {
+					preShutdownInternal(workbench);
+				}
+
+				public void handleException(Throwable exception) {
+					// Logged by SafeRunner
+				}
+			});
+			return true;
+		}
+
+		void preShutdownInternal(final IWorkbench workbench) {
 			IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 			if (window != null) {
 				IWorkbenchPage page = window.getActivePage();
@@ -217,13 +233,12 @@ public class DLTKUIPlugin extends AbstractUIPlugin {
 					IEditorReference[] references = page.getEditorReferences();
 					for (int i = 0; i < references.length; i++) {
 						IEditorPart editor = references[i].getEditor(false);
-						if (editor != null) {
+						if (editor != null && editor instanceof IScriptEditor) {
 							closeEditor(page, editor);
 						}
 					}
 				}
 			}
-			return true;
 		}
 
 		private void closeEditor(IWorkbenchPage page, IEditorPart editor) {
