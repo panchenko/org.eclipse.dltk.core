@@ -7,12 +7,6 @@
  *
  
  *******************************************************************************/
-/*
- * Created on 14.11.2004
- * 
- * TODO To change the template for this generated file go to Window - Preferences - Script - Code
- * Style - Code Templates
- */
 package org.eclipse.dltk.ast.references;
 
 import org.eclipse.dltk.ast.ASTVisitor;

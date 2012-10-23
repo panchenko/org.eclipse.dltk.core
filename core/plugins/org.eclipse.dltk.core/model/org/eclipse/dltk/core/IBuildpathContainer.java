@@ -99,9 +99,6 @@ public interface IBuildpathContainer {
 	 * The effects of using other script model APIs are unspecified.
 	 * </p>
 	 * 
-	 * @param project
-	 *            TODO
-	 * 
 	 * @return IBuildpathEntry[] - the buildpath entries this container
 	 *         represents
 	 * @see IBuildpathEntry
