@@ -87,8 +87,8 @@ public class ReconcileWorkingCopyOperation extends ModelOperation {
 			final IDLTKLanguageToolkit toolkit = DLTKLanguageManager
 					.getLanguageToolkit(workingCopy);
 			if (toolkit != null) {
-				ReconcileBuilder.build(toolkit.getNatureId(), workingCopy,
-						reporter);
+				new ReconcileBuilder(toolkit.getNatureId(), workingCopy,
+						reporter).build();
 			}
 			reporter.reportToRequestor();
 		}

@@ -507,7 +507,7 @@ public abstract class AbstractSourceModule extends Openable implements
 		}
 		if (problemReporter != null) {
 			if (!problemReporter.hasErrors()) {
-				ReconcileBuilder.build(natureId, this, problemReporter);
+				new ReconcileBuilder(natureId, this, problemReporter).build();
 			}
 			problemReporter.reportToRequestor();
 		}

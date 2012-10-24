@@ -12,7 +12,9 @@
 package org.eclipse.dltk.internal.core;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
 import org.eclipse.dltk.compiler.task.ITaskReporter;
 import org.eclipse.dltk.core.DLTKCore;
@@ -28,7 +30,7 @@ import org.eclipse.dltk.internal.core.builder.AbstractBuildContext;
 import org.eclipse.dltk.internal.core.builder.BuildParticipantManager;
 import org.eclipse.dltk.internal.core.builder.BuildParticipantManager.BuildParticipantResult;
 
-class ReconcileBuilder {
+class ReconcileBuilder implements ISafeRunnable {
 
 	private static class ReconcileBuildContext extends AbstractBuildContext {
 
@@ -60,8 +62,22 @@ class ReconcileBuilder {
 
 	}
 
-	static void build(String natureId, ISourceModule module,
+	private final String natureId;
+	private final ISourceModule module;
+	private final AccumulatingProblemReporter reporter;
+
+	public ReconcileBuilder(String natureId, ISourceModule module,
 			AccumulatingProblemReporter reporter) {
+		this.natureId = natureId;
+		this.module = module;
+		this.reporter = reporter;
+	}
+
+	void build() {
+		SafeRunner.run(this);
+	}
+
+	public void run() {
 		final NullProgressMonitor monitor = new NullProgressMonitor();
 		final IScriptProject project = module.getScriptProject();
 		final ReconcileBuildContext context = new ReconcileBuildContext(module,
@@ -126,6 +142,10 @@ class ReconcileBuilder {
 		BuildParticipantManager.notifyDependents(participants,
 				result.dependencies);
 		return participants;
+	}
+
+	public void handleException(Throwable exception) {
+		// Logged by SafeRunner
 	}
 
 }
