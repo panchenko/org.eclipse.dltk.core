@@ -24,6 +24,8 @@ import junit.framework.TestSuite;
 
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.dltk.core.tests.model.AbstractModelTests;
+import org.eclipse.dltk.core.tests.model.SuiteOfTestCases;
+import org.eclipse.dltk.core.tests.model.SuiteOfTestCases.Suite;
 import org.eclipse.dltk.internal.core.ModelManager;
 
 /**
@@ -65,13 +67,22 @@ public class BundledProjectSetup extends TestSetup {
 
 		private Test createTests(Class<?>[] testClasses) {
 			if (testClasses.length == 1) {
-				return new TestSuite(testClasses[0]);
+				return createSuite(testClasses[0]);
 			} else {
 				TestSuite result = new TestSuite();
 				for (Class<?> clazz : testClasses) {
-					result.addTest(new TestSuite(clazz));
+					result.addTest(createSuite(clazz));
 				}
 				return result;
+			}
+		}
+
+		@SuppressWarnings("unchecked")
+		private Test createSuite(final Class<?> cls) {
+			if (SuiteOfTestCases.class.isAssignableFrom(cls)) {
+				return new Suite((Class<? extends SuiteOfTestCases>) cls);
+			} else {
+				return new TestSuite(cls);
 			}
 		}
 
@@ -113,8 +124,8 @@ public class BundledProjectSetup extends TestSetup {
 		this(bundleName, projectNames, test, build, false);
 	}
 
-	private BundledProjectSetup(String bundleName, String[] projectNames,
-			Test test, boolean build, boolean disableIndexer) {
+	BundledProjectSetup(String bundleName, String[] projectNames, Test test,
+			boolean build, boolean disableIndexer) {
 		super(test);
 		this.helper = new Helper(bundleName);
 		this.projectNames = projectNames;

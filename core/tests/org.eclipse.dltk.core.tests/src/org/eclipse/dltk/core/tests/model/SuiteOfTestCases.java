@@ -12,10 +12,16 @@ package org.eclipse.dltk.core.tests.model;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.Protectable;
 import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestListener;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
@@ -148,9 +154,11 @@ public abstract class SuiteOfTestCases extends TestCase {
 					// fields into the current one
 					this.initialize(current);
 				}
+				current.parentSuite = this;
 				try {
 					super.runTest(test, result);
 				} finally {
+					current.parentSuite = null;
 					// make current
 					this.currentTestCase = current;
 				}
@@ -163,6 +171,10 @@ public abstract class SuiteOfTestCases extends TestCase {
 			}
 		}
 	}
+
+	Suite parentSuite;
+	private final static Set<String> initializedSuites = Collections
+			.synchronizedSet(new HashSet<String>());
 
 	public SuiteOfTestCases(String name) {
 		super(name);
@@ -199,6 +211,36 @@ public abstract class SuiteOfTestCases extends TestCase {
 	public void run(TestResult result) {
 		if (TestSupport.ignored(this))
 			return;
+		if (parentSuite == null && initializedSuites.add(getClass().getName())) {
+			System.out.println("setUpSuite() in " + getClass().getName());
+			// TODO (alex) tearDownSuite() not executed
+			final AtomicBoolean errors = new AtomicBoolean();
+			final TestListener listener = new TestListener() {
+				public void startTest(Test test) {
+				}
+
+				public void endTest(Test test) {
+				}
+
+				public void addFailure(Test test, AssertionFailedError t) {
+					errors.set(true);
+				}
+
+				public void addError(Test test, Throwable t) {
+					errors.set(true);
+				}
+			};
+			result.addListener(listener);
+			result.runProtected(this, new Protectable() {
+				public void protect() throws Throwable {
+					setUpSuite();
+				}
+			});
+			result.removeListener(listener);
+			if (errors.get()) {
+				return;
+			}
+		}
 		super.run(result);
 	}
 
