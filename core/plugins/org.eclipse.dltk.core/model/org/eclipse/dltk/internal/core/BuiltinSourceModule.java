@@ -10,7 +10,6 @@ package org.eclipse.dltk.internal.core;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
@@ -104,7 +103,7 @@ public class BuiltinSourceModule extends AbstractExternalSourceModule implements
 	/*
 	 * @see org.eclipse.dltk.internal.core.AbstractSourceModule#getNatureId()
 	 */
-	protected String getNatureId() throws CoreException {
+	protected String getNatureId() {
 		IScriptProject project = getScriptProject();
 		IDLTKLanguageToolkit toolkit = lookupLanguageToolkit(project);
 		return toolkit != null ? toolkit.getNatureId() : null;

@@ -14,7 +14,6 @@ import java.util.Set;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dltk.core.IBuffer;
@@ -372,7 +371,7 @@ public class SourceModule extends AbstractSourceModule implements ISourceModule 
 	}
 
 	@Override
-	protected String getNatureId() throws CoreException {
+	protected String getNatureId() {
 		IResource resource = this.getResource();
 		Object lookup = (resource == null) ? (Object) getPath() : resource;
 

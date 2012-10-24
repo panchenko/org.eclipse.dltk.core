@@ -156,7 +156,7 @@ public class ExternalSourceModule extends AbstractExternalSourceModule {
 	/*
 	 * @see org.eclipse.dltk.internal.core.AbstractSourceModule#getNatureId()
 	 */
-	protected String getNatureId() throws CoreException {
+	protected String getNatureId() {
 		IPath path = getFullPath();
 		IDLTKLanguageToolkit toolkit = lookupLanguageToolkit(path);
 		if (toolkit == null) {

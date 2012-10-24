@@ -59,8 +59,7 @@ public class BinaryModule extends AbstractSourceModule implements
 	}
 
 	@Override
-	protected IStatus validateSourceModule(IResource resource)
-			throws CoreException {
+	protected IStatus validateSourceModule(IResource resource) {
 		return Status.OK_STATUS;
 	}
 
@@ -248,7 +247,7 @@ public class BinaryModule extends AbstractSourceModule implements
 	}
 
 	@Override
-	protected String getNatureId() throws CoreException {
+	protected String getNatureId() {
 		IDLTKLanguageToolkit lookupLanguageToolkit = lookupLanguageToolkit(getScriptProject());
 		if (lookupLanguageToolkit == null) {
 			return null;

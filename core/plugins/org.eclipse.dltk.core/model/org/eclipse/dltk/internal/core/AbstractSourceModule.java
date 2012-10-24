@@ -7,10 +7,10 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.compiler.CharOperation;
 import org.eclipse.dltk.core.BufferChangedEvent;
 import org.eclipse.dltk.core.CompletionRequestor;
@@ -129,11 +129,7 @@ public abstract class AbstractSourceModule extends Openable implements
 	public boolean exists() {
 		// if not a working copy, it exists only if it is a primary compilation
 		// unit
-		try {
-			return isPrimary() && validateSourceModule(getResource()).isOK();
-		} catch (CoreException e) {
-			return false;
-		}
+		return isPrimary() && validateSourceModule(getResource()).isOK();
 	}
 
 	public IType[] getAllTypes() throws ModelException {
@@ -434,7 +430,8 @@ public abstract class AbstractSourceModule extends Openable implements
 		return getClass().getSimpleName();
 	}
 
-	protected abstract String getNatureId() throws CoreException;
+	@Nullable
+	protected abstract String getNatureId();
 
 	protected abstract ISourceModule getOriginalSourceModule();
 
@@ -464,96 +461,91 @@ public abstract class AbstractSourceModule extends Openable implements
 	protected boolean buildStructure(OpenableElementInfo info,
 			IProgressMonitor pm, Map newElements, IResource underlyingResource)
 			throws ModelException {
-		try {
-			// check if this source module can be opened
-			if (!isWorkingCopy()) {
-				// no check is done on root kind or
-				// exclusion pattern for working copies
-				final IStatus status = validateSourceModule(underlyingResource);
-				if (!status.isOK()) {
-					throw newModelException(status);
-				}
+		// check if this source module can be opened
+		if (!isWorkingCopy()) {
+			// no check is done on root kind or
+			// exclusion pattern for working copies
+			final IStatus status = validateSourceModule(underlyingResource);
+			if (!status.isOK()) {
+				throw newModelException(status);
 			}
-			// prevents reopening of non-primary working copies (they are closed
-			// when they are discarded and should not be reopened)
-			if (preventReopen()) {
-				throw newNotPresentException();
-			}
-
-			final SourceModuleElementInfo moduleInfo = (SourceModuleElementInfo) info;
-
-			// ensure buffer is opened
-			if (hasBuffer()) {
-				final IBuffer buffer = getBufferManager().getBuffer(this);
-				if (buffer == null) {
-					openBuffer(pm, moduleInfo);
-				}
-			}
-
-			// generate structure and compute syntax problems if needed
-			final SourceModuleStructureRequestor requestor = new SourceModuleStructureRequestor(
-					this, moduleInfo, newElements);
-
-			// System.out.println("==> Parsing: " + resource.getName());
-			final String natureId = getNatureId();
-			if (natureId == null) {
-				throw new ModelException(new ModelStatus(
-						ModelStatus.INVALID_NAME));
-			}
-
-			final ISourceElementParser parser = getSourceElementParser(natureId);
-			final AccumulatingProblemReporter problemReporter = getAccumulatingProblemReporter();
-			if (parser != null) {
-				parser.setRequestor(requestor);
-				parser.setReporter(problemReporter);
-				PerformanceNode p = RuntimePerformanceMonitor.begin();
-				parser.parseSourceModule(this);
-				p.done(natureId, "Source Element parser", 0);
-			}
-			if (problemReporter != null) {
-				if (!problemReporter.hasErrors()) {
-					ReconcileBuilder.build(natureId, this, problemReporter);
-				}
-				problemReporter.reportToRequestor();
-			}
-
-			if (DEBUG_PRINT_MODEL) {
-				System.out.println("Source Module Debug print:"); //$NON-NLS-1$
-
-				CorePrinter printer = new CorePrinter(System.out);
-				printNode(printer);
-				printer.flush();
-			}
-			// update timestamp (might be IResource.NULL_STAMP if original does
-			// not exist)
-			if (underlyingResource == null) {
-				underlyingResource = getResource();
-			}
-			// underlying resource is null in the case of a working copy out of
-			// workspace
-			if (underlyingResource != null) {
-				moduleInfo.timestamp = ((IFile) underlyingResource)
-						.getModificationStamp();
-			}
-			// We need to update children contents using model providers
-			// Call for extra model providers
-			final IDLTKLanguageToolkit toolkit = DLTKLanguageManager
-					.getLanguageToolkit(this);
-			final IModelProvider[] providers = ModelProviderManager
-					.getProviders(toolkit.getNatureId());
-			if (providers != null) {
-				final List<IModelElement> childrenSet = new ArrayList<IModelElement>(
-						moduleInfo.getChildrenAsList());
-				for (int i = 0; i < providers.length; i++) {
-					providers[i].provideModelChanges(this, childrenSet);
-				}
-				moduleInfo.setChildren(childrenSet);
-			}
-
-			return moduleInfo.isStructureKnown();
-		} catch (CoreException e) {
-			throw new ModelException(e);
 		}
+		// prevents reopening of non-primary working copies (they are closed
+		// when they are discarded and should not be reopened)
+		if (preventReopen()) {
+			throw newNotPresentException();
+		}
+
+		final SourceModuleElementInfo moduleInfo = (SourceModuleElementInfo) info;
+
+		// ensure buffer is opened
+		if (hasBuffer()) {
+			final IBuffer buffer = getBufferManager().getBuffer(this);
+			if (buffer == null) {
+				openBuffer(pm, moduleInfo);
+			}
+		}
+
+		// generate structure and compute syntax problems if needed
+		final SourceModuleStructureRequestor requestor = new SourceModuleStructureRequestor(
+				this, moduleInfo, newElements);
+
+		// System.out.println("==> Parsing: " + resource.getName());
+		final String natureId = getNatureId();
+		if (natureId == null) {
+			throw new ModelException(new ModelStatus(ModelStatus.INVALID_NAME));
+		}
+
+		final ISourceElementParser parser = getSourceElementParser(natureId);
+		final AccumulatingProblemReporter problemReporter = getAccumulatingProblemReporter();
+		if (parser != null) {
+			parser.setRequestor(requestor);
+			parser.setReporter(problemReporter);
+			PerformanceNode p = RuntimePerformanceMonitor.begin();
+			parser.parseSourceModule(this);
+			p.done(natureId, "Source Element parser", 0);
+		}
+		if (problemReporter != null) {
+			if (!problemReporter.hasErrors()) {
+				ReconcileBuilder.build(natureId, this, problemReporter);
+			}
+			problemReporter.reportToRequestor();
+		}
+
+		if (DEBUG_PRINT_MODEL) {
+			System.out.println("Source Module Debug print:"); //$NON-NLS-1$
+
+			CorePrinter printer = new CorePrinter(System.out);
+			printNode(printer);
+			printer.flush();
+		}
+		// update timestamp (might be IResource.NULL_STAMP if original does
+		// not exist)
+		if (underlyingResource == null) {
+			underlyingResource = getResource();
+		}
+		// underlying resource is null in the case of a working copy out of
+		// workspace
+		if (underlyingResource != null) {
+			moduleInfo.timestamp = ((IFile) underlyingResource)
+					.getModificationStamp();
+		}
+		// We need to update children contents using model providers
+		// Call for extra model providers
+		final IDLTKLanguageToolkit toolkit = DLTKLanguageManager
+				.getLanguageToolkit(this);
+		final IModelProvider[] providers = ModelProviderManager
+				.getProviders(toolkit.getNatureId());
+		if (providers != null) {
+			final List<IModelElement> childrenSet = new ArrayList<IModelElement>(
+					moduleInfo.getChildrenAsList());
+			for (int i = 0; i < providers.length; i++) {
+				providers[i].provideModelChanges(this, childrenSet);
+			}
+			moduleInfo.setChildren(childrenSet);
+		}
+
+		return moduleInfo.isStructureKnown();
 	}
 
 	protected Object createElementInfo() {
@@ -564,8 +556,7 @@ public abstract class AbstractSourceModule extends Openable implements
 		return JEM_SOURCEMODULE;
 	}
 
-	protected ISourceElementParser getSourceElementParser(String natureId)
-			throws CoreException {
+	protected ISourceElementParser getSourceElementParser(String natureId) {
 		return DLTKLanguageManager.getSourceElementParser(natureId);
 	}
 
@@ -573,8 +564,7 @@ public abstract class AbstractSourceModule extends Openable implements
 		return true;
 	}
 
-	protected final IDLTKLanguageToolkit lookupLanguageToolkit(Object object)
-			throws CoreException {
+	protected final IDLTKLanguageToolkit lookupLanguageToolkit(Object object) {
 		IDLTKLanguageToolkit toolkit = null;
 		if (object instanceof IPath) {
 			toolkit = DLTKLanguageManager.findToolkit((IPath) object);
@@ -680,8 +670,7 @@ public abstract class AbstractSourceModule extends Openable implements
 		return !isPrimary();
 	}
 
-	protected IStatus validateSourceModule(IResource resource)
-			throws CoreException {
+	protected IStatus validateSourceModule(IResource resource) {
 		IProjectFragment root = getProjectFragment();
 		try {
 			if (root.getKind() != IProjectFragment.K_SOURCE) {
