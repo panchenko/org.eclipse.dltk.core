@@ -11,19 +11,16 @@
  *******************************************************************************/
 package org.eclipse.dltk.ui.tests.templates;
 
-import org.eclipse.dltk.core.tests.model.SuiteOfTestCases;
+import junit.framework.TestCase;
+
 import org.eclipse.dltk.ui.templates.IScriptTemplateIndenter;
 import org.eclipse.dltk.ui.templates.NopScriptTemplateIndenter;
 import org.eclipse.dltk.ui.templates.TabExpandScriptTemplateIndenter;
 
-public class ScriptTemplateContextTest extends SuiteOfTestCases {
+public class ScriptTemplateContextTest extends TestCase {
 
 	public ScriptTemplateContextTest(String name) {
 		super(name);
-	}
-
-	public static Suite suite() {
-		return new Suite(ScriptTemplateContextTest.class);
 	}
 
 	public void testCalulateIndent() {

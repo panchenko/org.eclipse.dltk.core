@@ -14,19 +14,16 @@ package org.eclipse.dltk.ui.tests.text;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.dltk.core.tests.model.SuiteOfTestCases;
+import junit.framework.TestCase;
+
 import org.eclipse.dltk.ui.text.DLTKColorConstants;
 import org.eclipse.dltk.ui.text.rules.CombinedWordRule;
 import org.eclipse.jface.text.rules.IToken;
 
-public class TodoHighlightingTest extends SuiteOfTestCases {
+public class TodoHighlightingTest extends TestCase {
 
 	private static final String COMMENT_KEY = DLTKColorConstants.DLTK_SINGLE_LINE_COMMENT;
 	private static final String TODO_KEY = DLTKColorConstants.TASK_TAG;
-
-	public static Suite suite() {
-		return new Suite(TodoHighlightingTest.class);
-	}
 
 	public TodoHighlightingTest(String name) {
 		super(name);

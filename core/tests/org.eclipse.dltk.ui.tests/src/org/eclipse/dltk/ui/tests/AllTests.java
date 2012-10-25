@@ -20,8 +20,8 @@ public class AllTests {
 		suite.addTestSuite(ModelElementUtilTests.class);
 
 		suite.addTest(PackageExplorerTests.suite());
-		suite.addTest(ScriptTemplateContextTest.suite());
-		suite.addTest(TodoHighlightingTest.suite());
+		suite.addTestSuite(ScriptTemplateContextTest.class);
+		suite.addTestSuite(TodoHighlightingTest.class);
 		// $JUnit-END$
 		return suite;
 	}
