@@ -5,6 +5,6 @@ import org.eclipse.dltk.internal.core.OpenableElementInfo;
 /**
  * @since 2.0
  */
-public class BinaryModuleElementInfo extends OpenableElementInfo {
+class BinaryModuleElementInfo extends OpenableElementInfo {
 
 }

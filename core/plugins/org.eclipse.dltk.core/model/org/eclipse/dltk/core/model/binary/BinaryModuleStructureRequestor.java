@@ -107,10 +107,6 @@ public class BinaryModuleStructureRequestor implements IBinaryElementRequestor {
 		this.infoStack.push(handleInfo);
 	}
 
-	public void enterMethodRemoveSame(MethodInfo methodInfo) {
-		this.enterMethod(methodInfo);
-	}
-
 	public void enterMethod(MethodInfo methodInfo) {
 		ModelElement parentHandle = this.handleStack.peek();
 		ModelElementInfo parentInfo = this.infoStack.peek();
@@ -172,10 +168,6 @@ public class BinaryModuleStructureRequestor implements IBinaryElementRequestor {
 		ModelElement parentHandle = this.handleStack.peek();
 		ModelElementInfo parentInfo = this.infoStack.peek();
 		this.processType(typeInfo, parentHandle, parentInfo);
-	}
-
-	public boolean enterTypeAppend(String fullName, String delimiter) {
-		return false;
 	}
 
 	private void processType(TypeInfo typeInfo, ModelElement parentHandle,

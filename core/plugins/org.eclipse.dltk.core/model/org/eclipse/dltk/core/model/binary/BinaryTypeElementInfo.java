@@ -13,7 +13,7 @@ package org.eclipse.dltk.core.model.binary;
 /**
  * @since 2.0
  */
-public class BinaryTypeElementInfo extends BinaryMemberInfo {
+class BinaryTypeElementInfo extends BinaryMemberInfo {
 	/**
 	 * The name of the superclasses for this type.
 	 */

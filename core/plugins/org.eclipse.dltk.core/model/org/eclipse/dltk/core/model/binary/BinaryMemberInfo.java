@@ -6,7 +6,7 @@ import org.eclipse.dltk.internal.core.ModelElementInfo;
 /**
  * @since 2.0
  */
-public class BinaryMemberInfo extends ModelElementInfo {
+class BinaryMemberInfo extends ModelElementInfo {
 	private int flags;
 
 	public void setFlags(int flags) {

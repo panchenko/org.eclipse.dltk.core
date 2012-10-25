@@ -62,7 +62,8 @@ public class BinaryType extends BinaryMember implements IType, IParent {
 		IProject project = scriptProject.getProject();
 		IProject[] referencingProjects = project.getReferencingProjects();
 
-		List scriptProjects = new ArrayList(referencingProjects.length + 1);
+		List<IScriptProject> scriptProjects = new ArrayList<IScriptProject>(
+				referencingProjects.length + 1);
 		scriptProjects.add(scriptProject);
 
 		for (int i = 0; i < referencingProjects.length; ++i) {
@@ -71,7 +72,7 @@ public class BinaryType extends BinaryMember implements IType, IParent {
 				scriptProjects.add(DLTKCore.create(p));
 			}
 		}
-		return SearchEngine.createSearchScope((IModelElement[]) scriptProjects
+		return SearchEngine.createSearchScope(scriptProjects
 				.toArray(new IModelElement[scriptProjects.size()]), false,
 				DLTKLanguageManager.getLanguageToolkit(this));
 	}
