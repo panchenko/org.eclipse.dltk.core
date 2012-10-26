@@ -69,12 +69,37 @@ public class BundledProjectSetup extends TestSetup {
 			if (testClasses.length == 1) {
 				return createSuite(testClasses[0]);
 			} else {
-				TestSuite result = new TestSuite();
+				final TestSuite result = new TestSuite();
+				final List<String> names = new ArrayList<String>();
 				for (Class<?> clazz : testClasses) {
-					result.addTest(createSuite(clazz));
+					final Test suite = createSuite(clazz);
+					result.addTest(suite);
+					names.add(clazz.getName());
 				}
+				result.setName(findLongestCommonPrefix(names
+						.toArray(new String[names.size()])) + "*.tests");
 				return result;
 			}
+		}
+
+		private static String findLongestCommonPrefix(String[] array) {
+			int minLength = array[0].length();
+			for (int i = 1; i < array.length; ++i) {
+				final int length = array[i].length();
+				if (length < minLength) {
+					minLength = length;
+				}
+			}
+			LENGTH_LOOP: for (int i = minLength; i > 0; --i) {
+				final String prefix = array[0].substring(0, i);
+				for (int j = 1; j < array.length; ++j) {
+					if (!array[j].startsWith(prefix)) {
+						continue LENGTH_LOOP;
+					}
+				}
+				return prefix;
+			}
+			return "";
 		}
 
 		@SuppressWarnings("unchecked")
