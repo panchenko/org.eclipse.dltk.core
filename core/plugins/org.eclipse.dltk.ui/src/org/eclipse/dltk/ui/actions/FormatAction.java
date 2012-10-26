@@ -44,15 +44,15 @@ public class FormatAction extends SelectionDispatchAction {
 		setText(ActionMessages.FormatAction_label);
 	}
 
-	private static class ModuleCollector implements IModelElementVisitor {
+	static class ModuleCollector implements IModelElementVisitor {
 
-		final List modules = new ArrayList();
+		final List<ISourceModule> modules = new ArrayList<ISourceModule>();
 
 		public boolean visit(IModelElement element) {
 			if (element instanceof ISourceModule) {
 				final ISourceModule module = (ISourceModule) element;
 				if (!module.isReadOnly()) {
-					modules.add(element);
+					modules.add((ISourceModule) element);
 				}
 				return false;
 			}
@@ -63,7 +63,7 @@ public class FormatAction extends SelectionDispatchAction {
 
 	public void run(IStructuredSelection selection) {
 		final ModuleCollector collector = new ModuleCollector();
-		for (Iterator i = selection.iterator(); i.hasNext();) {
+		for (Iterator<?> i = selection.iterator(); i.hasNext();) {
 			final Object obj = i.next();
 			if (obj instanceof IModelElement) {
 				try {
@@ -74,8 +74,7 @@ public class FormatAction extends SelectionDispatchAction {
 			}
 		}
 		if (!collector.modules.isEmpty()) {
-			for (Iterator i = collector.modules.iterator(); i.hasNext();) {
-				final ISourceModule module = (ISourceModule) i.next();
+			for (final ISourceModule module : collector.modules) {
 				final IResource resource = module.getResource();
 				if (resource != null && resource.getType() == IResource.FILE
 						&& resource.exists()) {
@@ -88,7 +87,7 @@ public class FormatAction extends SelectionDispatchAction {
 							final Document document = new Document(source);
 							final String lineDelimiter = TextUtilities
 									.getDefaultLineDelimiter(document);
-							final Map preferences = formatterFactory
+							final Map<String, String> preferences = formatterFactory
 									.retrievePreferences(new PreferencesLookupDelegate(
 											project));
 							final IScriptFormatter formatter = formatterFactory
@@ -109,7 +108,6 @@ public class FormatAction extends SelectionDispatchAction {
 							break;
 						}
 					}
-
 				}
 			}
 		}
