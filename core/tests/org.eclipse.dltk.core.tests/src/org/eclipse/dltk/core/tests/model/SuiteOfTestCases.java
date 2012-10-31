@@ -12,9 +12,8 @@ package org.eclipse.dltk.core.tests.model;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.AssertionFailedError;
@@ -39,7 +38,7 @@ public abstract class SuiteOfTestCases extends TestCase {
 	 * copies the values of these fields intto each subsequent test case.
 	 */
 	public static class Suite extends TestSuite {
-		public SuiteOfTestCases currentTestCase;
+		SuiteOfTestCases currentTestCase;
 
 		/*
 		 * Creates a new suite on the given class. This class must be a subclass
@@ -90,7 +89,7 @@ public abstract class SuiteOfTestCases extends TestCase {
 			super(name);
 		}
 
-		private void initialize(SuiteOfTestCases test) {
+		void initialize(SuiteOfTestCases test) {
 			Class<?> currentClass = test.getClass();
 			while (currentClass != null
 					&& !currentClass.equals(SuiteOfTestCases.class)) {
@@ -173,8 +172,7 @@ public abstract class SuiteOfTestCases extends TestCase {
 	}
 
 	Suite parentSuite;
-	private final static Set<String> initializedSuites = Collections
-			.synchronizedSet(new HashSet<String>());
+	private final static Map<String, Suite> initializedSuites = new HashMap<String, Suite>();
 
 	public SuiteOfTestCases(String name) {
 		super(name);
@@ -211,35 +209,44 @@ public abstract class SuiteOfTestCases extends TestCase {
 	public void run(TestResult result) {
 		if (TestSupport.ignored(this))
 			return;
-		if (parentSuite == null && initializedSuites.add(getClass().getName())) {
-			System.out.println("setUpSuite() in " + getClass().getName());
-			// TODO (alex) tearDownSuite() not executed
-			final AtomicBoolean errors = new AtomicBoolean();
-			final TestListener listener = new TestListener() {
-				public void startTest(Test test) {
-				}
+		if (parentSuite == null) {
+			final String className = getClass().getName();
+			parentSuite = initializedSuites.get(className);
+			if (parentSuite == null) {
+				parentSuite = new Suite(getClass().getName());
+				initializedSuites.put(getClass().getName(), parentSuite);
+				System.out.println("setUpSuite() in " + getClass().getName());
+				// TODO (alex) tearDownSuite() not executed
+				final AtomicBoolean errors = new AtomicBoolean();
+				final TestListener listener = new TestListener() {
+					public void startTest(Test test) {
+					}
 
-				public void endTest(Test test) {
-				}
+					public void endTest(Test test) {
+					}
 
-				public void addFailure(Test test, AssertionFailedError t) {
-					errors.set(true);
-				}
+					public void addFailure(Test test, AssertionFailedError t) {
+						errors.set(true);
+					}
 
-				public void addError(Test test, Throwable t) {
-					errors.set(true);
+					public void addError(Test test, Throwable t) {
+						errors.set(true);
+					}
+				};
+				result.addListener(listener);
+				result.runProtected(this, new Protectable() {
+					public void protect() throws Throwable {
+						setUpSuite();
+					}
+				});
+				result.removeListener(listener);
+				if (errors.get()) {
+					return;
 				}
-			};
-			result.addListener(listener);
-			result.runProtected(this, new Protectable() {
-				public void protect() throws Throwable {
-					setUpSuite();
-				}
-			});
-			result.removeListener(listener);
-			if (errors.get()) {
-				return;
+			} else if (parentSuite.currentTestCase != null) {
+				parentSuite.initialize(this);
 			}
+			parentSuite.currentTestCase = this;
 		}
 		super.run(result);
 	}
