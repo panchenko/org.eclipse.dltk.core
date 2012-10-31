@@ -32,19 +32,17 @@ public class MixinModelTests extends AbstractModelTests {
 		super("org.eclipse.dltk.core.tests", name);
 	}
 
-	protected void setUp() throws Exception {
-		super.setUp();
-		if (project == null) {
-			project = setUpProject("Mixin0");
-		}
+	@Override
+	public void setUpSuite() throws Exception {
+		super.setUpSuite();
+		project = setUpProject("Mixin0");
 		waitUntilIndexesReady();
 	}
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-		if (project != null) {
-			deleteProject(project.getName());
-		}
+	@Override
+	public void tearDownSuite() throws Exception {
+		deleteProject(project.getName());
+		super.tearDownSuite();
 	}
 
 	public void testMixin001() throws Throwable {
