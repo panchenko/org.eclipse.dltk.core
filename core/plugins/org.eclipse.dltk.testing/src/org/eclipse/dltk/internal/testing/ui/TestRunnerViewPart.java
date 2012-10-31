@@ -274,7 +274,6 @@ public class TestRunnerViewPart extends ViewPart {
 	// Persistence tags.
 	static final String TAG_PAGE = "page"; //$NON-NLS-1$
 	static final String TAG_RATIO = "ratio"; //$NON-NLS-1$
-	static final String TAG_TRACEFILTER = "tracefilter"; //$NON-NLS-1$ 
 	static final String TAG_ORIENTATION = "orientation"; //$NON-NLS-1$
 	static final String TAG_SCROLL = "scroll"; //$NON-NLS-1$
 	/**

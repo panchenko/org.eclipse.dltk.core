@@ -505,9 +505,7 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 	}
 	
 	/**
-	 * @param testId 
-	 * @param className 
-	 * @param testName 
+	 * @param testElement
 	 * @param launchMode 
 	 * @return <code>false</code> iff the rerun could not be started
 	 * @throws CoreException 
