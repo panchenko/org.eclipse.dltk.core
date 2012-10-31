@@ -37,6 +37,7 @@ import org.eclipse.dltk.testing.DLTKTestingMessages;
 import org.eclipse.dltk.testing.DLTKTestingPlugin;
 import org.eclipse.dltk.testing.ITestCategoryEngine;
 import org.eclipse.dltk.testing.ITestRunnerUI;
+import org.eclipse.dltk.testing.ITestRunnerUIExtension;
 import org.eclipse.dltk.testing.ITestSession;
 import org.eclipse.dltk.testing.ITestingClient;
 import org.eclipse.dltk.testing.ITestingEngine;
@@ -523,6 +524,10 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 			return true;
 			
 		} else if (fLaunch != null) {
+			if (testRunnerUI instanceof ITestRunnerUIExtension) {
+				return ((ITestRunnerUIExtension) testRunnerUI).rerunTest(
+						fLaunch, testElement, launchMode);
+			}
 			// run the selected test using the previous launch configuration
 			ILaunchConfiguration launchConfiguration= fLaunch.getLaunchConfiguration();
 			if (launchConfiguration != null) {
