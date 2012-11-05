@@ -21,12 +21,16 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.ILaunchesListener2;
+import org.eclipse.dltk.annotations.Internal;
 import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.internal.testing.TestCategoryEngineManager;
 import org.eclipse.dltk.internal.testing.launcher.NullTestRunnerUI;
@@ -203,6 +207,7 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 						fTestRunnerClient.stopWaiting();
 					}
 					launchManager.removeLaunchListener(this);
+					scheduleTestRunTerminated();
 				}
 			}
 			public void launchesRemoved(ILaunch[] launches) {
@@ -211,11 +216,29 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 						fTestRunnerClient.stopWaiting();
 					}
 					launchManager.removeLaunchListener(this);
+					scheduleTestRunTerminated();
 				}
 			}
 			public void launchesChanged(ILaunch[] launches) {
 			}
 			public void launchesAdded(ILaunch[] launches) {
+			}
+
+			private void scheduleTestRunTerminated() {
+				if (!fIsRunning)
+					return;
+				final Job job = new Job(
+						"TestRunSession - notify launch terminated") { //$NON-NLS-1$
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						testRunTerminated();
+						return org.eclipse.core.runtime.Status.OK_STATUS;
+					}
+				};
+				job.setSystem(true);
+				// small delay, giving a chance for the client to notify in a
+				// normal way.
+				job.schedule(750);
 			}
 		});
 
@@ -704,13 +727,7 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 		}
 	
 		public void testRunTerminated() {
-			fIsRunning= false;
-			fIsStopped= true;
-			
-			Object[] listeners= fSessionListeners.getListeners();
-			for (int i= 0; i < listeners.length; ++i) {
-				((ITestSessionListener) listeners[i]).sessionTerminated();
-			}
+			TestRunSession.this.testRunTerminated();
 		}
 	
 		/* (non-Javadoc)
@@ -870,6 +887,18 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 	
 		private void logUnexpectedTest(String testId, TestElement testElement) {
 //			DLTKTestingPlugin.log(new Exception("Unexpected TestElement type for testId '" + testId + "': " + testElement)); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+	}
+
+	@Internal
+	void testRunTerminated() {
+		if (!fIsRunning || fIsStopped)
+			return;
+		fIsRunning = false;
+		fIsStopped = true;
+		Object[] listeners = fSessionListeners.getListeners();
+		for (int i = 0; i < listeners.length; ++i) {
+			((ITestSessionListener) listeners[i]).sessionTerminated();
 		}
 	}
 
