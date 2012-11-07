@@ -47,6 +47,11 @@ public class TextDocumentationResponse extends AbstractDocumentationResponse {
 	}
 
 	@Override
+	public String getText() {
+		return content;
+	}
+
+	@Override
 	public String getTitle() {
 		return title;
 	}

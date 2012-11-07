@@ -40,6 +40,10 @@ class DocumentationResponseDelegate implements IDocumentationResponse {
 		return target.getReader();
 	}
 
+	public String getText() throws IOException {
+		return target.getText();
+	}
+
 	public DocumentationResponseDelegate(IDocumentationResponse target) {
 		this.target = target;
 	}

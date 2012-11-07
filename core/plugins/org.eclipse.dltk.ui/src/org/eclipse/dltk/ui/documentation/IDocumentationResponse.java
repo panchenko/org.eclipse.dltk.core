@@ -68,4 +68,11 @@ public interface IDocumentationResponse {
 	 * @throws IOException
 	 */
 	Reader getReader() throws IOException;
+
+	/**
+	 * Returns the documentation contents as String.
+	 * 
+	 * @throws IOException
+	 */
+	String getText() throws IOException;
 }

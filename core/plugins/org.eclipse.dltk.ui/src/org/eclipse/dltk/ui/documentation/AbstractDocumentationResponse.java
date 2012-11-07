@@ -12,6 +12,7 @@
 package org.eclipse.dltk.ui.documentation;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URL;
 
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -45,6 +46,19 @@ public abstract class AbstractDocumentationResponse implements
 
 	public URL getURL() throws IOException {
 		return null;
+	}
+
+	public String getText() throws IOException {
+		final Reader reader = getReader();
+		try {
+			return DocumentationUtils.readAll(reader);
+		} finally {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				// ignore close exception
+			}
+		}
 	}
 
 }
