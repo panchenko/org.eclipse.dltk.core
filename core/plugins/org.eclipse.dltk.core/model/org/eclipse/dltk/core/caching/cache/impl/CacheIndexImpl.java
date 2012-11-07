@@ -11,18 +11,13 @@ import java.util.Collection;
 import org.eclipse.dltk.core.caching.cache.CacheEntry;
 import org.eclipse.dltk.core.caching.cache.CacheIndex;
 import org.eclipse.dltk.core.caching.cache.CachePackage;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
-
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.InternalEObject;
-
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-import org.eclipse.emf.ecore.impl.EObjectImpl;
-
+import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
@@ -41,7 +36,7 @@ import org.eclipse.emf.ecore.util.InternalEList;
  *
  * @generated
  */
-public class CacheIndexImpl extends EObjectImpl implements CacheIndex {
+public class CacheIndexImpl extends MinimalEObjectImpl implements CacheIndex {
 	/**
 	 * The default value of the '{@link #getLastIndex() <em>Last Index</em>}' attribute.
 	 * <!-- begin-user-doc -->
@@ -188,7 +183,7 @@ public class CacheIndexImpl extends EObjectImpl implements CacheIndex {
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case CachePackage.CACHE_INDEX__LAST_INDEX:
-				return new Long(getLastIndex());
+				return getLastIndex();
 			case CachePackage.CACHE_INDEX__ENTRIES:
 				return getEntries();
 			case CachePackage.CACHE_INDEX__ENVIRONMENT:
@@ -207,7 +202,7 @@ public class CacheIndexImpl extends EObjectImpl implements CacheIndex {
 	public void eSet(int featureID, Object newValue) {
 		switch (featureID) {
 			case CachePackage.CACHE_INDEX__LAST_INDEX:
-				setLastIndex(((Long)newValue).longValue());
+				setLastIndex((Long)newValue);
 				return;
 			case CachePackage.CACHE_INDEX__ENTRIES:
 				getEntries().clear();

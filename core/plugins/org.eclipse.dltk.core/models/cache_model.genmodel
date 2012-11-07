@@ -2,28 +2,21 @@
 <genmodel:GenModel xmi:version="2.0"
     xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
     xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/org.eclipse.dltk.core/model"
-    modelPluginID="org.eclipse.dltk.core" modelName="model" importerID="org.eclipse.emf.importer.ecore"
-    complianceLevel="5.0" copyrightFields="false">
+    modelPluginID="org.eclipse.dltk.core" modelName="model" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="5.0" copyrightFields="false"
+    runtimeVersion="2.6">
   <foreignModel>cache_model.ecore</foreignModel>
   <genPackages prefix="Cache" basePackage="org.eclipse.dltk.core.caching" disposableProviderFactory="true"
       contentTypeIdentifier="" ecorePackage="cache_model.ecore#/">
-    <genEnums typeSafeEnumCompatible="false" ecoreEnum="cache_model.ecore#//CacheEntryAttributeGroupFormat">
-      <genEnumLiterals ecoreEnumLiteral="cache_model.ecore#//CacheEntryAttributeGroupFormat/XMI"/>
-      <genEnumLiterals ecoreEnumLiteral="cache_model.ecore#//CacheEntryAttributeGroupFormat/ZIP"/>
-    </genEnums>
     <genClasses ecoreClass="cache_model.ecore#//CacheEntry">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntry/path"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntry/timestamp"/>
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cache_model.ecore#//CacheEntry/attributes"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference cache_model.ecore#//CacheEntry/groups"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntry/lastAccessTime"/>
     </genClasses>
     <genClasses ecoreClass="cache_model.ecore#//CacheEntryAttribute">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntryAttribute/name"/>
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntryAttribute/location"/>
-    </genClasses>
-    <genClasses ecoreClass="cache_model.ecore#//CacheEntryAttributeGroup">
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntryAttributeGroup/attributes"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheEntryAttributeGroup/format"/>
     </genClasses>
     <genClasses ecoreClass="cache_model.ecore#//CacheIndex">
       <genFeatures createChild="false" ecoreFeature="ecore:EAttribute cache_model.ecore#//CacheIndex/lastIndex"/>

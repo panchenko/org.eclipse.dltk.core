@@ -11,18 +11,13 @@ import java.util.Collection;
 import org.eclipse.dltk.core.caching.cache.CacheEntry;
 import org.eclipse.dltk.core.caching.cache.CacheEntryAttribute;
 import org.eclipse.dltk.core.caching.cache.CachePackage;
-
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.common.notify.NotificationChain;
-
 import org.eclipse.emf.common.util.EList;
-
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.InternalEObject;
-
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-import org.eclipse.emf.ecore.impl.EObjectImpl;
-
+import org.eclipse.emf.ecore.impl.MinimalEObjectImpl;
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
 
@@ -42,7 +37,7 @@ import org.eclipse.emf.ecore.util.InternalEList;
  *
  * @generated
  */
-public class CacheEntryImpl extends EObjectImpl implements CacheEntry {
+public class CacheEntryImpl extends MinimalEObjectImpl implements CacheEntry {
 	/**
 	 * The default value of the '{@link #getPath() <em>Path</em>}' attribute.
 	 * <!-- begin-user-doc -->
@@ -232,11 +227,11 @@ public class CacheEntryImpl extends EObjectImpl implements CacheEntry {
 			case CachePackage.CACHE_ENTRY__PATH:
 				return getPath();
 			case CachePackage.CACHE_ENTRY__TIMESTAMP:
-				return new Long(getTimestamp());
+				return getTimestamp();
 			case CachePackage.CACHE_ENTRY__ATTRIBUTES:
 				return getAttributes();
 			case CachePackage.CACHE_ENTRY__LAST_ACCESS_TIME:
-				return new Long(getLastAccessTime());
+				return getLastAccessTime();
 		}
 		return super.eGet(featureID, resolve, coreType);
 	}
@@ -254,14 +249,14 @@ public class CacheEntryImpl extends EObjectImpl implements CacheEntry {
 				setPath((String)newValue);
 				return;
 			case CachePackage.CACHE_ENTRY__TIMESTAMP:
-				setTimestamp(((Long)newValue).longValue());
+				setTimestamp((Long)newValue);
 				return;
 			case CachePackage.CACHE_ENTRY__ATTRIBUTES:
 				getAttributes().clear();
 				getAttributes().addAll((Collection<? extends CacheEntryAttribute>)newValue);
 				return;
 			case CachePackage.CACHE_ENTRY__LAST_ACCESS_TIME:
-				setLastAccessTime(((Long)newValue).longValue());
+				setLastAccessTime((Long)newValue);
 				return;
 		}
 		super.eSet(featureID, newValue);
