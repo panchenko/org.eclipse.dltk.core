@@ -31,6 +31,8 @@ import org.eclipse.ui.actions.SelectionListenerAction;
 
 import org.eclipse.dltk.internal.testing.model.TestElement;
 import org.eclipse.dltk.testing.DLTKTestingMessages;
+import org.eclipse.dltk.testing.ITestRunnerUI;
+import org.eclipse.dltk.testing.ITestRunnerUIExtension2;
 
 /**
  * Copies a test failure stack trace to the clipboard.
@@ -60,6 +62,11 @@ public class DLTKTestingCopyAction extends SelectionListenerAction {
 	 */
 	public void run() {
 		String trace= fView.getTrace();
+		final ITestRunnerUI runnerUI = fView.getTestRunnerUI();
+		if (runnerUI != null && runnerUI instanceof ITestRunnerUIExtension2) {
+			trace = ((ITestRunnerUIExtension2) runnerUI)
+					.prepareStackTraceCopy(trace);
+		}
 		String source= null;
 		if (trace != null) {
 			source= convertLineTerminators(trace);
