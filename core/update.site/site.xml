@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.eclipse.dltk.core_4.0.0.qualifier.jar" id="org.eclipse.dltk.core" version="4.0.0.qualifier"/>
-   <feature url="features/org.eclipse.dltk.core.sdk_4.0.0.qualifier.jar" id="org.eclipse.dltk.core.sdk" version="4.0.0.qualifier"/>
-   <feature url="features/org.eclipse.dltk.core.index_4.0.0.qualifier.jar" id="org.eclipse.dltk.core.index" version="4.0.0.qualifier"/>
-   <feature url="features/org.eclipse.dltk.core.index.sdk_4.0.0.qualifier.jar" id="org.eclipse.dltk.core.index.sdk" version="4.0.0.qualifier"/>
+   <feature url="features/org.eclipse.dltk.core_5.0.0.qualifier.jar" id="org.eclipse.dltk.core" version="5.0.0.qualifier"/>
+   <feature url="features/org.eclipse.dltk.core.sdk_5.0.0.qualifier.jar" id="org.eclipse.dltk.core.sdk" version="5.0.0.qualifier"/>
+   <feature url="features/org.eclipse.dltk.core.index_5.0.0.qualifier.jar" id="org.eclipse.dltk.core.index" version="5.0.0.qualifier"/>
+   <feature url="features/org.eclipse.dltk.core.index.sdk_5.0.0.qualifier.jar" id="org.eclipse.dltk.core.index.sdk" version="5.0.0.qualifier"/>
 </site>

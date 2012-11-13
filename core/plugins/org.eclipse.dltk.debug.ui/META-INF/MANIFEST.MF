@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.dltk.debug.ui;singleton:=true
-Bundle-Version: 4.0.0.qualifier
+Bundle-Version: 5.0.0.qualifier
 Bundle-Activator: org.eclipse.dltk.debug.ui.DLTKDebugUIPlugin
 Bundle-Vendor: %pluginProvider
 Bundle-Localization: plugin
@@ -11,16 +11,16 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.debug.ui,
  org.eclipse.ui.ide,
  org.eclipse.core.variables,
- org.eclipse.dltk.core;bundle-version="4.0.0",
- org.eclipse.dltk.ui;bundle-version="4.0.0",
- org.eclipse.dltk.debug;bundle-version="4.0.0",
+ org.eclipse.dltk.core;bundle-version="0.0.0",
+ org.eclipse.dltk.ui;bundle-version="0.0.0",
+ org.eclipse.dltk.debug;bundle-version="0.0.0",
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.ui.editors,
  org.eclipse.jface.text,
  org.eclipse.ui.console,
- org.eclipse.dltk.launching;bundle-version="4.0.0",
- org.eclipse.dltk.console;bundle-version="4.0.0",
- org.eclipse.dltk.console.ui;bundle-version="4.0.0",
+ org.eclipse.dltk.launching;bundle-version="0.0.0",
+ org.eclipse.dltk.console;bundle-version="0.0.0",
+ org.eclipse.dltk.console.ui;bundle-version="0.0.0",
  org.eclipse.core.expressions,
  org.eclipse.ui.forms
 Export-Package: org.eclipse.dltk.debug.ui,

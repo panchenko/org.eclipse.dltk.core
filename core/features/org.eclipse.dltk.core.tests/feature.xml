@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.dltk.core.tests"
       label="%featureName"
-      version="4.0.0.qualifier"
+      version="5.0.0.qualifier"
       provider-name="%featureProvider">
 
    <description>
@@ -18,7 +18,7 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.dltk.core" version="4.0.0" match="compatible"/>
+      <import feature="org.eclipse.dltk.core" version="5.0.0" match="compatible"/>
    </requires>
 
    <plugin

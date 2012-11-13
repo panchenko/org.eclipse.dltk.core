@@ -10,6 +10,6 @@
   </parent>
   <groupId>org.eclipse.dltk.features</groupId>
   <artifactId>org.eclipse.dltk.rse</artifactId>
-  <version>4.0.0-SNAPSHOT</version>
+  <version>5.0.0-SNAPSHOT</version>
   <packaging>eclipse-feature</packaging>
 </project>

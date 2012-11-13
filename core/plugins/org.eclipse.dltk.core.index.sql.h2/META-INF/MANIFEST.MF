@@ -2,14 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DLTK H2-based Indexer
 Bundle-SymbolicName: org.eclipse.dltk.core.index.sql.h2;singleton:=true
-Bundle-Version: 4.0.0.qualifier
+Bundle-Version: 5.0.0.qualifier
 Bundle-Activator: org.eclipse.dltk.core.index.sql.h2.H2Index
 Bundle-Vendor: Eclipse.org
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.h2,
- org.eclipse.dltk.core;bundle-version="4.0.0",
- org.eclipse.dltk.core.index.sql;bundle-version="4.0.0"
+ org.eclipse.dltk.core;bundle-version="0.0.0",
+ org.eclipse.dltk.core.index.sql;bundle-version="0.0.0"
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.dltk.core.index.sql.h2,
