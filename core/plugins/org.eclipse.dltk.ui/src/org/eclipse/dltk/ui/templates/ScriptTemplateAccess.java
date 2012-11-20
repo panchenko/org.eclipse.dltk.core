@@ -2,6 +2,7 @@ package org.eclipse.dltk.ui.templates;
 
 import java.io.IOException;
 
+import org.eclipse.dltk.compiler.CharOperation;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
 import org.eclipse.dltk.ui.text.templates.ITemplateAccess;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -34,11 +35,30 @@ public abstract class ScriptTemplateAccess implements ITemplateAccess {
 
 	protected ContextTypeRegistry createContextTypeRegistry() {
 		final ContributionContextTypeRegistry registry = new ContributionContextTypeRegistry();
-		registry.addContextType(getContextTypeId());
+		for (String id : getContextTypeIds()) {
+			registry.addContextType(id);
+		}
 		return registry;
 	}
 
-	protected abstract String getContextTypeId();
+	/**
+	 * Used to return the only context type id, now it is deprecated in favour
+	 * of {@link #getContextTypeIds()}.
+	 */
+	@Deprecated
+	protected String getContextTypeId() {
+		return null;
+	}
+
+	/**
+	 * This function should be overridden to return the list of context type
+	 * ids.
+	 */
+	protected String[] getContextTypeIds() {
+		final String contextTypeId = getContextTypeId();
+		return contextTypeId != null ? new String[] { contextTypeId }
+				: CharOperation.NO_STRINGS;
+	}
 
 	protected abstract String getCustomTemplatesKey();
 
