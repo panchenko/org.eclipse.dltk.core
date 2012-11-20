@@ -232,11 +232,8 @@ public abstract class ScriptTemplateCompletionProcessor extends
 
 	@Override
 	protected Template[] getTemplates(String contextTypeId) {
-		if (contextTypeId.equals(getContextTypeId())) {
-			return getTemplateAccess().getTemplateStore().getTemplates();
-		}
-
-		return new Template[0];
+		return getTemplateAccess().getTemplateStore().getTemplates(
+				contextTypeId);
 	}
 
 	protected char[] getIgnore() {
