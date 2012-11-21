@@ -93,4 +93,9 @@ public class ScriptTemplateProposal extends TemplateProposal implements
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return getDisplayString();
+	}
+
 }
