@@ -58,7 +58,11 @@ public final class CompletionProposalComparator implements
 			if (relevanceDif != 0) {
 				return relevanceDif;
 			}
-			return getSubRelevance(p2) - getSubRelevance(p1);
+			relevanceDif = getSubRelevance(p2) - getSubRelevance(p1);
+			if (relevanceDif != 0) {
+				return relevanceDif;
+			}
+			return getSubSortKey(p1).compareToIgnoreCase(getSubSortKey(p2));
 		}
 		/*
 		 * TODO the correct (but possibly much slower) sorting would use a
@@ -101,4 +105,13 @@ public final class CompletionProposalComparator implements
 		// catch all
 		return 0;
 	}
+
+	private String getSubSortKey(ICompletionProposal obj) {
+		if (obj instanceof TemplateProposal) {
+			return ((TemplateProposal) obj).getDisplayString();
+		} else {
+			return "";
+		}
+	}
+
 }
