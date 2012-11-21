@@ -17,12 +17,12 @@ import java.util.List;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.InvalidRegistryObjectException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.dltk.internal.corext.util.Messages;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
 import org.eclipse.jface.action.LegacyActionTools;
@@ -257,7 +257,7 @@ public final class CompletionProposalCategory {
 	 */
 	public List<ICompletionProposal> computeCompletionProposals(
 			ContentAssistInvocationContext context, String partition,
-			SubProgressMonitor monitor) {
+			IProgressMonitor monitor) {
 		fLastError= null;
 		
 		List<ICompletionProposal> result = new ArrayList<ICompletionProposal>();
@@ -293,7 +293,7 @@ public final class CompletionProposalCategory {
 	 */
 	public List<IContextInformation> computeContextInformation(
 			ContentAssistInvocationContext context, String partition,
-			SubProgressMonitor monitor) {
+			IProgressMonitor monitor) {
 		fLastError= null;
 		List<IContextInformation> result = new ArrayList<IContextInformation>();
 		List<CompletionProposalComputerDescriptor> descriptors = new ArrayList<CompletionProposalComputerDescriptor>(
