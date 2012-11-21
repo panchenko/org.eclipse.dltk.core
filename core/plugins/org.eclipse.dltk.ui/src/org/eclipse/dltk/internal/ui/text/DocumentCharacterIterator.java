@@ -218,4 +218,17 @@ public class DocumentCharacterIterator implements CharacterIterator, CharSequenc
 			throw new IndexOutOfBoundsException();
 		return new DocumentCharacterIterator(fDocument, getBeginIndex() + start, getBeginIndex() + end);
 	}
+
+	@Override
+	public String toString() {
+		if (fFirst == 0 && fLast == fDocument.getLength()) {
+			return fDocument.get();
+		} else {
+			try {
+				return fDocument.get(fFirst, length());
+			} catch (BadLocationException e) {
+				throw new IndexOutOfBoundsException();
+			}
+		}
+	}
 }
