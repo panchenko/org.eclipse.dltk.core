@@ -18,10 +18,12 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.dltk.annotations.NonNull;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.ElementChangedEvent;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
 import org.eclipse.dltk.core.IElementChangedListener;
+import org.eclipse.dltk.core.IMember;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.IModelElementDelta;
 import org.eclipse.dltk.core.IParent;
@@ -385,8 +387,7 @@ public class ScriptOutlinePage extends Page implements IContentOutlinePage,
 				Item i = (Item) node;
 				if (i.getData() instanceof IModelElement) {
 					IModelElement je = (IModelElement) i.getData();
-					if (je.getElementType() == IModelElement.IMPORT_CONTAINER
-							|| isInnerType(je)) {
+					if (collapseInitially(je)) {
 						setExpanded(i, false);
 						return;
 					}
@@ -934,23 +935,48 @@ public class ScriptOutlinePage extends Page implements IContentOutlinePage,
 	}
 
 	/**
-	 * Checks whether a given Java element is an inner type.
+	 * Answers if a given model element should be collapsed initially in the
+	 * Outline view.
 	 * 
 	 * @param element
-	 *            the java element
-	 * @return <code>true</code> iff the given element is an inner type
+	 *            the model element
+	 * @return <code>true</code> iff the given element should be initially
+	 *         collapsed
 	 */
-	private boolean isInnerType(IModelElement element) {
-
-		if (element != null && element.getElementType() == IModelElement.TYPE) {
-
-			IModelElement parent = element.getParent();
-			if (parent != null) {
-				int parentElementType = parent.getElementType();
-				return (parentElementType != IModelElement.SOURCE_MODULE);
+	protected boolean collapseInitially(@NonNull IModelElement element) {
+		final int elementType = element.getElementType();
+		if (elementType == IModelElement.IMPORT_CONTAINER) {
+			return true;
+		} else if (elementType == IModelElement.TYPE) {
+			// collapse if inner type
+			final IModelElement parent = element.getParent();
+			return parent != null
+					&& parent.getElementType() != IModelElement.SOURCE_MODULE;
+		} else if (elementType == IModelElement.METHOD
+				|| elementType == IModelElement.FIELD) {
+			final IModelElement parent = element.getParent();
+			if (parent != null && parent.getElementType() == IModelElement.TYPE) {
+				// collapse methods/fields of a type if no nested types
+				try {
+					if (!containsTypes((IMember) element)) {
+						return true;
+					}
+				} catch (ModelException e) {
+					DLTKUIPlugin.log(e);
+				}
 			}
 		}
+		return false;
+	}
 
+	private boolean containsTypes(IMember element) throws ModelException {
+		for (IModelElement child : ((IParent) element).getChildren()) {
+			if (child.getElementType() == IModelElement.TYPE
+					|| child instanceof IMember
+					&& containsTypes((IMember) child)) {
+				return true;
+			}
+		}
 		return false;
 	}
 
