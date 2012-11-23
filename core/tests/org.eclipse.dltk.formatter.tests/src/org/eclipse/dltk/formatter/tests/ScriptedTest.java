@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import junit.framework.TestResult;
 import junit.framework.TestSuite;
 
 import org.eclipse.dltk.compiler.util.Util;
@@ -42,8 +43,16 @@ public class ScriptedTest extends AbstractFormatterTest {
 		String validateOptionValue(String name, String value);
 	}
 
+	private boolean ignored;
 	private String input;
 	private String expected;
+
+	@Override
+	public void run(TestResult result) {
+		if (!ignored) {
+			super.run(result);
+		}
+	}
 
 	@Override
 	protected void runTest() throws Throwable {
@@ -88,6 +97,7 @@ public class ScriptedTest extends AbstractFormatterTest {
 	}
 
 	private static final String TEST_MARKER = "===="; //$NON-NLS-1$
+	private static final String IGNORE_PREFIX = "@IGNORE:"; //$NON-NLS-1$
 	private static final String RESPONSE_MARKER = "=="; //$NON-NLS-1$
 	private static final String OPTION_MARKER = "==>"; //$NON-NLS-1$
 
@@ -201,7 +211,12 @@ public class ScriptedTest extends AbstractFormatterTest {
 		final String input = joinLines(lines, testBegin, responseBegin - 1);
 		final String expected = joinLines(lines, responseBegin, testEnd);
 		ScriptedTest test = getClass().newInstance();
-		test.setName(testName);
+		if (testName.startsWith(IGNORE_PREFIX)) {
+			test.ignored = true;
+			test.setName(testName.substring(IGNORE_PREFIX.length()).trim());
+		} else {
+			test.setName(testName);
+		}
 		test.input = input;
 		test.expected = expected;
 		test.context = context;
