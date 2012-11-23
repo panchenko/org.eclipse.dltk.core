@@ -20,10 +20,8 @@
 				<artifactId>tycho-surefire-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
-					<testSuite>org.eclipse.dltk.ui.tests</testSuite>
+					<testSuite>${project.artifactId}</testSuite>
 					<testClass>org.eclipse.dltk.ui.tests.AllTests</testClass>
-					<failIfNoTests>false</failIfNoTests>
-					<testIgnoreFailure>true</testIgnoreFailure>
 					<useUIHarness>true</useUIHarness>
 					<dependencies>
 						<dependency>
