@@ -10,6 +10,7 @@
 package org.eclipse.dltk.core.tests.model;
 
 import org.eclipse.core.runtime.Plugin;
+import org.eclipse.dltk.core.tests.WorkspaceSetup;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -19,7 +20,10 @@ public class ModelTestsPlugin extends Plugin {
 
 	public static final String PLUGIN_NAME = "org.eclipse.dltk.core.tests";
 	public static final String TEST_NATURE = "org.eclipse.dltk.core.tests.testnature";
-	
+
+	public static final WorkspaceSetup WORKSPACE = new WorkspaceSetup(
+			PLUGIN_NAME);
+
 	//The shared instance.
 	private static ModelTestsPlugin plugin;
 	

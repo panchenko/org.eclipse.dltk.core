@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import junit.framework.JUnit4TestAdapter;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -27,6 +28,7 @@ import org.eclipse.dltk.core.tests.model.ModelMembersTests;
 import org.eclipse.dltk.core.tests.model.NamespaceTests;
 import org.eclipse.dltk.core.tests.model.WorkingCopyTests;
 import org.eclipse.dltk.core.tests.parser.SourceParserTests;
+import org.eclipse.dltk.core.tests.search.Bug387751Test;
 import org.eclipse.dltk.core.tests.util.CharacterStackTests;
 import org.eclipse.dltk.core.tests.utils.CharOperationTests;
 import org.eclipse.dltk.core.tests.utils.IntListTests;
@@ -67,6 +69,7 @@ public class AllTests {
 		suite.addTest(CharOperationTests.suite());
 		suite.addTest(new TestSuite(InternalCoreUtilTest.class));
 		suite.addTest(TextUtilsTest.suite());
+		suite.addTest(new JUnit4TestAdapter(Bug387751Test.class));
 		// $JUnit-END$
 		return suite;
 	}

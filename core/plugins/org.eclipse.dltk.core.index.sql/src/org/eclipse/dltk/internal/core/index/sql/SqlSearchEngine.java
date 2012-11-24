@@ -217,10 +217,13 @@ public class SqlSearchEngine implements ISearchEngine {
 					containerPath = containerPath
 							+ IDLTKSearchScope.FILE_ENTRY_SEPARATOR;
 				}
+				if (containerPath.length() != 0
+						&& containerPath.charAt(containerPath.length() - 1) != IPath.SEPARATOR) {
+					containerPath = containerPath + IPath.SEPARATOR;
+				}
 
 				String filePath = file.getPath();
-				String resourcePath = new StringBuilder(containerPath).append(
-						IPath.SEPARATOR).append(filePath).toString();
+				final String resourcePath = containerPath + filePath;
 
 				IProjectFragment projectFragment = projectFragmentCache
 						.get(containerPath);

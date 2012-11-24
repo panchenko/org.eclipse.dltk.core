@@ -766,7 +766,9 @@ public class DLTKSearchScope extends AbstractSearchScope {
 							IProjectFragment f = fragments[i];
 							if (f.isExternal()) {
 								IPath pPath = f.getPath();
-								if (absPath.equals(pPath)) {
+								if (pPath.isPrefixOf(absPath)
+										&& !Util.isExcluded(absPath, f,
+												t.isDirectory())) {
 									return f;
 								}
 							}
