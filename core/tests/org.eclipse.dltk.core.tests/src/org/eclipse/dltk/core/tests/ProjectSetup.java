@@ -11,6 +11,7 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.dltk.internal.core.util.Util;
@@ -20,6 +21,18 @@ import org.junit.Assert;
 // TODO DISABLE_INDEXER
 // TODO BUILD
 public class ProjectSetup extends AbstractProjectSetup {
+
+	public static void create(ProjectSetup... projects) throws Throwable {
+		for (ProjectSetup project : projects) {
+			project.before();
+		}
+	}
+
+	public static void delete(ProjectSetup... projects) {
+		for (ProjectSetup project : projects) {
+			project.after();
+		}
+	}
 
 	private final IWorkspaceSetup workspaceSetup;
 	private final String projectName;
@@ -32,14 +45,14 @@ public class ProjectSetup extends AbstractProjectSetup {
 	}
 
 	@Override
-	public void before() throws Throwable {
+	protected void before() throws Throwable {
 		workspaceSetup.before();
 		helper = new BundledProjectSetup.Helper(workspaceSetup.getBundleName());
 		project = helper.setUpProject(projectName);
 	}
 
 	@Override
-	public void after() {
+	protected void after() {
 		if (helper != null) {
 			try {
 				helper.deleteProject(projectName);
@@ -67,6 +80,11 @@ public class ProjectSetup extends AbstractProjectSetup {
 	}
 
 	public String getFileContentsAsString(String name) throws CoreException {
-		return new String(Util.getResourceContentsAsCharArray(getFile(name)));
+		return getFileContentsAsString(getFile(name));
+	}
+
+	public String getFileContentsAsString(final IFile file)
+			throws CoreException {
+		return new String(Util.getResourceContentsAsCharArray(file));
 	}
 }
