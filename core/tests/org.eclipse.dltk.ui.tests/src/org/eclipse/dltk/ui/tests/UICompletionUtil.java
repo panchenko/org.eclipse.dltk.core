@@ -30,7 +30,6 @@ import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension2;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.swt.SWT;
 import org.eclipse.ui.IEditorPart;
 import org.junit.Assert;
 
@@ -67,7 +66,7 @@ public class UICompletionUtil {
 		this.offset = offset + (after ? marker.length() : 0);
 	}
 
-	private IDocument getDocument() {
+	public IDocument getDocument() {
 		return getViewer().getDocument();
 	}
 
