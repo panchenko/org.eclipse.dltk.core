@@ -672,6 +672,21 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 		return fileDialogField.getText();
 	}
 
+	/**
+	 * Sets the file input field's text (simple name without path or extension)
+	 * to the given value. Method doesn't update the model.
+	 * 
+	 * @param name
+	 *            the new file name
+	 * @param canBeModified
+	 *            if <code>true</code> the type name field is editable;
+	 *            otherwise it is read-only.
+	 */
+	public void setFileText(String name, boolean canBeModified) {
+		fileDialogField.setText(name);
+		fileDialogField.setEnabled(canBeModified);
+	}
+
 	protected String getFileName() {
 		final String fileText = getFileText();
 
