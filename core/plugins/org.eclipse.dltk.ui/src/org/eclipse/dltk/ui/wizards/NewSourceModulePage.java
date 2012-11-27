@@ -102,8 +102,7 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 				ISourceModule module = currentScriptFolder
 						.getSourceModule(getFileName());
 				if (module.exists()) {
-					status
-							.setError(Messages.NewSourceModulePage_fileAlreadyExists);
+					status.setError(Messages.NewSourceModulePage_fileAlreadyExists);
 				} else {
 					IResource resource = module.getResource();
 					if (resource != null) {
@@ -112,12 +111,10 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 							try {
 								IFileStore store = EFS.getStore(location);
 								if (store.fetchInfo().exists()) {
-									status
-											.setError(Messages.NewSourceModulePage_error_TypeNameExistsDifferentCase);
+									status.setError(Messages.NewSourceModulePage_error_TypeNameExistsDifferentCase);
 								}
 							} catch (CoreException e) {
-								status
-										.setError(Messages.NewSourceModulePage_error_uri_location_unkown);
+								status.setError(Messages.NewSourceModulePage_error_uri_location_unkown);
 							}
 						}
 					}
@@ -482,11 +479,9 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 			extension.prepare(context);
 		}
 		final List<ICreateStep> steps = new ArrayList<ICreateStep>();
-		steps.addAll(Arrays.asList(context.getSteps(ICreateStep.KIND_PREPARE)));
-		steps.addAll(Arrays.asList(context.getSteps(ICreateStep.KIND_EXECUTE)));
-		steps
-				.addAll(Arrays.asList(context
-						.getSteps(ICreateStep.KIND_FINALIZE)));
+		Collections.addAll(steps, context.getSteps(ICreateStep.KIND_PREPARE));
+		Collections.addAll(steps, context.getSteps(ICreateStep.KIND_EXECUTE));
+		Collections.addAll(steps, context.getSteps(ICreateStep.KIND_FINALIZE));
 		for (ICreateStep step : steps) {
 			step.execute(context, monitor);
 		}
@@ -724,8 +719,7 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 		dialog.setIgnoreCase(false);
 		dialog.setTitle(Messages.NewSourceModulePage_selectScriptFolder);
 		dialog.setMessage(Messages.NewSourceModulePage_selectScriptFolder);
-		dialog
-				.setEmptyListMessage(Messages.NewSourceModulePage_noFoldersAvailable);
+		dialog.setEmptyListMessage(Messages.NewSourceModulePage_noFoldersAvailable);
 
 		IProjectFragment projectFragment = getProjectFragment();
 		if (projectFragment != null) {
@@ -794,8 +788,8 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 						.getContextType(template.getContextTypeId());
 				// TODO introduce a way to create context by contextType
 				final SourceModuleTemplateContext context = new SourceModuleTemplateContext(
-						contextType, CodeGeneration
-								.getLineDelimiterUsed(module));
+						contextType,
+						CodeGeneration.getLineDelimiterUsed(module));
 				// String fileComment = getFileComment(file, lineDelimiter);
 				// context.setVariable(CodeTemplateContextType.FILE_COMMENT,
 				//					fileComment != null ? fileComment : ""); //$NON-NLS-1$
