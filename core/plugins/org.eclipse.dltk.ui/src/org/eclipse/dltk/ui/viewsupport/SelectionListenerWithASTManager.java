@@ -137,9 +137,7 @@ public class SelectionListenerWithASTManager {
 		 *            the selection
 		 */
 		public void firePostSelectionChanged(final ITextSelection selection) {
-			if (fCurrentJob != null) {
-				fCurrentJob.cancel();
-			}
+			cancelJob();
 			IModelElement input = EditorUtility.getEditorInputModelElement(
 					fPart, false);
 			if (!(input instanceof ISourceModule)) {
@@ -147,6 +145,13 @@ public class SelectionListenerWithASTManager {
 			}
 			fCurrentJob = new ASTJob(this, (ISourceModule) input, selection);
 			fCurrentJob.schedule();
+		}
+
+		void cancelJob() {
+			if (fCurrentJob != null) {
+				fCurrentJob.cancel();
+				fCurrentJob = null;
+			}
 		}
 
 	}
@@ -264,6 +269,7 @@ public class SelectionListenerWithASTManager {
 			if (partListener != null) {
 				partListener.uninstall(listener);
 				if (partListener.isEmpty()) {
+					partListener.cancelJob();
 					fListenerGroups.remove(part);
 				}
 			}
