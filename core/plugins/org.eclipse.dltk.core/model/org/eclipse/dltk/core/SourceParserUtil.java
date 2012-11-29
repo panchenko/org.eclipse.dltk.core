@@ -45,8 +45,7 @@ public class SourceParserUtil {
 
 		final String errorKey;
 		final String astKey;
-		final ISourceModuleInfo mifo = ModelManager.getModelManager()
-				.getSourceModuleInfoCache().get(module);
+		final ISourceModuleInfo mifo = getCache().get(module);
 		if (mifo != null && useASTCaching) {
 			errorKey = getKey(ERRORS, 0);
 			astKey = getKey(AST, 0);
@@ -178,8 +177,7 @@ public class SourceParserUtil {
 	@Deprecated
 	public static ModuleDeclaration getModuleDeclaration(ISourceModule module,
 			IProblemReporter reporter, int flags) {
-		ISourceModuleInfoCache sourceModuleInfoCache = ModelManager
-				.getModelManager().getSourceModuleInfoCache();
+		ISourceModuleInfoCache sourceModuleInfoCache = getCache();
 		return getModuleDeclaration(module, reporter,
 				sourceModuleInfoCache.get(module), flags);
 	}
@@ -278,6 +276,10 @@ public class SourceParserUtil {
 	}
 
 	public static void clearCache() {
-		ModelManager.getModelManager().getSourceModuleInfoCache().clear();
+		getCache().clear();
+	}
+
+	public static ISourceModuleInfoCache getCache() {
+		return ModelManager.getModelManager().getSourceModuleInfoCache();
 	}
 }

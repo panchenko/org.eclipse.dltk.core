@@ -14,8 +14,10 @@ package org.eclipse.dltk.core.tests;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dltk.core.DLTKCore;
@@ -24,6 +26,7 @@ import org.eclipse.dltk.core.IScriptFolder;
 import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ModelException;
+import org.eclipse.dltk.internal.core.util.Util;
 import org.junit.rules.ExternalResource;
 
 public abstract class AbstractProjectSetup extends ExternalResource {
@@ -96,6 +99,17 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 	 * specified as a project relative path. The empty path refers to the
 	 * default package fragment.
 	 */
+	public IScriptFolder getScriptFolder(String fragmentPath, String path)
+			throws ModelException {
+		return getScriptFolder(fragmentPath, new Path(path));
+	}
+
+	/**
+	 * Returns the specified script folder in this project and the given
+	 * fragment, or <code>null</code> if it does not exist. The rootPath must be
+	 * specified as a project relative path. The empty path refers to the
+	 * default package fragment.
+	 */
 	public IScriptFolder getScriptFolder(String fragmentPath, IPath path)
 			throws ModelException {
 		final IProjectFragment root = getProjectFragment(fragmentPath);
@@ -126,6 +140,21 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 	public ISourceModule getSourceModule(String rootPath, String path)
 			throws ModelException {
 		return getSourceModule(rootPath, new Path(path));
+	}
+
+	public String getFileContentsAsString(String name) throws CoreException {
+		return getFileContentsAsString(getFile(name));
+	}
+
+	public String getFileContentsAsString(IFile file) throws CoreException {
+		return new String(Util.getResourceContentsAsCharArray(file));
+	}
+
+	/**
+	 * Returns workspace this project belongs to.
+	 */
+	public IWorkspace getWorkspace() {
+		return get().getWorkspace();
 	}
 
 }

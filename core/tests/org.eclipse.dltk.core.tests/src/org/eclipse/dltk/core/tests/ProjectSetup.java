@@ -11,10 +11,8 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.dltk.internal.core.util.Util;
 import org.junit.Assert;
 
 // TODO waitUntilIndexesReady
@@ -79,12 +77,4 @@ public class ProjectSetup extends AbstractProjectSetup {
 		return project;
 	}
 
-	public String getFileContentsAsString(String name) throws CoreException {
-		return getFileContentsAsString(getFile(name));
-	}
-
-	public String getFileContentsAsString(final IFile file)
-			throws CoreException {
-		return new String(Util.getResourceContentsAsCharArray(file));
-	}
 }

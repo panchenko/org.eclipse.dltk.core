@@ -15,11 +15,11 @@ public interface ISourceModuleInfoCache {
 	 * source module are modified, information are deleted.
 	 */
 	interface ISourceModuleInfo {
-		Object get(Object key);
+		Object get(String key);
 
-		void put(Object key, Object value);
+		void put(String key, Object value);
 
-		void remove(Object key);
+		void remove(String key);
 
 		boolean isEmpty();
 	}
@@ -39,4 +39,15 @@ public interface ISourceModuleInfoCache {
 	 * modules.
 	 */
 	public void clear();
+
+	/**
+	 * Returns number of the elements, currently contained in the cache.
+	 */
+	public int size();
+
+	/**
+	 * Returns the capacity of the cache, i.e. the number of elements it can
+	 * contain.
+	 */
+	public int capacity();
 }
