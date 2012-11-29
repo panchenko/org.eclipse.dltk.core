@@ -5,10 +5,11 @@ import java.util.List;
 
 import org.eclipse.dltk.compiler.util.Util;
 import org.eclipse.dltk.ui.PreferenceConstants;
+import org.eclipse.dltk.ui.preferences.FieldValidators.MinimumNumberValidator;
 import org.eclipse.dltk.ui.preferences.ImprovedAbstractConfigurationBlock;
 import org.eclipse.dltk.ui.preferences.OverlayPreferenceStore;
+import org.eclipse.dltk.ui.preferences.OverlayPreferenceStore.OverlayKey;
 import org.eclipse.dltk.ui.preferences.PreferencesMessages;
-import org.eclipse.dltk.ui.preferences.FieldValidators.MinimumNumberValidator;
 import org.eclipse.dltk.ui.util.PixelConverter;
 import org.eclipse.dltk.ui.util.SWTFactory;
 import org.eclipse.jface.dialogs.ControlEnableState;
@@ -112,8 +113,9 @@ public class DefaultFoldingPreferenceConfigurationBlock extends
 		return new DocumentationFoldingPreferenceBlock(store, page);
 	}
 
-	protected List createOverlayKeys() {
-		ArrayList keys = new ArrayList();
+	@Override
+	protected List<OverlayKey> createOverlayKeys() {
+		ArrayList<OverlayKey> keys = new ArrayList<OverlayKey>();
 
 		keys.add(new OverlayPreferenceStore.OverlayKey(
 				OverlayPreferenceStore.BOOLEAN,
