@@ -778,6 +778,12 @@ public class DelegatingFoldingStructureProvider implements
 		}
 	}
 
+	// for testing
+	public static IFoldingContent createContent(IModelElement input)
+			throws ModelException {
+		return new FoldingContent(input);
+	}
+
 	/**
 	 * @param modelElement
 	 * @param contents
