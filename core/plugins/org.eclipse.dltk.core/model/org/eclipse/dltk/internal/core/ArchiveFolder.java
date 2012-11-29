@@ -118,12 +118,4 @@ public class ArchiveFolder extends ScriptFolder {
 		return ((ArchiveFolderInfo) getElementInfo()).getForeignResources();
 	}
 
-	public Object getElementInfo(IProgressMonitor monitor)
-			throws ModelException {
-
-		ModelManager manager = ModelManager.getModelManager();
-		Object info = manager.getInfo(this);
-		return info;
-	}
-
 }
