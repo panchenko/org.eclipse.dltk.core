@@ -67,6 +67,8 @@ public class DLTKPluginImages {
 			+ "jdoc_tag_obj.gif"; //$NON-NLS-1$
 	
 	public static final String IMG_CORRECTION_CHANGE= NAME_PREFIX + "correction_change.gif"; //$NON-NLS-1$
+	public static final String IMG_CORRECTION_ADD = NAME_PREFIX
+			+ "add_correction.gif"; //$NON-NLS-1$
 	
 	public static final String IMG_OBJS_ANNOTATION= NAME_PREFIX + "annotation_obj.gif"; //$NON-NLS-1$
 	public static final String IMG_OBJS_ANNOTATION_DEFAULT= NAME_PREFIX + "annotation_default_obj.gif"; //$NON-NLS-1$
@@ -360,6 +362,11 @@ public class DLTKPluginImages {
 	 */
 	public static final ImageDescriptor DESC_OVR_DEPRECATED = createUnManagedCached(
 			T_OVR, "deprecated.gif"); //$NON-NLS-1$
+
+	static {
+		createManagedFromKey(T_OBJ, IMG_CORRECTION_CHANGE);
+		createManagedFromKey(T_OBJ, IMG_CORRECTION_ADD);
+	}
 
 	private static final class CachedImageDescriptor extends ImageDescriptor {
 		private ImageDescriptor fDescriptor;
