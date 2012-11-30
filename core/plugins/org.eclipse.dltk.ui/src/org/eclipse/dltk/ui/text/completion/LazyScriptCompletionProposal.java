@@ -102,7 +102,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * 
 	 * @return the additional proposal info, or <code>null</code> if none exists
 	 */
-	public final ProposalInfo getProposalInfo() {
+	public final ICompletionProposalInfo getProposalInfo() {
 		if (!fProposalInfoComputed) {
 			setProposalInfo(computeProposalInfo());
 		}
@@ -110,7 +110,7 @@ public abstract class LazyScriptCompletionProposal extends
 		return super.getProposalInfo();
 	}
 
-	protected ProposalInfo computeProposalInfo() {
+	protected ICompletionProposalInfo computeProposalInfo() {
 		return null;
 	}
 

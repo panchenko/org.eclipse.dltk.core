@@ -185,7 +185,7 @@ public abstract class AbstractScriptCompletionProposal implements
 	private int fCursorPosition;
 	private Image fImage;
 	private IContextInformation fContextInformation;
-	private ProposalInfo fProposalInfo;
+	private ICompletionProposalInfo fProposalInfo;
 	private char[] fTriggerCharacters;
 	private String fSortString;
 	private int fRelevance;
@@ -230,7 +230,7 @@ public abstract class AbstractScriptCompletionProposal implements
 	 *            The additional information associated with this proposal or
 	 *            <code>null</code>
 	 */
-	public void setProposalInfo(ProposalInfo proposalInfo) {
+	public void setProposalInfo(ICompletionProposalInfo proposalInfo) {
 		fProposalInfo = proposalInfo;
 	}
 
@@ -240,7 +240,7 @@ public abstract class AbstractScriptCompletionProposal implements
 	 * 
 	 * @return the additional proposal info, or <code>null</code> if none exists
 	 */
-	public ProposalInfo getProposalInfo() {
+	public ICompletionProposalInfo getProposalInfo() {
 		return fProposalInfo;
 	}
 
@@ -989,13 +989,14 @@ public abstract class AbstractScriptCompletionProposal implements
 	 *         <code>null</code>
 	 */
 	public IModelElement getModelElement() {
-		if (getProposalInfo() != null)
+		final ICompletionProposalInfo proposalInfo = getProposalInfo();
+		if (proposalInfo != null && proposalInfo instanceof ProposalInfo) {
 			try {
-				return getProposalInfo().getModelElement();
+				return ((ProposalInfo) proposalInfo).getModelElement();
 			} catch (ModelException x) {
 				DLTKUIPlugin.log(x);
 			}
-
+		}
 		return null;
 	}
 }

@@ -201,7 +201,7 @@ public class ScriptMethodCompletionProposal extends
 	}
 
 	@Override
-	protected ProposalInfo computeProposalInfo() {
+	protected ICompletionProposalInfo computeProposalInfo() {
 		IScriptProject project = fInvocationContext.getProject();
 		if (project != null)
 			return new MethodProposalInfo(project, fProposal);

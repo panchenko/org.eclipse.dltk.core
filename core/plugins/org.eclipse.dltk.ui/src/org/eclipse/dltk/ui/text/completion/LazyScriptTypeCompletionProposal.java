@@ -252,7 +252,7 @@ public abstract class LazyScriptTypeCompletionProposal extends
 		return isInDoc() ? getDocTriggers() : getTypeTriggers();
 	}
 
-	protected ProposalInfo computeProposalInfo() {
+	protected ICompletionProposalInfo computeProposalInfo() {
 		if (fSourceModule != null) {
 			IScriptProject project = fSourceModule.getScriptProject();
 			if (project != null)
