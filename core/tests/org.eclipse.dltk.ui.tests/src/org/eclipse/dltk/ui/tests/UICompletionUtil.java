@@ -21,6 +21,7 @@ import org.eclipse.dltk.ui.DLTKUILanguageManager;
 import org.eclipse.dltk.ui.IDLTKUILanguageToolkit;
 import org.eclipse.dltk.ui.text.completion.CompletionProposalCategory;
 import org.eclipse.dltk.ui.text.completion.CompletionProposalComputerRegistry;
+import org.eclipse.dltk.ui.text.completion.IScriptCompletionProposalComputer;
 import org.eclipse.dltk.ui.text.completion.ProposalSorterRegistry;
 import org.eclipse.dltk.ui.text.completion.ScriptContentAssistInvocationContext;
 import org.eclipse.jface.text.BadLocationException;
@@ -43,6 +44,7 @@ public class UICompletionUtil {
 	}
 
 	public static UICompletionUtil on(IEditorPart part) {
+		Assert.assertNotNull("Editor must be not null", part);
 		return new UICompletionUtil((ScriptEditor) part);
 	}
 
@@ -79,6 +81,23 @@ public class UICompletionUtil {
 		return offset.intValue();
 	}
 
+	public List<ICompletionProposal> invokeCompletion(
+			Class<? extends IScriptCompletionProposalComputer> computerClass) {
+		final IDLTKLanguageToolkit toolkit = editor.getLanguageToolkit();
+		final ScriptContentAssistInvocationContext context = new ScriptContentAssistInvocationContext(
+				getViewer(), getOffset(), editor, toolkit.getNatureId());
+
+		final IScriptCompletionProposalComputer computer;
+		try {
+			computer = computerClass.newInstance();
+		} catch (InstantiationException e) {
+			throw new AssertionError(e);
+		} catch (IllegalAccessException e) {
+			throw new AssertionError(e);
+		}
+		return computer.computeCompletionProposals(context, null);
+	}
+
 	public List<ICompletionProposal> invokeCompletion() {
 
 		final IDLTKLanguageToolkit toolkit = editor.getLanguageToolkit();
@@ -107,9 +126,10 @@ public class UICompletionUtil {
 		return proposals;
 	}
 
-	public void apply(ICompletionProposal proposal) {
+	public UICompletionUtil apply(ICompletionProposal proposal) {
 		((ICompletionProposalExtension2) proposal).apply(getViewer(), (char) 0,
 				0, getOffset());
+		return this;
 	}
 
 	public String getText() {

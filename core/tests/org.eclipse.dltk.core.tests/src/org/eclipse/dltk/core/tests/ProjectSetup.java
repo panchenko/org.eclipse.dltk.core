@@ -11,14 +11,21 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.dltk.internal.core.ModelManager;
 import org.junit.Assert;
 
 // TODO waitUntilIndexesReady
-// TODO DISABLE_INDEXER
-// TODO BUILD
 public class ProjectSetup extends AbstractProjectSetup {
+
+	public static enum Option {
+		BUILD, INDEXER_DISABLED
+	}
 
 	public static void create(ProjectSetup... projects) throws Throwable {
 		for (ProjectSetup project : projects) {
@@ -36,17 +43,41 @@ public class ProjectSetup extends AbstractProjectSetup {
 	private final String projectName;
 	private BundledProjectSetup.Helper helper;
 	private IProject project;
+	private final Set<Option> options;
 
 	public ProjectSetup(IWorkspaceSetup workspaceSetup, String projectName) {
 		this.workspaceSetup = workspaceSetup;
 		this.projectName = projectName;
+		this.options = EnumSet.noneOf(Option.class);
+	}
+
+	public ProjectSetup(IWorkspaceSetup workspaceSetup, String projectName,
+			Option option, Option... restOptions) {
+		this.workspaceSetup = workspaceSetup;
+		this.projectName = projectName;
+		this.options = EnumSet.of(option, restOptions);
+	}
+
+	protected boolean isVerbose() {
+		return false;
 	}
 
 	@Override
 	protected void before() throws Throwable {
 		workspaceSetup.before();
+		if (options.contains(Option.INDEXER_DISABLED)) {
+			ModelManager.getModelManager().getIndexManager().disable();
+		}
 		helper = new BundledProjectSetup.Helper(workspaceSetup.getBundleName());
 		project = helper.setUpProject(projectName);
+		if (options.contains(Option.BUILD)) {
+			final long start = System.currentTimeMillis();
+			get().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			if (isVerbose()) {
+				System.out.println((System.currentTimeMillis() - start)
+						+ " ms to build " + projectName + " project");
+			}
+		}
 	}
 
 	@Override
@@ -60,6 +91,9 @@ public class ProjectSetup extends AbstractProjectSetup {
 			helper = null;
 		}
 		project = null;
+		if (options.contains(Option.INDEXER_DISABLED)) {
+			ModelManager.getModelManager().getIndexManager().enable();
+		}
 		workspaceSetup.after();
 	}
 
