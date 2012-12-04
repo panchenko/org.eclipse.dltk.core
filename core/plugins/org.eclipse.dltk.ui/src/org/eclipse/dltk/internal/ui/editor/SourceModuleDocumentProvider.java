@@ -470,6 +470,14 @@ public class SourceModuleDocumentProvider extends TextFileDocumentProvider
 			Assert.isTrue(isQuickFixableStateSet());
 			return fIsQuickFixable;
 		}
+
+		public int getSourceStart() {
+			return fProblem.getSourceStart();
+		}
+
+		public int getSourceEnd() {
+			return fProblem.getSourceEnd();
+		}
 	}
 
 	/**

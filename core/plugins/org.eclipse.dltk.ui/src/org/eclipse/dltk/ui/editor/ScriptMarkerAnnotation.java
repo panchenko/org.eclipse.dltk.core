@@ -153,4 +153,12 @@ public class ScriptMarkerAnnotation extends MarkerAnnotation implements IScriptA
 		
 		return  MarkerUtilities.getMarkerType(getMarker());
 	}
+
+	public int getSourceStart() {
+		return MarkerUtilities.getCharStart(getMarker());
+	}
+
+	public int getSourceEnd() {
+		return MarkerUtilities.getCharEnd(getMarker());
+	}
 }

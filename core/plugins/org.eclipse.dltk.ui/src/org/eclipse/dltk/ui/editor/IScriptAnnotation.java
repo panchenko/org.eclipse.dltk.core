@@ -123,4 +123,14 @@ public interface IScriptAnnotation {
 	 *         or <code>null<code> if no marker type can be evaluated.
 	 */
 	String getMarkerType();
+
+	/**
+	 * Returns the starting character offset of this problem.
+	 */
+	int getSourceStart();
+
+	/**
+	 * Returns the ending character offset of this problem.
+	 */
+	int getSourceEnd();
 }
