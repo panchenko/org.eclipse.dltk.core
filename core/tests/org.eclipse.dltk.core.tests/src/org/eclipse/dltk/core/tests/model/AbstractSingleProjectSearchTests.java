@@ -20,12 +20,16 @@ import org.eclipse.dltk.core.search.IDLTKSearchScope;
 import org.eclipse.dltk.core.search.SearchEngine;
 import org.eclipse.dltk.core.search.SearchParticipant;
 import org.eclipse.dltk.core.search.SearchPattern;
+import org.eclipse.dltk.core.tests.IDLTKSearchConstantsForTests;
+import org.eclipse.dltk.core.tests.ProjectSetup;
 
+/**
+ * Don't use this class for the new tests, instead implement them in JUnit4 way
+ * using {@link ProjectSetup} annotated with {@link org.junit.ClassRule}.
+ */
+@Deprecated
 public class AbstractSingleProjectSearchTests extends AbstractModelTests
-		implements IDLTKSearchConstants {
-
-	protected static final int EXACT_RULE = SearchPattern.R_EXACT_MATCH
-			| SearchPattern.R_CASE_SENSITIVE;
+		implements IDLTKSearchConstants, IDLTKSearchConstantsForTests {
 
 	private final String scriptProjectName;
 

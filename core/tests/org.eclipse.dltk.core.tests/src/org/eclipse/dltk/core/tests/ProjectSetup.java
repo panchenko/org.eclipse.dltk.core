@@ -11,10 +11,8 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
@@ -24,7 +22,6 @@ import org.eclipse.dltk.internal.core.ModelManager;
 import org.eclipse.dltk.utils.TextUtils;
 import org.junit.Assert;
 
-// TODO waitUntilIndexesReady
 public class ProjectSetup extends AbstractProjectSetup {
 
 	public static enum Option {
