@@ -14,10 +14,13 @@ package org.eclipse.dltk.ui.tests;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
+import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.internal.ui.editor.ScriptEditor;
 import org.eclipse.dltk.ui.DLTKUILanguageManager;
+import org.eclipse.dltk.ui.DLTKUIPlugin;
 import org.eclipse.dltk.ui.IDLTKUILanguageToolkit;
 import org.eclipse.dltk.ui.text.completion.CompletionProposalCategory;
 import org.eclipse.dltk.ui.text.completion.CompletionProposalComputerRegistry;
@@ -41,6 +44,10 @@ public class UICompletionUtil {
 
 	private UICompletionUtil(ScriptEditor editor) {
 		this.editor = editor;
+	}
+
+	public static UICompletionUtil openEditor(ISourceModule module) throws CoreException {
+		return UICompletionUtil.on(DLTKUIPlugin.openInEditor(module));
 	}
 
 	public static UICompletionUtil on(IEditorPart part) {
