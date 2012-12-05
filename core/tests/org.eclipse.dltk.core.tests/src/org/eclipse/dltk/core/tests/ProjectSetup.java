@@ -11,20 +11,24 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.dltk.internal.core.ModelManager;
+import org.eclipse.dltk.utils.TextUtils;
 import org.junit.Assert;
 
 // TODO waitUntilIndexesReady
 public class ProjectSetup extends AbstractProjectSetup {
 
 	public static enum Option {
-		BUILD, INDEXER_DISABLED
+		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY
 	}
 
 	public static void create(ProjectSetup... projects) throws Throwable {
@@ -56,6 +60,12 @@ public class ProjectSetup extends AbstractProjectSetup {
 		this.workspaceSetup = workspaceSetup;
 		this.projectName = projectName;
 		this.options = EnumSet.of(option, restOptions);
+		if (options.contains(Option.INDEXER_DISABLED)
+				&& options.contains(Option.WAIT_INDEXES_READY)) {
+			throw new IllegalStateException("Conflicting options: "
+					+ TextUtils.join(Arrays.asList(Option.INDEXER_DISABLED,
+							Option.WAIT_INDEXES_READY), ","));
+		}
 	}
 
 	protected boolean isVerbose() {
@@ -77,6 +87,9 @@ public class ProjectSetup extends AbstractProjectSetup {
 				System.out.println((System.currentTimeMillis() - start)
 						+ " ms to build " + projectName + " project");
 			}
+		}
+		if (options.contains(Option.WAIT_INDEXES_READY)) {
+			ModelManager.getModelManager().getIndexManager().waitUntilReady();
 		}
 	}
 
