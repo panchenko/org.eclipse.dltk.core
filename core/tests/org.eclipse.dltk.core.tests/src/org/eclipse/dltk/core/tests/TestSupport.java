@@ -14,6 +14,8 @@ package org.eclipse.dltk.core.tests;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.junit.Test;
+
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -36,7 +38,7 @@ public class TestSupport {
 	 * 
 	 * @return <false> when not itself already in the call stack
 	 */
-	public static boolean notYetImplemented(TestCase caller) {
+	public static boolean notYetImplemented(Object caller) {
 		if (notYetImplementedFlag.get() != null) {
 			return false;
 		}
@@ -106,10 +108,11 @@ public class TestSupport {
 	 * @return <code>true</code> if this is a junit test.
 	 */
 	private static boolean isPublicTestMethod(final Method method) {
-		return method.getParameterTypes().length == 0
-				&& method.getName().startsWith("test")
-				&& method.getReturnType().equals(Void.TYPE)
-				&& Modifier.isPublic(method.getModifiers());
+		return method.getReturnType().equals(Void.TYPE)
+				&& Modifier.isPublic(method.getModifiers())
+				&& (method.getParameterTypes().length == 0
+						&& method.getName().startsWith("test") || method
+						.getAnnotation(Test.class) != null);
 	}
 
 	private static final ThreadLocal<Boolean> notYetImplementedFlag = new ThreadLocal<Boolean>();
