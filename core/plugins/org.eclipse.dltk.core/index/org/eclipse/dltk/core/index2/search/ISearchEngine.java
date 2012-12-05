@@ -57,7 +57,13 @@ public interface ISearchEngine {
 		DECLARATIONS,
 
 		/** Search for declarations as well as references */
-		ALL_OCCURENCES
+		ALL_OCCURRENCES;
+
+		/**
+		 * Use correctly spelled {@link #ALL_OCCURRENCES} above.
+		 */
+		@Deprecated
+		public static final SearchFor ALL_OCCURENCES = ALL_OCCURRENCES;
 	}
 
 	/**

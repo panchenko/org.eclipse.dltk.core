@@ -242,7 +242,7 @@ public class NewSearchEngine {
 			elementName = new String(fieldPattern.name);
 			matchRule = ModelAccess.convertSearchRule(pattern.getMatchRule());
 			if (fieldPattern.findDeclarations && fieldPattern.findReferences) {
-				searchFor = SearchFor.ALL_OCCURENCES;
+				searchFor = SearchFor.ALL_OCCURRENCES;
 			} else if (fieldPattern.findDeclarations) {
 				searchFor = SearchFor.DECLARATIONS;
 			} else if (fieldPattern.findReferences) {
