@@ -156,6 +156,7 @@ public abstract class MatchingNodeSet<E> implements IMatchingNodeSet<E>,
 		for (E node : nodes) {
 			result.append("\n\t"); //$NON-NLS-1$
 			result.append(matchingNodes.get(node));
+			result.append(' ');
 			result.append(describeNode(node));
 		}
 		result.append("\nPossible matches:"); //$NON-NLS-1$

@@ -59,7 +59,7 @@ public class DLTKSearchDocument extends SearchDocument {
 	}
 
 	public String toString() {
-		return "SearchDocument for " + getPath(); //$NON-NLS-1$
+		return "SearchDocument(" + getPath() + ')'; //$NON-NLS-1$
 	}
 
 	public boolean isExternal() {

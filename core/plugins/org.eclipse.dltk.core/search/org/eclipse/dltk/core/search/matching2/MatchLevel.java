@@ -11,6 +11,8 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.search.matching2;
 
+import org.eclipse.dltk.core.search.SearchMatch;
+
 public enum MatchLevel {
 	// /**
 	// * 0%
@@ -30,5 +32,16 @@ public enum MatchLevel {
 	/**
 	 * 100%
 	 */
-	ACCURATE_MATCH
+	ACCURATE_MATCH;
+
+	public int toSearchMatchAccuracy() {
+		switch (this) {
+		case ACCURATE_MATCH:
+			return SearchMatch.A_ACCURATE;
+		case INACCURATE_MATCH:
+			return SearchMatch.A_INACCURATE;
+		default:
+			return -1;
+		}
+	}
 }

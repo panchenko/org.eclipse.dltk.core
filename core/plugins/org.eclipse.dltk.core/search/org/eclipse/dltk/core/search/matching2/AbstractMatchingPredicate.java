@@ -11,6 +11,8 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.search.matching2;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.eclipse.dltk.compiler.CharOperation;
@@ -111,8 +113,45 @@ public abstract class AbstractMatchingPredicate<E> implements
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "("
-				+ (namePattern != null ? new String(namePattern) : "*") + ")";
+		final StringBuilder sb = new StringBuilder();
+		sb.append(getClass().getSimpleName());
+		sb.append("(");
+		sb.append(namePattern != null ? new String(namePattern) : "*");
+		final List<String> options = new ArrayList<String>();
+		collectToStringOptions(options);
+		if (!options.isEmpty()) {
+			sb.append(":");
+			boolean first = true;
+			for (String option : options) {
+				if (!first) {
+					sb.append(',');
+				}
+				sb.append(option);
+				first = false;
+			}
+		}
+		sb.append(")");
+		return sb.toString();
+	}
+
+	protected void collectToStringOptions(List<String> options) {
+	}
+
+	public MatchLevel resolvePotentialMatch(E node) {
+		return MatchLevel.INACCURATE_MATCH;
+	}
+
+	public boolean contains(IMatchingPredicate<E> predicate) {
+		return false;
+	}
+
+	/**
+	 * Calls {@link #matchName(String)} and upgrades
+	 * {@link MatchLevel#POSSIBLE_MATCH} to the specified value.
+	 */
+	protected MatchLevel matchName(String name, MatchLevel upgraded) {
+		final MatchLevel level = matchName(name);
+		return level == MatchLevel.POSSIBLE_MATCH ? upgraded : level;
 	}
 
 }

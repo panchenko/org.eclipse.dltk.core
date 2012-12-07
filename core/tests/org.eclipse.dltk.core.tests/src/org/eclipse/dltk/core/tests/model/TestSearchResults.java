@@ -12,6 +12,8 @@
 package org.eclipse.dltk.core.tests.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -112,5 +114,13 @@ public class TestSearchResults extends SearchRequestor {
 	@Override
 	public String toString() {
 		return matches.toString();
+	}
+
+	public void sortByOffset() {
+		Collections.sort(matches, new Comparator<SearchMatch>() {
+			public int compare(SearchMatch o1, SearchMatch o2) {
+				return o1.getOffset() - o2.getOffset();
+			}
+		});
 	}
 }

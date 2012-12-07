@@ -11,11 +11,18 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.search.matching2;
 
-
 public final class FalseMatchingPredicate<E> implements IMatchingPredicate<E> {
 
 	public MatchLevel match(E node) {
 		return null;
+	}
+
+	public MatchLevel resolvePotentialMatch(E node) {
+		return null;
+	}
+
+	public boolean contains(IMatchingPredicate<E> predicate) {
+		return predicate.getClass() == getClass();
 	}
 
 }

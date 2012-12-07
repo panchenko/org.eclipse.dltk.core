@@ -17,7 +17,7 @@ import org.eclipse.dltk.core.search.indexing.IIndexConstants;
 
 public class TypeReferencePattern extends AndPattern implements IIndexConstants {
 
-	protected char[] qualification;
+	public char[] qualification;
 	public char[] simpleName;
 
 	protected char[] currentCategory;

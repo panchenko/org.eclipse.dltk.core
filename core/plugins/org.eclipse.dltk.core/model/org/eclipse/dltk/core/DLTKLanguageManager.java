@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.ast.parser.ISourceParser;
 import org.eclipse.dltk.ast.parser.SourceParserManager;
 import org.eclipse.dltk.codeassist.ICompletionEngine;
@@ -364,6 +365,7 @@ public class DLTKLanguageManager {
 	/**
 	 * @since 2.0
 	 */
+	@Nullable
 	public static ISearchPatternProcessor getSearchPatternProcessor(
 			String natureId) {
 		final ISearchFactory factory = getSearchFactory(natureId);

@@ -11,8 +11,6 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.search.matching2;
 
-
-
 public interface IMatchingPredicate<E> {
 
 	/**
@@ -22,5 +20,22 @@ public interface IMatchingPredicate<E> {
 	 * @return match level or <code>null</code> if not matches
 	 */
 	MatchLevel match(E node);
+
+	/**
+	 * Answers whether this predicate completely contains another predicate.
+	 * 
+	 * @since 5.0
+	 */
+	public boolean contains(IMatchingPredicate<E> predicate);
+
+	/**
+	 * Resolves the potential matching after the node was enhanced with the
+	 * additional information. This method is called for the nodes, for which
+	 * {@link MatchLevel#POSSIBLE_MATCH} was previously returned from
+	 * {@link #match(Object)}.
+	 * 
+	 * @since 5.0
+	 */
+	MatchLevel resolvePotentialMatch(E node);
 
 }
