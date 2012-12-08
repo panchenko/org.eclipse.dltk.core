@@ -10,7 +10,6 @@
 package org.eclipse.dltk.core;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
@@ -24,31 +23,29 @@ import org.eclipse.core.runtime.Platform;
  * aren't required.
  * 
  * @author Haiodo
- * 
  */
 public class PriorityDLTKExtensionManager {
-	public final static String PRIORITY_ATTR = "priority"; //$NON-NLS-1$
+	public static final String PRIORITY_ATTR = "priority"; //$NON-NLS-1$
 
-	private Map extensions;
-
-	private String extensionPoint = null;
-	private String identifier = null;
 	/**
-	 * The preffered Id is not zero then
+	 * guarded by this
 	 */
-	private Map prefferedLevels = new HashMap();
-	private Map prefferedExtensionCache = new HashMap();
+	private Map<String, ElementInfo> extensions;
 
-	protected void setIdentifierValue(String identifier) {
-		this.identifier = identifier;
-		if (this.extensions != null) {
-			this.extensions = null;
-		}
-	}
+	private final String extensionPoint;
+	private final String identifier;
+	/**
+	 * The preferred Id is not null, guarded by this.
+	 */
+	private Map<String, Integer> prefferedLevels;
+	/**
+	 * guarded by itself
+	 */
+	private final Map<String, ElementInfo> prefferedExtensionCache = new HashMap<String, ElementInfo>();
 
 	public static class ElementInfo {
 		int level;
-		public IConfigurationElement config;
+		public final IConfigurationElement config;
 		public Object object;
 		public ElementInfo oldInfo;
 
@@ -57,32 +54,32 @@ public class PriorityDLTKExtensionManager {
 		}
 
 		public IConfigurationElement getConfig() {
-			return this.config;
+			return config;
 		}
 	}
 
 	public PriorityDLTKExtensionManager(String extensionPoint, String identifier) {
+		Assert.isNotNull(extensionPoint);
+		Assert.isNotNull(identifier);
 		this.extensionPoint = extensionPoint;
 		this.identifier = identifier;
-		Assert.isNotNull(this.extensionPoint);
-		Assert.isNotNull(this.identifier);
 	}
 
-	protected void initialize() {
+	protected synchronized Map<String, ElementInfo> initialize() {
 		if (extensions != null) {
-			return;
+			return extensions;
 		}
 
-		extensions = new HashMap(5);
+		extensions = new HashMap<String, ElementInfo>(5);
 		IConfigurationElement[] cfg = Platform.getExtensionRegistry()
-				.getConfigurationElementsFor(this.extensionPoint);
+				.getConfigurationElementsFor(extensionPoint);
 
 		for (int i = 0; i < cfg.length; i++) {
 			final IConfigurationElement element = cfg[i];
 			if (!isValidConfigurationElement(element))
 				continue;
-			String nature = element.getAttribute(this.identifier);
-			ElementInfo oldInfo = (ElementInfo) extensions.get(nature);
+			String nature = element.getAttribute(identifier);
+			ElementInfo oldInfo = extensions.get(nature);
 			if (oldInfo != null) {
 				int lev = getLevel(element);
 				if (lev <= oldInfo.level) {
@@ -108,6 +105,7 @@ public class PriorityDLTKExtensionManager {
 			ElementInfo info = createNewInfo(element, oldInfo);
 			extensions.put(nature, info);
 		}
+		return extensions;
 	}
 
 	/**
@@ -127,24 +125,37 @@ public class PriorityDLTKExtensionManager {
 	}
 
 	protected ElementInfo internalGetElementInfo(String id) {
-		initialize();
-		if (prefferedExtensionCache.containsKey(id)) {
-			return (ElementInfo) prefferedExtensionCache.get(id);
-		}
-		ElementInfo info = (ElementInfo) extensions.get(id);
-		Object level = prefferedLevels.get(id);
-		if (level != null) {
-			// Search for preffered id.
-			int prefferedLevel = ((Integer) level).intValue();
-			while (info != null) {
-				if (info.level == prefferedLevel) {
-					return info;
-				}
-				info = info.oldInfo;
-			}
+		ElementInfo info;
+		synchronized (prefferedExtensionCache) {
+			info = prefferedExtensionCache.get(id);
 		}
 		if (info != null) {
-			prefferedExtensionCache.put(id, info);
+			return info;
+		}
+		info = initialize().get(id);
+		if (info != null) {
+			final Integer level;
+			synchronized (this) {
+				level = prefferedLevels != null ? prefferedLevels.get(id)
+						: null;
+			}
+			if (level != null) {
+				// Search for preferred id.
+				final int prefferedLevel = level.intValue();
+				for (ElementInfo o = info;;) {
+					if (o.level == prefferedLevel) {
+						info = o;
+						break;
+					}
+					o = o.oldInfo;
+					if (o == null) {
+						break;
+					}
+				}
+			}
+			synchronized (prefferedExtensionCache) {
+				prefferedExtensionCache.put(id, info);
+			}
 		}
 		return info;
 	}
@@ -167,15 +178,11 @@ public class PriorityDLTKExtensionManager {
 	}
 
 	public ElementInfo[] getElementInfos() {
-		initialize();
-		// Collection values = extensions.values();
-		// return (ElementInfo[]) values.toArray(new
-		// ElementInfo[values.size()]);
-		ElementInfo[] values = new ElementInfo[this.extensions.size()];
-		Iterator j = this.extensions.keySet().iterator();
-		for (int i = 0; i < values.length; i++) {
-			String key = (String) j.next();
-			values[i] = this.getElementInfo(key);
+		final Map<String, ElementInfo> exts = initialize();
+		final String[] keys = exts.keySet().toArray(new String[exts.size()]);
+		final ElementInfo[] values = new ElementInfo[keys.length];
+		for (int i = 0; i < keys.length; i++) {
+			values[i] = getElementInfo(keys[i]);
 		}
 		return values;
 	}
@@ -210,13 +217,19 @@ public class PriorityDLTKExtensionManager {
 		return null;
 	}
 
-	public void setPreffetedLevel(String id, int level) {
+	public synchronized void setPreffetedLevel(String id, int level) {
+		synchronized (prefferedExtensionCache) {
+			prefferedExtensionCache.clear();
+		}
 		if (level != -1) {
-			this.prefferedExtensionCache.clear();
-			this.prefferedLevels.put(id, new Integer(level));
+			if (prefferedLevels == null) {
+				prefferedLevels = new HashMap<String, Integer>();
+			}
+			prefferedLevels.put(id, Integer.valueOf(level));
 		} else {
-			this.prefferedExtensionCache.clear();
-			this.prefferedLevels.put(id, null);
+			if (prefferedLevels != null) {
+				prefferedLevels.remove(id);
+			}
 		}
 	}
 }
