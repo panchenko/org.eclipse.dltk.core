@@ -18,19 +18,19 @@ public class CallArgumentsList extends ASTListNode {
 	public static final CallArgumentsList EMPTY = new CallArgumentsList() {
 
 		public void addNode(ASTNode s) {
-			throw new IllegalStateException(Messages.CallArgumentsList_thisObjectIsUnmodifiable);
+			throw new IllegalStateException("This object is unmodifiable"); //$NON-NLS-1$
 		}
 
 		public void setChilds(List l) {
-			throw new IllegalStateException(Messages.CallArgumentsList_thisObjectIsUnmodifiable);
+			throw new IllegalStateException("This object is unmodifiable"); //$NON-NLS-1$
 		}
 
 		public void setEnd(int end) {
-			throw new IllegalStateException(Messages.CallArgumentsList_thisObjectIsUnmodifiable);
+			throw new IllegalStateException("This object is unmodifiable"); //$NON-NLS-1$
 		}
 
 		public void setStart(int start) {
-			throw new IllegalStateException(Messages.CallArgumentsList_thisObjectIsUnmodifiable);
+			throw new IllegalStateException("This object is unmodifiable"); //$NON-NLS-1$
 		}
 
 	};

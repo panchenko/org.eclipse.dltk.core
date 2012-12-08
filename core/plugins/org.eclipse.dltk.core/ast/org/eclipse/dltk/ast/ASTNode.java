@@ -22,7 +22,6 @@ import org.eclipse.dltk.core.ISourceNode;
 import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.core.SourceRange;
 import org.eclipse.dltk.utils.CorePrinter;
-import org.eclipse.osgi.util.NLS;
 
 public abstract class ASTNode implements ISourceNode {
 
@@ -216,9 +215,8 @@ public abstract class ASTNode implements ISourceNode {
 	public abstract void traverse(ASTVisitor visitor) throws Exception;
 
 	public void printNode(CorePrinter output) {
-		output.println(NLS.bind(
-				Messages.ASTNode_nodeDoesntSupportDebugPrinting,
-				new Object[] { this.getClass() }));
+		output.println(this.getClass()
+				+ " (node doesn't support debug printing)"); //$NON-NLS-1$
 	}
 
 	protected ISourceRange getSourceRange() {
