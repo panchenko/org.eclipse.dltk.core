@@ -11,7 +11,9 @@
 package org.eclipse.dltk.ast.parser;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.dltk.core.DLTKContributedExtension;
 import org.eclipse.dltk.core.DLTKContributionExtensionManager;
 import org.eclipse.dltk.core.DLTKCore;
@@ -87,8 +89,8 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 	
 	static class SourceParserContribution extends DLTKContributedExtension {		
 
-		private ISourceParserFactory factory;
-		private IConfigurationElement config;
+		private final ISourceParserFactory factory;
+		private final IConfigurationElement config;
 		
 		SourceParserContribution(ISourceParserFactory factory, IConfigurationElement config) {
 			this.factory = factory;
@@ -103,7 +105,7 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 		}
 
 		ISourceParser getSourceParser() {
-			ISourceParser parser = factory.createSourceParser();
+			final ISourceParser parser = factory.createSourceParser();
 			/*
 			 * another cheat - not all source parsers are thread safe, so
 			 * we need to create a new instance each time one is requested (hence
@@ -112,7 +114,14 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 			 * the parser instance should be initialized with all it's attribute
 			 * data
 			 */
-			((AbstractSourceParser) parser).setInitializationData(config, null, null);
+			if (parser instanceof IExecutableExtension) {
+				try {
+					((IExecutableExtension) parser).setInitializationData(
+							config, null, null);
+				} catch (CoreException e) {
+					DLTKCore.error(e);
+				}
+			}
 			
 			return parser;
 		}
