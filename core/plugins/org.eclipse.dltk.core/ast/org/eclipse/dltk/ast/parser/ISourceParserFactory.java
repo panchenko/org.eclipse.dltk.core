@@ -10,6 +10,11 @@
  *******************************************************************************/
 package org.eclipse.dltk.ast.parser;
 
+import org.eclipse.dltk.annotations.ExtensionPoint;
+
+@ExtensionPoint(point = SourceParserManager.SOURCE_PARSER_EXT_POINT, element = {
+		SourceParserManager.PARSER_CONTRIBUTION_TAG,
+		SourceParserManager.PARSER_TAG }, attribute = "class")
 public interface ISourceParserFactory {
 
 	/**

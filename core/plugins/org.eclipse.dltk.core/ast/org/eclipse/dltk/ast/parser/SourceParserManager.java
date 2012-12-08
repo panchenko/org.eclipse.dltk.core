@@ -10,10 +10,15 @@
  *******************************************************************************/
 package org.eclipse.dltk.ast.parser;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExecutableExtension;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.core.DLTKContributedExtension;
 import org.eclipse.dltk.core.DLTKContributionExtensionManager;
 import org.eclipse.dltk.core.DLTKCore;
@@ -24,10 +29,16 @@ import org.eclipse.dltk.core.DLTKCore;
  */
 public class SourceParserManager extends DLTKContributionExtensionManager {
 
-	private static final String SOURCE_PARSER_EXT_POINT = DLTKCore.PLUGIN_ID
+	static final String SOURCE_PARSER_EXT_POINT = DLTKCore.PLUGIN_ID
 			+ ".sourceParsers"; //$NON-NLS-1$
 
-	private static final String PARSER_TAG = "parser"; //$NON-NLS-1$
+	static final String PARSER_CONTRIBUTION_TAG = "parserContribution"; //$NON-NLS-1$
+
+	static final String PARSER_TAG = "parser"; //$NON-NLS-1$
+
+	static final String PARSER_CONFIGURATOR_TAG = "parserConfigurator"; //$NON-NLS-1$
+
+	static final String PARSER_CONFIGURATOR_CLASS = "class"; //$NON-NLS-1$
 
 	private static SourceParserManager instance;
 
@@ -39,7 +50,13 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 	}
 
 	public ISourceParser getSourceParserById(String id) {
-		return ((SourceParserContribution) getContributionById(id)).getSourceParser();
+		return ((SourceParserContribution) getContributionById(id))
+				.createSourceParser(null);
+	}
+
+	@Override
+	protected boolean isNatureContribution(IConfigurationElement main) {
+		return PARSER_CONTRIBUTION_TAG.equals(main.getName()); //$NON-NLS-1$
 	}
 	
 	/*
@@ -82,7 +99,7 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 		SourceParserContribution contribution = (SourceParserContribution) getSelectedContribution(
 				project, natureId);
 		if (contribution != null) {
-			return contribution.getSourceParser();
+			return contribution.createSourceParser(project);
 		}
 		return null;
 	}
@@ -91,6 +108,8 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 
 		private final ISourceParserFactory factory;
 		private final IConfigurationElement config;
+		@Nullable
+		final ISourceParserConfigurator[] configurators;
 		
 		SourceParserContribution(ISourceParserFactory factory, IConfigurationElement config) {
 			this.factory = factory;
@@ -102,9 +121,11 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 			 * already provides
 			 */
 			setInitializationData(config, null, null);
+			this.configurators = getId() != null ? createConfigurators(getId())
+					: null;
 		}
 
-		ISourceParser getSourceParser() {
+		ISourceParser createSourceParser(@Nullable IProject project) {
 			final ISourceParser parser = factory.createSourceParser();
 			/*
 			 * another cheat - not all source parsers are thread safe, so
@@ -122,8 +143,40 @@ public class SourceParserManager extends DLTKContributionExtensionManager {
 					DLTKCore.error(e);
 				}
 			}
+			if (configurators != null) {
+				for (ISourceParserConfigurator configurator : configurators) {
+					configurator.configure(parser, project);
+				}
+			}
 			
 			return parser;
+		}
+
+		private static ISourceParserConfigurator[] createConfigurators(
+				String parserId) {
+			List<ISourceParserConfigurator> result = null;
+			for (IConfigurationElement element : Platform
+					.getExtensionRegistry().getConfigurationElementsFor(
+							SOURCE_PARSER_EXT_POINT)) {
+				if (PARSER_CONFIGURATOR_TAG.equals(element.getName())
+						&& parserId.equals(element.getAttribute("id"))) { //$NON-NLS-1$
+					try {
+						final Object configurator = element
+								.createExecutableExtension(PARSER_CONFIGURATOR_CLASS);
+						if (configurator instanceof ISourceParserConfigurator) {
+							if (result == null) {
+								result = new ArrayList<ISourceParserConfigurator>();
+							}
+							result.add((ISourceParserConfigurator) configurator);
+						}
+					} catch (CoreException e) {
+						DLTKCore.error(e);
+					}
+				}
+			}
+			return result != null ? result
+					.toArray(new ISourceParserConfigurator[result.size()])
+					: null;
 		}
 	}
 }

@@ -12,6 +12,9 @@ package org.eclipse.dltk.ast.parser;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
 
+/**
+ * @see ISourceParserFactory
+ */
 public interface ISourceParser {
 	IModuleDeclaration parse(IModuleSource input, IProblemReporter reporter);
 }
