@@ -14,6 +14,7 @@ package org.eclipse.dltk.core.tests;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import junit.framework.Assert;
@@ -121,7 +122,8 @@ public class TestSupport {
 		try {
 			final Method runMethod = testCase.getClass().getMethod(
 					testCase.getName(), NO_PARAMS);
-			if (runMethod.getAnnotation(Skip.class) != null) {
+			if (runMethod.getAnnotation(Skip.class) != null
+					|| runMethod.getAnnotation(Ignore.class) != null) {
 				return true;
 			}
 		} catch (NoSuchMethodException e) {
