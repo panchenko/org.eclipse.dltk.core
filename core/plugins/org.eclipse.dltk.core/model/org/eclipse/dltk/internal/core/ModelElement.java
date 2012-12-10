@@ -129,6 +129,18 @@ public abstract class ModelElement extends PlatformObject implements
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
+	public <E extends IModelElement> E getAncestor(Class<E> elementClass) {
+		IModelElement element = this;
+		do {
+			if (elementClass.isInstance(element)) {
+				return (E) element;
+			}
+			element = element.getParent();
+		} while (element != null);
+		return null;
+	}
+
 	/**
 	 * @see IOpenable
 	 */

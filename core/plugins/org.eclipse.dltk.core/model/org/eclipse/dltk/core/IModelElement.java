@@ -224,6 +224,18 @@ public interface IModelElement extends IAdaptable {
 	IModelElement getAncestor(int ancestorType);
 
 	/**
+	 * Returns the first ancestor of this script element that has the given
+	 * type. Returns <code>null</code> if no such an ancestor can be found. This
+	 * is a handle-only method.
+	 * 
+	 * @param ancestorType
+	 *            the given type
+	 * @return the first ancestor of this script element that has the given
+	 *         type, null if no such an ancestor can be found
+	 */
+	<E extends IModelElement> E getAncestor(Class<E> clazz);
+
+	/**
 	 * Returns the first openable parent. If this element is openable, the
 	 * element itself is returned. Returns <code>null</code> if this element
 	 * doesn't have an openable parent. This is a handle-only method.
