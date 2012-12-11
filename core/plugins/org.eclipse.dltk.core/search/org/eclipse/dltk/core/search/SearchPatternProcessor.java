@@ -21,11 +21,11 @@ public abstract class SearchPatternProcessor implements ISearchPatternProcessor 
 		//
 	}
 
-	protected static class TypePatten implements ITypePattern {
+	protected static class TypePattern implements ITypePattern {
 		private final String qualification;
 		private final String simpleName;
 
-		public TypePatten(String qualification, String simpleName) {
+		public TypePattern(String qualification, String simpleName) {
 			this.qualification = qualification;
 			this.simpleName = simpleName;
 		}
@@ -53,8 +53,19 @@ public abstract class SearchPatternProcessor implements ISearchPatternProcessor 
 		}
 	}
 
+	/**
+	 * There is a typo in class name, {@link TypePattern} class should be used
+	 * instead.
+	 */
+	@Deprecated
+	protected static class TypePatten extends TypePattern {
+		public TypePatten(String qualification, String simpleName) {
+			super(qualification, simpleName);
+		}
+	}
+
 	public ITypePattern parseType(String patternString) {
-		return new TypePatten(null, patternString);
+		return new TypePattern(null, patternString);
 	}
 
 	public String getDelimiterReplacementString() {
