@@ -1,8 +1,8 @@
 package org.eclipse.dltk.internal.ui;
 
-import org.eclipse.dltk.internal.ui.text.IInformationControlExtension4;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.IInformationControlCreator;
+import org.eclipse.jface.text.IInformationControlExtension4;
 import org.eclipse.jface.text.IInformationControlExtension5;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
