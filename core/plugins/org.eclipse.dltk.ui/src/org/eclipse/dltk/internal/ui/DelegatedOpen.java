@@ -12,11 +12,19 @@
 package org.eclipse.dltk.internal.ui;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.dltk.codeassist.ISelectionEngine;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.ui.IOpenDelegate;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PartInitException;
 
+/**
+ * Instances of this class are used to represent foreign elements returned from
+ * the {@link ISelectionEngine} after the corresponding {@link IOpenDelegate}
+ * factory was found.
+ * 
+ * @see IOpenDelegate
+ */
 public class DelegatedOpen {
 	private final IOpenDelegate adapter;
 	private final Object object;
@@ -31,6 +39,8 @@ public class DelegatedOpen {
 		try {
 			return adapter.openInEditor(object, activate);
 		} catch (PartInitException e) {
+			throw e;
+		} catch (ModelException e) {
 			throw e;
 		} catch (CoreException e) {
 			throw new ModelException(e);
