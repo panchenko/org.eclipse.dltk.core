@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Stack;
 
 import org.eclipse.core.filebuffers.IPersistableAnnotationModel;
@@ -97,7 +96,6 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.text.AbstractInformationControlManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.BadPositionCategoryException;
 import org.eclipse.jface.text.DefaultInformationControl;
@@ -111,9 +109,7 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextHover;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextSelection;
-import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension2;
-import org.eclipse.jface.text.ITextViewerExtension4;
 import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.text.IWidgetTokenKeeper;
 import org.eclipse.jface.text.Position;
@@ -127,9 +123,6 @@ import org.eclipse.jface.text.contentassist.IContentAssistant;
 import org.eclipse.jface.text.contentassist.IContentAssistantExtension2;
 import org.eclipse.jface.text.formatter.FormattingContextProperties;
 import org.eclipse.jface.text.formatter.IFormattingContext;
-import org.eclipse.jface.text.information.IInformationProvider;
-import org.eclipse.jface.text.information.IInformationProviderExtension;
-import org.eclipse.jface.text.information.IInformationProviderExtension2;
 import org.eclipse.jface.text.information.InformationPresenter;
 import org.eclipse.jface.text.link.ILinkedModeListener;
 import org.eclipse.jface.text.link.LinkedModeModel;
@@ -191,7 +184,6 @@ import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.IUpdate;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
-import org.eclipse.ui.texteditor.TextEditorAction;
 import org.eclipse.ui.texteditor.TextNavigationAction;
 import org.eclipse.ui.texteditor.TextOperationAction;
 import org.eclipse.ui.texteditor.templates.ITemplatesPage;
@@ -893,211 +885,6 @@ public abstract class ScriptEditor extends AbstractDecoratedTextEditor
 				getAction(IScriptEditorActionDefinitionIds.SHOW_OUTLINE));
 		menu.appendToGroup(IContextMenuConstants.GROUP_OPEN,
 				getAction(IScriptEditorActionDefinitionIds.OPEN_HIERARCHY));
-	}
-
-	/**
-	 * Information provider used to present focusable information shells.
-	 * 
-	 * 
-	 */
-	private static final class InformationProvider implements
-			IInformationProvider, IInformationProviderExtension,
-			IInformationProviderExtension2 {
-
-		private IRegion fHoverRegion;
-		private Object fHoverInfo;
-		private IInformationControlCreator fControlCreator;
-
-		InformationProvider(IRegion hoverRegion, Object hoverInfo,
-				IInformationControlCreator controlCreator) {
-			fHoverRegion = hoverRegion;
-			fHoverInfo = hoverInfo;
-			fControlCreator = controlCreator;
-		}
-
-		/*
-		 * @see
-		 * org.eclipse.jface.text.information.IInformationProvider#getSubject
-		 * (org.eclipse.jface.text.ITextViewer, int)
-		 */
-		public IRegion getSubject(ITextViewer textViewer, int invocationOffset) {
-			return fHoverRegion;
-		}
-
-		/*
-		 * @see
-		 * org.eclipse.jface.text.information.IInformationProvider#getInformation
-		 * (org.eclipse.jface.text.ITextViewer, org.eclipse.jface.text.IRegion)
-		 */
-		public String getInformation(ITextViewer textViewer, IRegion subject) {
-			return fHoverInfo.toString();
-		}
-
-		/*
-		 * @see
-		 * org.eclipse.jface.text.information.IInformationProviderExtension#
-		 * getInformation2(org.eclipse.jface.text.ITextViewer,
-		 * org.eclipse.jface.text.IRegion)
-		 */
-		public Object getInformation2(ITextViewer textViewer, IRegion subject) {
-			return fHoverInfo;
-		}
-
-		/*
-		 * @see
-		 * org.eclipse.jface.text.information.IInformationProviderExtension2
-		 * #getInformationPresenterControlCreator()
-		 */
-		public IInformationControlCreator getInformationPresenterControlCreator() {
-			return fControlCreator;
-		}
-	}
-
-	/**
-	 * This action behaves in two different ways: If there is no current text
-	 * hover, the documentation is displayed using information presenter. If
-	 * there is a current text hover, it is converted into a information
-	 * presenter in order to make it sticky.
-	 */
-	class InformationDispatchAction extends TextEditorAction {
-
-		/** The wrapped text operation action. */
-		private final TextOperationAction fTextOperationAction;
-
-		/**
-		 * Creates a dispatch action.
-		 * 
-		 * @param resourceBundle
-		 *            the resource bundle
-		 * @param prefix
-		 *            the prefix
-		 * @param textOperationAction
-		 *            the text operation action
-		 */
-		public InformationDispatchAction(ResourceBundle resourceBundle,
-				String prefix, final TextOperationAction textOperationAction) {
-			super(resourceBundle, prefix, ScriptEditor.this);
-			if (textOperationAction == null)
-				throw new IllegalArgumentException();
-			fTextOperationAction = textOperationAction;
-		}
-
-		/*
-		 * @see org.eclipse.jface.action.IAction#run()
-		 */
-		public void run() {
-
-			ISourceViewer sourceViewer = getSourceViewer();
-			if (sourceViewer == null) {
-				fTextOperationAction.run();
-				return;
-			}
-
-			if (sourceViewer instanceof ITextViewerExtension4) {
-				ITextViewerExtension4 extension4 = (ITextViewerExtension4) sourceViewer;
-				if (extension4.moveFocusToWidgetToken())
-					return;
-			}
-
-			if (sourceViewer instanceof ITextViewerExtension2) {
-				// does a text hover exist?
-				ITextHover textHover = ((ITextViewerExtension2) sourceViewer)
-						.getCurrentTextHover();
-				if (textHover != null
-						&& makeTextHoverFocusable(sourceViewer, textHover))
-					return;
-			}
-
-			/*
-			 * if (sourceViewer instanceof ISourceViewerExtension3) { // does an
-			 * annotation hover exist? IAnnotationHover annotationHover=
-			 * ((ISourceViewerExtension3)
-			 * sourceViewer).getCurrentAnnotationHover(); if (annotationHover !=
-			 * null && makeAnnotationHoverFocusable(sourceViewer,
-			 * annotationHover)) return; }
-			 */
-
-			// otherwise, just run the action
-			fTextOperationAction.run();
-		}
-
-		/**
-		 * Tries to make a text hover focusable (or "sticky").
-		 * 
-		 * @param sourceViewer
-		 *            the source viewer to display the hover over
-		 * @param textHover
-		 *            the hover to make focusable
-		 * @return <code>true</code> if successful, <code>false</code> otherwise
-		 * 
-		 */
-		private boolean makeTextHoverFocusable(ISourceViewer sourceViewer,
-				ITextHover textHover) {
-			Point hoverEventLocation = ((ITextViewerExtension2) sourceViewer)
-					.getHoverEventLocation();
-			int offset = computeOffsetAtLocation(sourceViewer,
-					hoverEventLocation.x, hoverEventLocation.y);
-			if (offset == -1)
-				return false;
-
-			IRegion hoverRegion = textHover
-					.getHoverRegion(sourceViewer, offset);
-			if (hoverRegion == null)
-				return false;
-
-			String hoverInfo = textHover
-					.getHoverInfo(sourceViewer, hoverRegion);
-
-			IInformationControlCreator controlCreator = null;
-			if (textHover instanceof IInformationProviderExtension2)
-				controlCreator = ((IInformationProviderExtension2) textHover)
-						.getInformationPresenterControlCreator();
-
-			IInformationProvider informationProvider = new InformationProvider(
-					hoverRegion, hoverInfo, controlCreator);
-
-			fInformationPresenter.setOffset(offset);
-			fInformationPresenter
-					.setAnchor(AbstractInformationControlManager.ANCHOR_BOTTOM);
-			fInformationPresenter.setMargins(6, 6); // default values from
-			// AbstractInformationControlManager
-			String contentType = IDocument.DEFAULT_CONTENT_TYPE;
-			fInformationPresenter.setInformationProvider(informationProvider,
-					contentType);
-			fInformationPresenter.showInformation();
-
-			return true;
-
-		}
-
-		// modified version from TextViewer
-		private int computeOffsetAtLocation(ITextViewer textViewer, int x, int y) {
-
-			StyledText styledText = textViewer.getTextWidget();
-			IDocument document = textViewer.getDocument();
-
-			if (document == null)
-				return -1;
-
-			try {
-				int widgetOffset = styledText.getOffsetAtLocation(new Point(x,
-						y));
-				Point p = styledText.getLocationAtOffset(widgetOffset);
-				if (p.x > x)
-					widgetOffset--;
-
-				if (textViewer instanceof ITextViewerExtension5) {
-					ITextViewerExtension5 extension = (ITextViewerExtension5) textViewer;
-					return extension.widgetOffset2ModelOffset(widgetOffset);
-				} else {
-					IRegion visibleRegion = textViewer.getVisibleRegion();
-					return widgetOffset + visibleRegion.getOffset();
-				}
-			} catch (IllegalArgumentException e) {
-				return -1;
-			}
-
-		}
 	}
 
 	@Override
