@@ -52,6 +52,7 @@ public abstract class LazyScriptTypeCompletionProposal extends
 		return fSimpleName;
 	}
 
+	@Override
 	protected String computeReplacementString() {
 		String replacement = super.computeReplacementString();
 
@@ -101,6 +102,7 @@ public abstract class LazyScriptTypeCompletionProposal extends
 		return qualifiedTypeName;
 	}
 
+	@Override
 	public void apply(IDocument document, char trigger, int offset) {
 		boolean insertClosingParenthesis = trigger == '('
 				&& autocloseBrackets();
@@ -222,11 +224,13 @@ public abstract class LazyScriptTypeCompletionProposal extends
 		return false;
 	}
 
+	@Override
 	protected boolean isValidPrefix(String prefix) {
 		return isPrefix(prefix, getSimpleTypeName())
 				|| isPrefix(prefix, getQualifiedTypeName());
 	}
 
+	@Override
 	public CharSequence getPrefixCompletionText(IDocument document,
 			int completionOffset) {
 		String prefix = getPrefix(document, completionOffset);
@@ -248,10 +252,12 @@ public abstract class LazyScriptTypeCompletionProposal extends
 
 	protected abstract char[] getDocTriggers();
 
+	@Override
 	protected char[] computeTriggerCharacters() {
 		return isInDoc() ? getDocTriggers() : getTypeTriggers();
 	}
 
+	@Override
 	protected ICompletionProposalInfo computeProposalInfo() {
 		if (fSourceModule != null) {
 			IScriptProject project = fSourceModule.getScriptProject();
@@ -261,6 +267,7 @@ public abstract class LazyScriptTypeCompletionProposal extends
 		return super.computeProposalInfo();
 	}
 
+	@Override
 	protected int computeRelevance() {
 		/*
 		 * There are two histories: the RHS history remembers types used for the

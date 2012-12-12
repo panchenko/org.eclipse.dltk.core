@@ -60,6 +60,7 @@ public abstract class LazyScriptCompletionProposal extends
 		fProposal = proposal;
 	}
 
+	@Override
 	public final char[] getTriggerCharacters() {
 		if (!fTriggerCharactersComputed) {
 			setTriggerCharacters(computeTriggerCharacters());
@@ -79,6 +80,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 *            The set of characters which can trigger the application of
 	 *            this completion proposal
 	 */
+	@Override
 	public final void setTriggerCharacters(char[] triggerCharacters) {
 		fTriggerCharactersComputed = true;
 		super.setTriggerCharacters(triggerCharacters);
@@ -91,7 +93,8 @@ public abstract class LazyScriptCompletionProposal extends
 	 *            The additional information associated with this proposal or
 	 *            <code>null</code>
 	 */
-	public final void setProposalInfo(ProposalInfo proposalInfo) {
+	@Override
+	public final void setProposalInfo(ICompletionProposalInfo proposalInfo) {
 		fProposalInfoComputed = true;
 		super.setProposalInfo(proposalInfo);
 	}
@@ -102,6 +105,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * 
 	 * @return the additional proposal info, or <code>null</code> if none exists
 	 */
+	@Override
 	public final ICompletionProposalInfo getProposalInfo() {
 		if (!fProposalInfoComputed) {
 			setProposalInfo(computeProposalInfo());
@@ -122,11 +126,13 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param cursorPosition
 	 *            The cursorPosition to set
 	 */
+	@Override
 	public final void setCursorPosition(int cursorPosition) {
 		fCursorPositionComputed = true;
 		super.setCursorPosition(cursorPosition);
 	}
 
+	@Override
 	protected final int getCursorPosition() {
 		if (!fCursorPositionComputed) {
 			setCursorPosition(computeCursorPosition());
@@ -138,6 +144,7 @@ public abstract class LazyScriptCompletionProposal extends
 		return getReplacementString().length();
 	}
 
+	@Override
 	protected boolean isInDoc() {
 		final CompletionContext coreContext = fInvocationContext
 				.getCoreContext();
@@ -145,6 +152,7 @@ public abstract class LazyScriptCompletionProposal extends
 		return coreContext != null && coreContext.isInDoc();
 	}
 
+	@Override
 	public final IContextInformation getContextInformation() {
 		if (!fContextInformationComputed) {
 			setContextInformation(computeContextInformation());
@@ -162,6 +170,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param contextInformation
 	 *            The context information associated with this proposal
 	 */
+	@Override
 	public final void setContextInformation(
 			IContextInformation contextInformation) {
 		fContextInformationComputed = true;
@@ -171,6 +180,7 @@ public abstract class LazyScriptCompletionProposal extends
 	/*
 	 * @see ICompletionProposal#getDisplayString()
 	 */
+	@Override
 	public final String getDisplayString() {
 		if (!fDisplayStringComputed) {
 			setDisplayString(computeDisplayString());
@@ -178,6 +188,7 @@ public abstract class LazyScriptCompletionProposal extends
 		return super.getDisplayString();
 	}
 
+	@Override
 	protected final void setDisplayString(String string) {
 		fDisplayStringComputed = true;
 		super.setDisplayString(string);
@@ -187,10 +198,12 @@ public abstract class LazyScriptCompletionProposal extends
 		return fInvocationContext.getLabelProvider().createLabel(fProposal);
 	}
 
+	@Override
 	public final String getAdditionalProposalInfo() {
 		return super.getAdditionalProposalInfo();
 	}
 
+	@Override
 	public final int getContextInformationPosition() {
 		if (getContextInformation() == null) {
 			return getReplacementOffset() - 1;
@@ -203,6 +216,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * 
 	 * @return Returns a int
 	 */
+	@Override
 	public final int getReplacementOffset() {
 		if (!fReplacementOffsetComputed) {
 			setReplacementOffset(fProposal.getReplaceStart());
@@ -216,11 +230,13 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param replacementOffset
 	 *            The replacement offset to set
 	 */
+	@Override
 	public final void setReplacementOffset(int replacementOffset) {
 		fReplacementOffsetComputed = true;
 		super.setReplacementOffset(replacementOffset);
 	}
 
+	@Override
 	public final int getPrefixCompletionStart(IDocument document,
 			int completionOffset) {
 		return getReplacementOffset();
@@ -231,6 +247,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * 
 	 * @return Returns a int
 	 */
+	@Override
 	public final int getReplacementLength() {
 		if (!fReplacementLengthComputed)
 			setReplacementLength(fProposal.getReplaceEnd()
@@ -244,6 +261,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param replacementLength
 	 *            The replacementLength to set
 	 */
+	@Override
 	public final void setReplacementLength(int replacementLength) {
 		fReplacementLengthComputed = true;
 		super.setReplacementLength(replacementLength);
@@ -271,11 +289,13 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param replacementString
 	 *            The replacement string to set
 	 */
+	@Override
 	public final void setReplacementString(String replacementString) {
 		fReplacementStringComputed = true;
 		super.setReplacementString(replacementString);
 	}
 
+	@Override
 	public final Image getImage() {
 		if (!fImageComputed)
 			setImage(computeImage());
@@ -294,11 +314,13 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param image
 	 *            The image to set
 	 */
+	@Override
 	public final void setImage(Image image) {
 		fImageComputed = true;
 		super.setImage(image);
 	}
 
+	@Override
 	protected boolean isValidPrefix(String prefix) {
 		if (super.isValidPrefix(prefix))
 			return true;
@@ -319,6 +341,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * 
 	 * @return Returns a int
 	 */
+	@Override
 	public final int getRelevance() {
 		if (!fRelevanceComputed)
 			setRelevance(computeRelevance());
@@ -331,6 +354,7 @@ public abstract class LazyScriptCompletionProposal extends
 	 * @param relevance
 	 *            The relevance to set
 	 */
+	@Override
 	public final void setRelevance(int relevance) {
 		fRelevanceComputed = true;
 		super.setRelevance(relevance);
@@ -368,6 +392,7 @@ public abstract class LazyScriptCompletionProposal extends
 		}
 	}
 
+	@Override
 	public final void setSortString(String string) {
 		// fSortStringComputed = true;
 		super.setSortString(string);
