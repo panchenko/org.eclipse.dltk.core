@@ -48,6 +48,7 @@ public class ScriptTypeCompletionProposal extends ScriptCompletionProposal {
 	}
 
 
+	@Override
 	public void apply(IDocument document, char trigger, int offset) {
 		try {
 
@@ -65,14 +66,17 @@ public class ScriptTypeCompletionProposal extends ScriptCompletionProposal {
 		}
 	}
 	
+	@Override
 	protected boolean isValidPrefix(String prefix) {
 		return super.isValidPrefix(prefix) || isPrefix(prefix, fUnqualifiedTypeName) || isPrefix(prefix, fFullyQualifiedTypeName);
 	}
 
+	@Override
 	public CharSequence getPrefixCompletionText(IDocument document, int completionOffset) {
 		return fUnqualifiedTypeName;
 	}
 
+	@Override
 	protected boolean isSmartTrigger(char trigger) {		
 		return false;
 	}

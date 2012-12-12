@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.dltk.internal.corext.util.Messages;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
+import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.osgi.framework.Bundle;
 
 public final class ProposalSorterHandle {
@@ -166,7 +167,8 @@ public final class ProposalSorterHandle {
 	 * @param proposals the list of computed completion proposals to be sorted (element type:
 	 *        {@link org.eclipse.jface.text.contentassist.ICompletionProposal}), must be writable
 	 */
-	public void sortProposals(ContentAssistInvocationContext context, List proposals) {
+	public void sortProposals(ContentAssistInvocationContext context,
+			List<ICompletionProposal> proposals) {
 		IStatus status;
 		try {
 			AbstractProposalSorter sorter= getSorter();

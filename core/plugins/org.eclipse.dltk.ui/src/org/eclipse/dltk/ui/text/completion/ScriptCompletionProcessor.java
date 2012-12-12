@@ -97,6 +97,7 @@ public abstract class ScriptCompletionProcessor extends ContentAssistProcessor {
 	 * getContextInformationValidator()
 	 */
 	// should be final? breaks api?
+	@Override
 	public IContextInformationValidator getContextInformationValidator() {
 		if (fValidator == null) {
 			fValidator = createContextInformationValidator();

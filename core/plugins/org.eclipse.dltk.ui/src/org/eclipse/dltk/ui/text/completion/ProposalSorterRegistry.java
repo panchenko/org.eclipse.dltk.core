@@ -12,7 +12,6 @@ package org.eclipse.dltk.ui.text.completion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,7 @@ public final class ProposalSorterRegistry {
 	private final IPreferenceStore fPreferenceStore;
 	private final String fKey;
 
-	private Map fSorters= null;
+	private Map<String, ProposalSorterHandle> fSorters = null;
 	private ProposalSorterHandle fDefaultSorter;
 
 	private ProposalSorterRegistry(final IPreferenceStore preferenceStore, final String key) {
@@ -58,7 +57,7 @@ public final class ProposalSorterRegistry {
 	public ProposalSorterHandle getCurrentSorter() {
 		ensureSortersRead();
 		String id= fPreferenceStore.getString(fKey);
-		ProposalSorterHandle sorter= (ProposalSorterHandle) fSorters.get(id);
+		ProposalSorterHandle sorter = fSorters.get(id);
 		return sorter != null ? sorter : fDefaultSorter;
 	}
 
@@ -66,12 +65,13 @@ public final class ProposalSorterRegistry {
 		if (fSorters != null)
 			return;
 
-		Map sorters= new LinkedHashMap();
+		Map<String, ProposalSorterHandle> sorters = new LinkedHashMap<String, ProposalSorterHandle>();
 		IExtensionRegistry registry= Platform.getExtensionRegistry();
-		List elements= new ArrayList(Arrays.asList(registry.getConfigurationElementsFor(DLTKUIPlugin.PLUGIN_ID, EXTENSION_POINT)));
+		List<IConfigurationElement> elements = new ArrayList<IConfigurationElement>(
+				Arrays.asList(registry.getConfigurationElementsFor(
+						DLTKUIPlugin.PLUGIN_ID, EXTENSION_POINT)));
 
-		for (Iterator iter= elements.iterator(); iter.hasNext();) {
-			IConfigurationElement element= (IConfigurationElement) iter.next();
+		for (IConfigurationElement element : elements) {
 			
 			try {
 			
@@ -106,8 +106,8 @@ public final class ProposalSorterRegistry {
 
 	public ProposalSorterHandle[] getSorters() {
 		ensureSortersRead();
-		Collection sorters= fSorters.values();
-		return (ProposalSorterHandle[]) sorters.toArray(new ProposalSorterHandle[sorters.size()]);
+		Collection<ProposalSorterHandle> sorters = fSorters.values();
+		return sorters.toArray(new ProposalSorterHandle[sorters.size()]);
 	}
 
 	public void select(ProposalSorterHandle handle) {

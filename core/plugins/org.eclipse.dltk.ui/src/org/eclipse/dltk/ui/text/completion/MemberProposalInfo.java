@@ -50,6 +50,7 @@ public abstract class MemberProposalInfo extends ProposalInfo {
 	 *         <code>null</code>
 	 * @throws ModelException
 	 */
+	@Override
 	public IModelElement getModelElement() throws ModelException {
 //		if (!fModelElementResolved) {
 //			fModelElementResolved = true;

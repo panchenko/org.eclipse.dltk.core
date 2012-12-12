@@ -63,6 +63,7 @@ public class ProposalContextInformation implements IContextInformation,
 	/*
 	 * @see IContextInformation#equals
 	 */
+	@Override
 	public boolean equals(Object object) {
 		if (object instanceof IContextInformation) {
 			IContextInformation contextInformation = (IContextInformation) object;

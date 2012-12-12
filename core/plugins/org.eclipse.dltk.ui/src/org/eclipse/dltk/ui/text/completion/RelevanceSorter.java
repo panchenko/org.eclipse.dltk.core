@@ -18,11 +18,12 @@ import org.eclipse.jface.text.contentassist.ICompletionProposal;
  */
 public final class RelevanceSorter extends AbstractProposalSorter {
 
-	private final Comparator fComparator= new CompletionProposalComparator();
+	private final Comparator<ICompletionProposal> fComparator = new CompletionProposalComparator();
 
 	public RelevanceSorter() {
 	}
 		
+	@Override
 	public int compare(ICompletionProposal p1, ICompletionProposal p2) {
 		return fComparator.compare(p1, p2);
 	}

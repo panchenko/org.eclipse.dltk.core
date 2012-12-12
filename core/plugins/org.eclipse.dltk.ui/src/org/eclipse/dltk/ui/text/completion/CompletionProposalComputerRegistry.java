@@ -223,7 +223,6 @@ public final class CompletionProposalComputerRegistry {
 			try {
 				CompletionProposalComputerDescriptor desc = new CompletionProposalComputerDescriptor(
 						element, this, categories);
-				@SuppressWarnings("unchecked")
 				final Set<String> partitions = desc.getPartitions();
 				for (String partition : partitions) {
 					List<CompletionProposalComputerDescriptor> list = map

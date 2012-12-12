@@ -22,6 +22,7 @@ public final class AlphabeticSorter extends AbstractProposalSorter {
 		fComparator.setOrderAlphabetically(true);
 	}
 	
+	@Override
 	public int compare(ICompletionProposal p1, ICompletionProposal p2) {
 		return fComparator.compare(p1, p2);
 	}

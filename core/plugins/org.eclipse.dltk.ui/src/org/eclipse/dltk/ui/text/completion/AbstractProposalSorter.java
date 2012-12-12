@@ -29,7 +29,8 @@ import org.eclipse.jface.text.contentassist.ICompletionProposal;
  * The orderings imposed by a subclass need not be consistent with equals.
  * </p>
  */
-public abstract class AbstractProposalSorter implements Comparator {
+public abstract class AbstractProposalSorter implements
+		Comparator<ICompletionProposal> {
 
 	/**
 	 * Creates a new sorter. Note that subclasses must provide a zero-argument
@@ -63,7 +64,7 @@ public abstract class AbstractProposalSorter implements Comparator {
 	 *            the list of proposals to be sorted
 	 */
 	public void beginSorting(ContentAssistInvocationContext context,
-			List proposals) {
+			List<ICompletionProposal> proposals) {
 		beginSorting(context);
 	}
 
@@ -84,6 +85,7 @@ public abstract class AbstractProposalSorter implements Comparator {
 	 *            the second proposal to be compared
 	 * @return a negative integer, zero, or a positive integer as the first
 	 *         argument is less than, equal to, or greater than the second.
+	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
 	 */
 	public abstract int compare(ICompletionProposal p1, ICompletionProposal p2);
 
@@ -94,20 +96,5 @@ public abstract class AbstractProposalSorter implements Comparator {
 	 * </p>
 	 */
 	public void endSorting() {
-	}
-
-	/**
-	 * This method delegates to
-	 * {@link #compare(ICompletionProposal, ICompletionProposal)} and may be
-	 * removed if the class is ever converted to extend
-	 * <code>Comparator&lt;ICompletionProposal&gt;</code>.
-	 * 
-	 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-	 */
-	public final int compare(Object o1, Object o2) {
-		ICompletionProposal p1 = (ICompletionProposal) o1;
-		ICompletionProposal p2 = (ICompletionProposal) o2;
-
-		return compare(p1, p2);
 	}
 }

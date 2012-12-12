@@ -11,7 +11,6 @@ package org.eclipse.dltk.ui.text.completion;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -177,10 +176,7 @@ final class CompletionProposalComputerDescriptor {
 		if (categoryId == null)
 			categoryId = DEFAULT_CATEGORY_ID;
 		CompletionProposalCategory category = null;
-		for (Iterator<CompletionProposalCategory> it = categories.iterator(); it
-				.hasNext();) {
-			CompletionProposalCategory cat = (CompletionProposalCategory) it
-					.next();
+		for (CompletionProposalCategory cat : categories) {
 			if (cat.getId().equals(categoryId)) {
 				category = cat;
 				break;

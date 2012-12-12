@@ -4,7 +4,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.core.ISourceModule;
-import org.eclipse.dltk.ui.text.completion.ScriptTypeCompletionProposal;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -32,10 +31,12 @@ public class ScriptOverrideCompletionProposal extends ScriptTypeCompletionPropos
 		setReplacementString(buffer.toString());		
 	}
 
+	@Override
 	public CharSequence getPrefixCompletionText(IDocument document, int completionOffset) {
 		return fMethodName;
 	}
 
+	@Override
 	protected boolean updateReplacementString(IDocument document, char trigger, int offset) throws CoreException, BadLocationException {
 		final IDocument buffer= new Document(document.get());
 		int index= offset - 1;
@@ -50,6 +51,7 @@ public class ScriptOverrideCompletionProposal extends ScriptTypeCompletionPropos
 		return false;
 	}
 	
+	@Override
 	public IContextInformation getContextInformation() {		
 		return new ContextInformation(getDisplayString(), getDisplayString());
 	}
