@@ -22,18 +22,42 @@ import org.eclipse.dltk.internal.core.ModelManager;
 import org.eclipse.dltk.utils.TextUtils;
 import org.junit.Assert;
 
+/**
+ * The ProjectSetup Rule provides convenient way of creating workspace project
+ * based on prepared template in JUnit4 tests:
+ * 
+ * <pre>
+ * &#064;ClassRule
+ * public static final ProjectSetup PROJECT = new ProjectSetup(....);
+ * </pre>
+ * 
+ * In JUnit versions before 4.9 &#064;ClassRule was not available, so instead of
+ * it, {@link #create(ProjectSetup...)} and {@link #delete(ProjectSetup...)}
+ * methods should be called manually from the methods annotated with
+ * &#064;BeforeClas and &#064;AfterClass.
+ */
 public class ProjectSetup extends AbstractProjectSetup {
 
 	public static enum Option {
 		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY
 	}
 
+	/**
+	 * This method implements workaround when using this class in JUnit before
+	 * 4.9 (without &#64;ClassRule) and should be called from the method
+	 * annotated with &#64;BeforeClass
+	 */
 	public static void create(ProjectSetup... projects) throws Throwable {
 		for (ProjectSetup project : projects) {
 			project.before();
 		}
 	}
 
+	/**
+	 * This method implements workaround when using this class in JUnit before
+	 * 4.9 (without &#64;ClassRule) and should be called from the method
+	 * annotated with &#64;AfterClass
+	 */
 	public static void delete(ProjectSetup... projects) {
 		for (ProjectSetup project : projects) {
 			project.after();
