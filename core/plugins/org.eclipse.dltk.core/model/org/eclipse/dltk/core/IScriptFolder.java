@@ -11,6 +11,18 @@ package org.eclipse.dltk.core;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
+/**
+ * A script fragment is a portion of the workspace corresponding to an entire
+ * package, or to a portion thereof.
+ * <p>
+ * Script folder elements need to be opened before they can be navigated or
+ * manipulated. The children are of type <code>ISourceModule</code>
+ * (representing a source file) or <code>IBinaryModule</code> (representing a
+ * binary class file). The children are listed in no particular order.
+ * </p>
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
+ */
 public interface IScriptFolder extends IOpenable, IParent, IModelElement,
 		ISourceManipulation {
 

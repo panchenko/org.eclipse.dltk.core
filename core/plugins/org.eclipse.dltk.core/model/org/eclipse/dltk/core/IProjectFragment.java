@@ -12,6 +12,22 @@ package org.eclipse.dltk.core;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+/**
+ * A project fragment contains a set of script folders. It corresponds to an
+ * underlying resource which is either a folder or an archive (like JAR/zip). In
+ * the case of a folder, all descendant folders represent script folders. For a
+ * given child folder representing a script folder, the corresponding folder
+ * name is composed of the folder names between the folder for this project
+ * fragment and the child folder representing the script folder, separated by
+ * '/'. In the case of a archive (JAR/zip), the contents of the archive dictates
+ * the set of script folders in an analogous manner. Project fragments need to
+ * be opened before they can be navigated or manipulated.
+ * 
+ * The children are of type <code>IScriptFolder</code>, and are in no particular
+ * order.
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
+ */
 public interface IProjectFragment extends IParent, IModelElement, IOpenable {
 
 	
