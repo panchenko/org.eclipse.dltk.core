@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.eclipse.dltk.core.IModelElement;
+import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.internal.codeassist.impl.AssistOptions;
 import org.eclipse.dltk.internal.codeassist.impl.Engine;
 import org.eclipse.dltk.internal.compiler.lookup.LookupEnvironment;
@@ -72,6 +73,20 @@ public abstract class ScriptSelectionEngine extends Engine implements
 	 */
 	protected void reportForeignElement(Object object) {
 		requestor.acceptForeignElement(object);
+	}
+
+	/**
+	 * @since 5.0
+	 */
+	protected void reportElement(Object element) {
+		requestor.acceptElement(element, null);
+	}
+
+	/**
+	 * @since 5.0
+	 */
+	protected void reportElement(Object element, ISourceRange range) {
+		requestor.acceptElement(element, range);
 	}
 
 	public void setOptions(Map options) {

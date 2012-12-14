@@ -38,6 +38,14 @@ public class ModelElementArray {
 		this.elements = elements;
 	}
 
+	/**
+	 * @since 5.0
+	 */
+	public ModelElementArray(Collection<?> elements) {
+		Assert.isLegal(elements != null && elements.size() > 1);
+		this.elements = elements.toArray();
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof ModelElementArray) {

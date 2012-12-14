@@ -15,8 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.dltk.annotations.NonNull;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.ICodeAssist;
+import org.eclipse.dltk.core.ICodeSelection;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ISourceRange;
@@ -291,12 +293,18 @@ public class SelectionConverter {
 		return ScriptModelUtil.NO_ELEMENTS;
 	}
 
-	public static Object[] filterElements(Object[] elements) {
-		if (elements == null || elements.length == 0)
+	/**
+	 * Takes the specified {@link ICodeSelection} and extracts
+	 * {@link IModelElement}s and those elements which are supported by some
+	 * {@link IOpenDelegate} (for the latter elements the {@link DelegatedOpen}
+	 * instances are created).
+	 */
+	@NonNull
+	public static Object[] filterElements(Iterable<Object> selection) {
+		if (selection == null)
 			return ScriptModelUtil.NO_ELEMENTS;
-		final List<Object> output = new ArrayList<Object>(elements.length);
-		for (int i = 0; i < elements.length; ++i) {
-			final Object element = elements[i];
+		final List<Object> output = new ArrayList<Object>();
+		for (final Object element : selection) {
 			if (element instanceof IModelElement) {
 				output.add(element);
 			} else {
@@ -325,7 +333,6 @@ public class SelectionConverter {
 		}
 		return null;
 	}
-
 
 	// public static IModelElement[] resolveSelectedElements(IModelElement input
 	// , ITextSelection selection) throws ModelException {

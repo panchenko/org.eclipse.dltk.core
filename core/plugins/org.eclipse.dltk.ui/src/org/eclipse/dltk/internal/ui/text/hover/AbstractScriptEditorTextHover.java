@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.dltk.core.DLTKLanguageManager;
 import org.eclipse.dltk.core.ICodeAssist;
+import org.eclipse.dltk.core.ICodeSelection;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ISourceModule;
@@ -138,36 +139,14 @@ public abstract class AbstractScriptEditorTextHover implements
 				} catch (BadLocationException e) {
 				}
 
-				Object[] result = resolve.codeSelectAll(
+				final ICodeSelection result = resolve.codeSelectAll(
 						hoverRegion.getOffset(), hoverRegion.getLength());
 
 				if (result == null) {
-					return null;
-				}
-
-				int nResults = result.length;
-
-				if (nResults == 0) {
 					if (content != null) {
 						return getHoverInfo(nature, content);
 					}
 					return null;
-				}
-				if (nResults > 1) {
-					for (int i = 1; i < result.length; i++) {
-						final Object ith = result[i];
-						if (ith instanceof IModelElement) {
-							final String elementName = ((IModelElement) ith)
-									.getElementName();
-							if (content.equals(elementName)) {
-								// exact match is found swap this with the first
-								Object first = result[0];
-								result[0] = ith;
-								result[i] = first;
-								break;
-							}
-						}
-					}
 				}
 				return getHoverInfo(nature, result);
 
@@ -204,6 +183,17 @@ public abstract class AbstractScriptEditorTextHover implements
 		}
 		return getHoverInfo(nature,
 				modelElements.toArray(new IModelElement[modelElements.size()]));
+	}
+
+	/**
+	 * Provides hover information for the given elements.
+	 * 
+	 * @param selection
+	 *            the Script elements for which to provide hover information
+	 * @return the hover information string
+	 */
+	protected String getHoverInfo(String nature, ICodeSelection selection) {
+		return getHoverInfo(nature, selection.toArray());
 	}
 
 	/**

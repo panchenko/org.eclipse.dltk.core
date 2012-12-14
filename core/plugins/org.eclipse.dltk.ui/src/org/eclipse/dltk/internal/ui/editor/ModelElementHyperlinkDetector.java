@@ -11,18 +11,26 @@
  *******************************************************************************/
 package org.eclipse.dltk.internal.ui.editor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.dltk.core.ICodeAssist;
+import org.eclipse.dltk.core.ICodeSelection;
 import org.eclipse.dltk.core.IModelElement;
+import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.core.ModelException;
-import org.eclipse.dltk.internal.ui.actions.SelectionConverter;
+import org.eclipse.dltk.internal.ui.DelegatedOpen;
+import org.eclipse.dltk.internal.ui.OpenDelegateManager;
 import org.eclipse.dltk.internal.ui.text.ScriptWordFinder;
+import org.eclipse.dltk.ui.IOpenDelegate;
 import org.eclipse.dltk.ui.actions.OpenAction;
 import org.eclipse.dltk.ui.infoviews.ModelElementArray;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.hyperlink.IHyperlink;
 import org.eclipse.jface.text.hyperlink.IHyperlinkDetector;
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -75,14 +83,38 @@ public class ModelElementHyperlinkDetector implements IHyperlinkDetector {
 			if (wordRegion == null || wordRegion.getLength() == 0)
 				return null;
 
-			final Object[] elements = SelectionConverter
-					.filterElements(((ICodeAssist) input).codeSelectAll(
-							wordRegion.getOffset(), wordRegion.getLength()));
-			if (elements.length > 0) {
+			final ICodeSelection selection = ((ICodeAssist) input)
+					.codeSelectAll(wordRegion.getOffset(),
+							wordRegion.getLength());
+			if (selection == null) {
+				return null;
+			}
+			final List<Object> elements = new ArrayList<Object>(
+					selection.size());
+			for (Object element : selection) {
+				if (element instanceof IModelElement) {
+					elements.add(element);
+				} else {
+					final IOpenDelegate adapter = OpenDelegateManager
+							.findFor(element);
+					if (adapter != null) {
+						elements.add(new DelegatedOpen(adapter, element));
+					} else {
+						continue;
+					}
+				}
+			}
+			if (!elements.isEmpty()) {
 				final IHyperlink link;
-				if (elements.length == 1) {
-					link = new ModelElementHyperlink(wordRegion, elements[0],
-							openAction);
+				if (elements.size() == 1) {
+					final ISourceRange elementRange = selection
+							.rangeOf(elements.get(0));
+					if (elementRange != null) {
+						wordRegion = new Region(elementRange.getOffset(),
+								elementRange.getLength());
+					}
+					link = new ModelElementHyperlink(wordRegion,
+							elements.get(0), openAction);
 				} else {
 					link = new ModelElementHyperlink(wordRegion,
 							new ModelElementArray(elements), openAction);

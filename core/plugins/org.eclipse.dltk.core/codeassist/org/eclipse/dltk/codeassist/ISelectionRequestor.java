@@ -11,7 +11,10 @@
  *******************************************************************************/
 package org.eclipse.dltk.codeassist;
 
+import org.eclipse.dltk.annotations.NonNull;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.core.IModelElement;
+import org.eclipse.dltk.core.ISourceRange;
 
 /**
  * @since 3.0
@@ -20,6 +23,8 @@ public interface ISelectionRequestor {
 
 	void acceptModelElement(IModelElement element);
 
-	void acceptForeignElement(Object object);
+	void acceptElement(@NonNull Object element, @Nullable ISourceRange range);
+
+	void acceptForeignElement(Object element);
 
 }

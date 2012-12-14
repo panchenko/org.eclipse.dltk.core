@@ -9,6 +9,8 @@
  *******************************************************************************/
 package org.eclipse.dltk.core;
 
+import org.eclipse.dltk.annotations.Nullable;
+
 /**
  * Common protocol for Script elements that support source code assist and code
  * resolve.
@@ -168,14 +170,26 @@ public interface ICodeAssist {
 			throws ModelException;
 
 	/**
-	 * @since 3.0
+	 * Returns the elements corresponding to the given selected text in this
+	 * compilation unit.
+	 * 
+	 * @return the elements corresponding to the given selected text, or
+	 *         <code>null</code> if nothing found
+	 * @since 5.0
 	 */
-	Object[] codeSelectAll(int offset, int length) throws ModelException;
+	@Nullable
+	ICodeSelection codeSelectAll(int offset, int length) throws ModelException;
 
 	/**
-	 * @since 3.0
+	 * Returns the elements corresponding to the given selected text in this
+	 * compilation unit.
+	 * 
+	 * @return the elements corresponding to the given selected text, or
+	 *         <code>null</code> if nothing found
+	 * @since 5.0
 	 */
-	Object[] codeSelectAll(int offset, int length, WorkingCopyOwner owner)
+	@Nullable
+	ICodeSelection codeSelectAll(int offset, int length, WorkingCopyOwner owner)
 			throws ModelException;
 
 }

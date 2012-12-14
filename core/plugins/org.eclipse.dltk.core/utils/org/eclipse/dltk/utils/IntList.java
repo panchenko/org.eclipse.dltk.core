@@ -22,6 +22,11 @@ public class IntList {
 		public void setSize(int newSize) {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public String toString() {
+			return "IntList.EMPTY_LIST";
+		}
 	};
 
 	private int[] values;
@@ -96,6 +101,19 @@ public class IntList {
 
 	public void clear() {
 		this.length = 0;
+	}
+
+	public void set(int index, int value) {
+		assert index < length;
+		values[index] = value;
+	}
+
+	public int first() {
+		return values[0];
+	}
+
+	public int last() {
+		return values[length - 1];
 	}
 
 }

@@ -43,6 +43,7 @@ import org.eclipse.dltk.core.IModelStatusConstants;
 import org.eclipse.dltk.core.IOpenable;
 import org.eclipse.dltk.core.IProjectFragment;
 import org.eclipse.dltk.core.IScriptProject;
+import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.core.ScriptModelUtil;
 import org.eclipse.dltk.core.WorkingCopyOwner;
@@ -563,15 +564,33 @@ public abstract class Openable extends ModelElement implements IOpenable,
 	}
 
 	static class ModelElementSelectionRequestor implements ISelectionRequestor {
-		final List<IModelElement> elements = new ArrayList<IModelElement>();
-		final List<Object> foreignElements = new ArrayList<Object>();
+		private final List<IModelElement> elements = new ArrayList<IModelElement>();
+		private List<Object> foreignElements;
+		private Map<Object, ISourceRange> ranges;
 
-		public void acceptForeignElement(Object object) {
-			foreignElements.add(object);
+		public void acceptForeignElement(Object element) {
+			if (element instanceof IModelElement) {
+				acceptModelElement((IModelElement) element);
+			} else {
+				if (foreignElements == null) {
+					foreignElements = new ArrayList<Object>();
+				}
+				foreignElements.add(element);
+			}
 		}
 
 		public void acceptModelElement(IModelElement element) {
 			elements.add(element);
+		}
+
+		public void acceptElement(Object element, ISourceRange range) {
+			acceptForeignElement(element);
+			if (range != null) {
+				if (ranges == null) {
+					ranges = new HashMap<Object, ISourceRange>();
+				}
+				ranges.put(element, range);
+			}
 		}
 
 		void addModelElements(IModelElement[] elements) {
@@ -587,18 +606,22 @@ public abstract class Openable extends ModelElement implements IOpenable,
 		}
 
 		boolean isEmpty() {
-			return elements.isEmpty() && foreignElements.isEmpty();
+			return elements.isEmpty()
+					&& (foreignElements == null || foreignElements.isEmpty());
 		}
 
-		Object[] toArray() {
+		CodeSelection asResponse() {
 			if (isEmpty()) {
-				return ScriptModelUtil.NO_ELEMENTS;
+				return null;
 			} else {
-				final List<Object> result = new ArrayList<Object>(
-						elements.size() + foreignElements.size());
-				result.addAll(elements);
-				result.addAll(foreignElements);
-				return result.toArray(new Object[result.size()]);
+				final IModelElement[] elementArray = elements != null
+						&& !elements.isEmpty() ? elements
+						.toArray(new IModelElement[elements.size()]) : null;
+				final Object[] foreignElementArray = foreignElements != null
+						&& !foreignElements.isEmpty() ? foreignElements
+						.toArray() : null;
+				return new CodeSelection(elementArray, foreignElementArray,
+						ranges);
 			}
 		}
 	}
@@ -656,12 +679,12 @@ public abstract class Openable extends ModelElement implements IOpenable,
 		return requestor.toModelElementArray();
 	}
 
-	protected Object[] codeSelectAll(
+	protected CodeSelection codeSelectAll(
 			org.eclipse.dltk.compiler.env.IModuleSource cu, int offset,
 			int length, WorkingCopyOwner owner) throws ModelException {
 		final ModelElementSelectionRequestor requestor = new ModelElementSelectionRequestor();
 		codeSelect(cu, offset, length, owner, requestor);
-		return requestor.toArray();
+		return requestor.asResponse();
 	}
 
 }

@@ -85,11 +85,13 @@ public abstract class AbstractSourceModule extends Openable implements
 		return super.codeSelect(this, offset, length, owner);
 	}
 
-	public Object[] codeSelectAll(int offset, int length) throws ModelException {
+	public CodeSelection codeSelectAll(int offset, int length)
+			throws ModelException {
 		return codeSelectAll(offset, length, DefaultWorkingCopyOwner.PRIMARY);
 	}
 
-	public Object[] codeSelectAll(int offset, int length, WorkingCopyOwner owner)
+	public CodeSelection codeSelectAll(int offset, int length,
+			WorkingCopyOwner owner)
 			throws ModelException {
 		return super.codeSelectAll(this, offset, length, owner);
 	}
