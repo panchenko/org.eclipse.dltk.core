@@ -37,6 +37,7 @@ import org.eclipse.dltk.internal.debug.ui.ScriptHotCodeReplaceListener;
 import org.eclipse.dltk.internal.debug.ui.log.ScriptDebugLogManager;
 import org.eclipse.dltk.internal.launching.DLTKLaunchingPlugin;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
+import org.eclipse.dltk.ui.viewsupport.ImageDescriptorRegistry;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.IPreferencePage;
