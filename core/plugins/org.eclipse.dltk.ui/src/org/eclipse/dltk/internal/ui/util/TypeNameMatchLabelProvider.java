@@ -19,6 +19,9 @@ import org.eclipse.dltk.ui.ScriptElementLabels;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
 
+/**
+ * Label provider for {@link TypeNameMatch} instances.
+ */
 public class TypeNameMatchLabelProvider extends LabelProvider {
 	
 	public static final int SHOW_FULLYQUALIFIED=		0x01;
@@ -34,9 +37,17 @@ public class TypeNameMatchLabelProvider extends LabelProvider {
 //	private static final Image INTERFACE_ICON= DLTKPluginImages.get(DLTKPluginImages.IMG_OBJS_INTERFACE);
 	private static final Image PKG_ICON= DLTKPluginImages.get(DLTKPluginImages.IMG_OBJS_PACKAGE);
 	
-	private int fFlags;
-	private IDLTKUILanguageToolkit fToolkit; 
+	private final int fFlags;
+	private final IDLTKUILanguageToolkit fToolkit;
 	
+	/**
+	 * Creates the label provider with the specified parameters.
+	 * 
+	 * @param flags
+	 *            bitwise OR of the flags defined in this class
+	 * @param toolkit
+	 *            language specific UI-toolkit to be used
+	 */
 	public TypeNameMatchLabelProvider(int flags, IDLTKUILanguageToolkit toolkit) {
 		fFlags= flags;
 		this.fToolkit = toolkit;
