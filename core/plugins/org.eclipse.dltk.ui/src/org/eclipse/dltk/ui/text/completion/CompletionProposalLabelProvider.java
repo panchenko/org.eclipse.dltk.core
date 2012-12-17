@@ -416,6 +416,10 @@ public class CompletionProposalLabelProvider {
 			adornmentFlags |= ScriptElementImageDescriptor.CONSTRUCTOR;
 		}
 
+		if (adornmentFlags == 0) {
+			return descriptor;
+		}
+
 		return new ScriptElementImageDescriptor(descriptor, adornmentFlags,
 				ScriptElementImageProvider.SMALL_SIZE);
 	}
