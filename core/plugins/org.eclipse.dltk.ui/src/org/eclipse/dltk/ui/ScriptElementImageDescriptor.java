@@ -40,8 +40,15 @@ public class ScriptElementImageDescriptor extends CompositeImageDescriptor {
 	/** Flag to render the error adornment. */
 	public final static int ERROR = 0x040;
 
+	/**
+	 * Flag to render the 'deprecated' adornment.
+	 * 
+	 * @since 5.0
+	 */
+	public final static int DEPRECATED = 0x400;
+
 	private Point fSize;
-	private int fFlags;
+	private final int fFlags;
 
 	private final ImageDescriptor fBaseImage;
 
@@ -128,6 +135,11 @@ public class ScriptElementImageDescriptor extends CompositeImageDescriptor {
 	protected void drawCompositeImage(int width, int height) {
 		ImageData bg = getImageData(fBaseImage);
 
+		if ((fFlags & DEPRECATED) != 0) { // draw *behind* the full image
+			Point size = getSize();
+			ImageData data = getImageData(DLTKPluginImages.DESC_OVR_DEPRECATED);
+			drawImage(data, 0, size.y - data.height);
+		}
 		if (bg != null) {
 			drawImage(bg, 0, 0);
 		}
