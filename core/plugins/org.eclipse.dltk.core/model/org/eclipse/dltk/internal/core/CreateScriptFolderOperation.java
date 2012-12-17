@@ -26,39 +26,39 @@ import org.eclipse.dltk.internal.core.util.Util;
 
 
 /**
- * This operation creates a new package fragment under a given package fragment
- * root. The following must be specified:
+ * This operation creates a new script folder under a given project fragment.
+ * The following must be specified:
  * <ul>
- * <li>the package fragment root
- * <li>the package name
+ * <li>the project fragment
+ * <li>the folder name
  * </ul>
  * <p>
- * Any needed folders/package fragments are created. If the package fragment
- * already exists, this operation has no effect. The result elements include the
- * <code>IScriptFolder</code> created and any side effect package fragments
- * that were created.
+ * Any needed folders are created. If the script folder already exists, this
+ * operation has no effect. The result elements include the
+ * <code>IScriptFolder</code> created and any side effect script folders that
+ * were created.
  * 
  * <p>
- * NOTE: A default package fragment exists by default for a given root.
+ * NOTE: A default script folder exists by default for a given project fragment.
  * 
  * <p>
  * Possible exception conditions:
  * <ul>
- * <li>Package fragment root is read-only
- * <li>Package fragment's name is taken by a simple (non-folder) resource
+ * <li>project fragment is read-only
+ * <li>script folder's name is taken by a simple (non-folder) resource
  * </ul>
  */
 public class CreateScriptFolderOperation extends ModelOperation {
 	/**
-	 * The fully qualified, dot-delimited, package name.
+	 * The fully qualified, folder name.
 	 */
 	protected IPath pkgName;
 
 	/**
-	 * When executed, this operation will create a package fragment with the
-	 * given name under the given package fragment root. The dot-separated name
-	 * is broken into segments. Intermediate folders are created as required for
-	 * each segment. If the folders already exist, this operation has no effect.
+	 * When executed, this operation will create a script folder with the given
+	 * name under the given project fragment. The slash-separated name is broken
+	 * into segments. Intermediate folders are created as required for each
+	 * segment. If the folders already exist, this operation has no effect.
 	 */
 	public CreateScriptFolderOperation(IProjectFragment parentElement, String packageName, boolean force) {
 		super(null, new IModelElement[] {
@@ -68,8 +68,8 @@ public class CreateScriptFolderOperation extends ModelOperation {
 	}
 
 	/**
-	 * Execute the operation - creates the new package fragment and any side
-	 * effect package fragments.
+	 * Execute the operation - creates the new script folder and any side effect
+	 * folders.
 	 * 
 	 * @exception ModelException
 	 *                if the operation is unable to complete
@@ -80,7 +80,8 @@ public class CreateScriptFolderOperation extends ModelOperation {
 		beginTask(Messages.operation_createScriptFolderProgress, this.pkgName.segmentCount());
 		IContainer parentFolder = (IContainer) root.getResource();
 		IPath sideEffectPackageName = Path.EMPTY;
-		ArrayList results = new ArrayList(this.pkgName.segmentCount());
+		ArrayList<IScriptFolder> results = new ArrayList<IScriptFolder>(
+				this.pkgName.segmentCount());
 		int i;
 		for (i = 0; i < this.pkgName.segmentCount(); i++) {
 			String subFolderName = this.pkgName.segment(i);
@@ -118,12 +119,11 @@ public class CreateScriptFolderOperation extends ModelOperation {
 	 * <li>NO_ELEMENTS_TO_PROCESS - the root supplied to the operation is
 	 * <code>null</code>.
 	 * <li>INVALID_NAME - the name provided to the operation is
-	 * <code>null</code> or is not a valid package fragment name.
+	 * <code>null</code> or is not a valid script folder name.
 	 * <li>READ_ONLY - the root provided to this operation is read only.
 	 * <li>NAME_COLLISION - there is a pre-existing resource (file) with the
-	 * same name as a folder in the package fragment's hierarchy.
-	 * <li>ELEMENT_NOT_PRESENT - the underlying resource for the root is
-	 * missing
+	 * same name as a folder in the script folder's hierarchy.
+	 * <li>ELEMENT_NOT_PRESENT - the underlying resource for the root is missing
 	 * </ul>
 	 * 
 	 * @see IScriptModelStatus
