@@ -14,6 +14,15 @@ package org.eclipse.dltk.ui.wizards;
 import org.eclipse.swt.widgets.Composite;
 
 /**
+ * Substantially different mode of {@link NewSourceModuleWizard} operation, the
+ * set of possible values is returned by
+ * {@link ISourceModuleWizardExtension#getModes()}.
+ * 
+ * <p>
+ * <strong>EXPERIMENTAL</strong>. This interface has been added as part of a
+ * work in progress. There is no guarantee that this API will remain the same.
+ * </p>
+ * 
  * @since 2.0
  */
 public interface ISourceModuleWizardMode {

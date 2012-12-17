@@ -14,6 +14,7 @@ package org.eclipse.dltk.ui.wizards;
 import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.dltk.annotations.ExtensionPoint;
 import org.eclipse.dltk.ui.wizards.ISourceModuleWizard.ICreateContext;
 
 /**
@@ -21,6 +22,7 @@ import org.eclipse.dltk.ui.wizards.ISourceModuleWizard.ICreateContext;
  * 
  * @since 2.0
  */
+@ExtensionPoint(point = NewSourceModuleWizard.WizardExtensionManager.EXTENSION_POINT, element = "wizardExtension", attribute = "class")
 public interface ISourceModuleWizardExtension {
 
 	/**

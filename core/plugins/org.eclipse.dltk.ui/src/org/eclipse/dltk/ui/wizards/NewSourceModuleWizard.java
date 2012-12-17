@@ -42,13 +42,15 @@ public abstract class NewSourceModuleWizard extends NewElementWizard implements
 	static class WizardExtensionManager extends
 			LazyExtensionManager<ISourceModuleWizardExtension> {
 
+		static final String EXTENSION_POINT = DLTKUIPlugin.PLUGIN_ID
+				+ ".sourceModuleWizardExtension"; //$NON-NLS-1$
 		private final String nature;
 
 		/**
 		 * @param nature
 		 */
 		public WizardExtensionManager(String nature) {
-			super(DLTKUIPlugin.PLUGIN_ID + ".sourceModuleWizardExtension"); //$NON-NLS-1$
+			super(EXTENSION_POINT);
 			this.nature = nature;
 		}
 
