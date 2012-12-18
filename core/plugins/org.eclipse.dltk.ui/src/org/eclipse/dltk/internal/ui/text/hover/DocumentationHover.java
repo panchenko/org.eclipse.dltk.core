@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.URL;
 
+import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.dltk.annotations.Internal;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.internal.ui.text.HTMLPrinter;
@@ -581,9 +583,13 @@ public class DocumentationHover extends AbstractScriptEditorTextHover implements
 		return null;
 	}
 
-	private static final IScriptDocumentationTitleAdapter titleAdapter = new IScriptDocumentationTitleAdapter() {
+	private static final ScriptDocumentationTitleAdapter titleAdapter = new ScriptDocumentationTitleAdapter();
 
-		private ScriptElementImageProvider fImageProvider = new ScriptElementImageProvider();
+	@Internal
+	static class ScriptDocumentationTitleAdapter extends PlatformObject
+			implements IScriptDocumentationTitleAdapter {
+
+		private ScriptElementImageProvider fImageProvider;
 
 		public String getTitle(Object element) {
 			if (element instanceof IModelElement) {
@@ -610,5 +616,5 @@ public class DocumentationHover extends AbstractScriptEditorTextHover implements
 			}
 			return null;
 		}
-	};
+	}
 }

@@ -14,6 +14,7 @@ package org.eclipse.dltk.ui.documentation;
 import java.io.IOException;
 import java.io.Reader;
 
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.utils.AdaptUtils;
 
@@ -63,8 +64,8 @@ public class DocumentationUtils {
 	 * @param reader
 	 * @return
 	 */
-	public static IDocumentationResponse wrap(Object member, Object context,
-			Reader reader) {
+	public static IDocumentationResponse wrap(Object member,
+			IAdaptable context, Reader reader) {
 		if (reader != null) {
 			final IScriptDocumentationTitleAdapter titleAdapter = AdaptUtils
 					.getAdapter(context, IScriptDocumentationTitleAdapter.class);

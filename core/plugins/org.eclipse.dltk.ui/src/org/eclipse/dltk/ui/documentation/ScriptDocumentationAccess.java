@@ -15,6 +15,7 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.Comparator;
 
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IMember;
@@ -167,7 +168,7 @@ public class ScriptDocumentationAccess {
 	 * @since 3.0
 	 */
 	public static IDocumentationResponse getDocumentation(String nature,
-			final Object member, final Object context) {
+			final Object member, final IAdaptable context) {
 		return merge(nature, new Operation2() {
 			public IDocumentationResponse getInfo(
 					IScriptDocumentationProvider provider) {
