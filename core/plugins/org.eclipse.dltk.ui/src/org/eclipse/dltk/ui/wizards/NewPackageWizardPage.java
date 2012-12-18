@@ -48,13 +48,11 @@ import org.eclipse.swt.widgets.Text;
  * instantiate. To implement a different kind of a new package wizard page,
  * extend <code>NewContainerWizardPage</code>.
  * </p>
- * 
-	 *
  */
 public abstract class NewPackageWizardPage extends NewContainerWizardPage {
 
 	private static final String PAGE_NAME = "NewPackageWizardPage"; //$NON-NLS-1$
-	private static final String PACKAGE = "NewPackageWizardPage.package"; //$NON-NLS-1$
+	protected static final String PACKAGE = "NewPackageWizardPage.package"; //$NON-NLS-1$
 
 	private StringDialogField fPackageDialogField;
 
@@ -183,7 +181,7 @@ public abstract class NewPackageWizardPage extends NewContainerWizardPage {
 	/*
 	 * Verifies the input for the package field.
 	 */
-	private IStatus packageChanged() {
+	protected IStatus packageChanged() {
 		StatusInfo status = new StatusInfo();
 		String packName = getPackageText();
 		if (packName.length() > 0) {
