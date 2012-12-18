@@ -13,6 +13,7 @@ package org.eclipse.dltk.ui.actions;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IStatus;
@@ -110,12 +111,14 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 	/*
 	 * (non-Javadoc) Method declared on SelectionDispatchAction.
 	 */
+	@Override
 	public void selectionChanged(ITextSelection selection) {
 	}
 
 	/*
 	 * (non-Javadoc) Method declared on SelectionDispatchAction.
 	 */
+	@Override
 	public void selectionChanged(IStructuredSelection selection) {
 		setEnabled(isEnabled(selection));
 	}
@@ -153,6 +156,7 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 	/*
 	 * (non-Javadoc) Method declared on SelectionDispatchAction.
 	 */
+	@Override
 	public void run(ITextSelection selection) {
 		IModelElement input = SelectionConverter.getInput(fEditor);
 		if (!ActionUtil.isProcessable(getShell(), input))
@@ -163,15 +167,15 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 					.codeResolveOrInputForked(fEditor);
 			if (elements == null)
 				return;
-			List candidates = new ArrayList(elements.length);
+			List<IModelElement> candidates = new ArrayList<IModelElement>(
+					elements.length);
 			for (int i = 0; i < elements.length; i++) {
 				IModelElement[] resolvedElements = OpenTypeHierarchyUtil
 						.getCandidates(elements[i]);
 				if (resolvedElements != null)
-					candidates.addAll(Arrays.asList(resolvedElements));
+					Collections.addAll(candidates, resolvedElements);
 			}
-			run((IModelElement[]) candidates
-					.toArray(new IModelElement[candidates.size()]));
+			run(candidates.toArray(new IModelElement[candidates.size()]));
 		} catch (InvocationTargetException e) {
 			ExceptionHandler.handle(e, getShell(), getDialogTitle(),
 					ActionMessages.SelectionConverter_codeResolve_failed);
@@ -183,6 +187,7 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 	/*
 	 * (non-Javadoc) Method declared on SelectionDispatchAction.
 	 */
+	@Override
 	public void run(IStructuredSelection selection) {
 		if (selection.size() != 1)
 			return;
@@ -206,11 +211,10 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 		if (!ActionUtil.isProcessable(getShell(), element))
 			return;
 
-		List result = new ArrayList(1);
+		List<IModelElement> result = new ArrayList<IModelElement>(1);
 		IStatus status = compileCandidates(result, element);
 		if (status.isOK()) {
-			run((IModelElement[]) result.toArray(new IModelElement[result
-					.size()]));
+			run(result.toArray(new IModelElement[result.size()]));
 		} else {
 			ErrorDialog.openError(getShell(), getDialogTitle(),
 					ActionMessages.OpenTypeHierarchyAction_messages_title,
@@ -234,7 +238,8 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 		return ActionMessages.OpenTypeHierarchyAction_dialog_title;
 	}
 
-	private static IStatus compileCandidates(List result, IModelElement elem) {
+	private static IStatus compileCandidates(List<IModelElement> result,
+			IModelElement elem) {
 		IStatus ok = new Status(IStatus.OK, DLTKUIPlugin.getPluginId(), 0,
 				"", null); //$NON-NLS-1$		
 		try {
