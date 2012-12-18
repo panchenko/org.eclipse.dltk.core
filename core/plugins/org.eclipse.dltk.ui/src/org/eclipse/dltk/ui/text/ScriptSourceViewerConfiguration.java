@@ -9,7 +9,16 @@
  *******************************************************************************/
 package org.eclipse.dltk.ui.text;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.compiler.task.ITodoTaskPreferences;
 import org.eclipse.dltk.compiler.util.Util;
 import org.eclipse.dltk.internal.ui.editor.ModelElementHyperlinkDetector;
@@ -58,8 +67,10 @@ import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
+import org.eclipse.ui.texteditor.HyperlinkDetectorRegistry;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 public abstract class ScriptSourceViewerConfiguration extends
@@ -281,26 +292,83 @@ public abstract class ScriptSourceViewerConfiguration extends
 				.getBoolean(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_HYPERLINKS_ENABLED))
 			return null;
 
-		IHyperlinkDetector[] inheritedDetectors = super
+		final IHyperlinkDetector[] inheritedDetectors = super
 				.getHyperlinkDetectors(sourceViewer);
 
 		if (fTextEditor == null) {
 			return inheritedDetectors;
 		}
 
-		int inheritedDetectorsLength = inheritedDetectors != null ? inheritedDetectors.length
-				: 0;
-		IHyperlinkDetector[] detectors = new IHyperlinkDetector[inheritedDetectorsLength + 1];
-
-		// TODO(mhowe) I reverse these so I can get a shot at finding the
-		// hyperlink before DLTK does.
-		// DLTK shouldn't create an action if it does nothing.
-		for (int i = 0; i < inheritedDetectorsLength; i++)
-			detectors[i] = inheritedDetectors[i];
-		detectors[inheritedDetectorsLength] = new ModelElementHyperlinkDetector(
+		int resultLength = 1;
+		if (inheritedDetectors != null) {
+			resultLength += inheritedDetectors.length;
+		}
+		final IHyperlinkDetector[] additionalDetectors = getAdditionalRegisteredHyperlinkDetectors(sourceViewer);
+		if (additionalDetectors != null) {
+			resultLength += additionalDetectors.length;
+		}
+		final IHyperlinkDetector[] detectors = new IHyperlinkDetector[resultLength];
+		int resultIndex = 0;
+		if (inheritedDetectors != null) {
+			System.arraycopy(inheritedDetectors, 0, detectors, resultIndex,
+					inheritedDetectors.length);
+			resultIndex += inheritedDetectors.length;
+		}
+		detectors[resultIndex++] = new ModelElementHyperlinkDetector(
 				fTextEditor);
-
+		if (additionalDetectors != null) {
+			System.arraycopy(additionalDetectors, 0, detectors, resultIndex,
+					additionalDetectors.length);
+			resultIndex += additionalDetectors.length;
+		}
 		return detectors;
+	}
+
+	/**
+	 * Returns the additional registered hyperlink detectors which are used to
+	 * detect hyperlinks in the given source viewer.
+	 * 
+	 * @param sourceViewer
+	 *            the source viewer to be configured by this configuration
+	 * @return an array with hyperlink detectors or <code>null</code> if no
+	 *         hyperlink detectors are registered
+	 * @since 5.0
+	 */
+	@Nullable
+	private final IHyperlinkDetector[] getAdditionalRegisteredHyperlinkDetectors(
+			ISourceViewer sourceViewer) {
+		final Map<String, IAdaptable> targets = getAdditionalHyperlinkDetectorTargets(sourceViewer);
+		Assert.isNotNull(targets);
+		if (targets.isEmpty()) {
+			return null;
+		}
+		final HyperlinkDetectorRegistry registry = EditorsUI
+				.getHyperlinkDetectorRegistry();
+		List<IHyperlinkDetector> result = null;
+		for (Map.Entry<String, IAdaptable> target : targets.entrySet()) {
+			final IHyperlinkDetector[] detectors = registry
+					.createHyperlinkDetectors(target.getKey(),
+							target.getValue());
+			if (detectors != null && detectors.length != 0) {
+				if (result == null) {
+					result = new ArrayList<IHyperlinkDetector>();
+				}
+				Collections.addAll(result, detectors);
+			}
+		}
+		return result != null ? result.toArray(new IHyperlinkDetector[result
+				.size()]) : null;
+	}
+
+	/**
+	 * Similar to {@link #getHyperlinkDetectorTargets(ISourceViewer)}, but these
+	 * detectors are always added in the end.
+	 * 
+	 * @since 5.0
+	 */
+	protected Map<String, IAdaptable> getAdditionalHyperlinkDetectorTargets(
+			ISourceViewer sourceViewer) {
+		return new HashMap<String, IAdaptable>();
 	}
 
 	/*
