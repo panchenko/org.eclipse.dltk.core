@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.dltk.internal.ui.typehierarchy;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.dltk.core.IMember;
 import org.eclipse.dltk.core.IModelElement;
@@ -20,7 +21,7 @@ import org.eclipse.dltk.internal.ui.actions.OpenActionUtil;
 import org.eclipse.dltk.internal.ui.editor.EditorUtility;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
 import org.eclipse.dltk.ui.util.ExceptionHandler;
-import org.eclipse.core.runtime.Assert;
+import org.eclipse.dltk.utils.AdaptUtils;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -146,6 +147,14 @@ public class OpenTypeHierarchyUtil {
 				case IModelElement.TYPE:
 				case IModelElement.SCRIPT_PROJECT:
 					return new IModelElement[] { elem };
+			case IModelElement.LOCAL_VARIABLE: {
+				final IType type = AdaptUtils.getAdapter(elem, IType.class);
+				if (type != null) {
+					return new IModelElement[] { type };
+				} else {
+					return null;
+				}
+			}
 //				case IModelElement.PROJECT_FRAGMENT:
 //					if (((IProjectFragment)elem).containsJavaResources())
 //						return new IModelElement[] {elem};
