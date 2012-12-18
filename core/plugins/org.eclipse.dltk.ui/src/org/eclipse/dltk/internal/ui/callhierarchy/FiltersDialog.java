@@ -12,7 +12,7 @@ package org.eclipse.dltk.internal.ui.callhierarchy;
 
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.internal.corext.callhierarchy.CallHierarchy;
-import org.eclipse.dltk.internal.ui.dialogs.StatusInfo;
+import org.eclipse.dltk.ui.dialogs.StatusInfo;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.StatusDialog;
 import org.eclipse.swt.SWT;
