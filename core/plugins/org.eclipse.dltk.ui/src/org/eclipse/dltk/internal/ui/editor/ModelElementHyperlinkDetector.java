@@ -33,12 +33,14 @@ import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.hyperlink.IHyperlink;
 import org.eclipse.jface.text.hyperlink.IHyperlinkDetector;
+import org.eclipse.jface.text.hyperlink.IHyperlinkDetectorExtension;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 /**
  * Script element hyperlink detector.
  */
-public class ModelElementHyperlinkDetector implements IHyperlinkDetector {
+public class ModelElementHyperlinkDetector implements IHyperlinkDetector,
+		IHyperlinkDetectorExtension {
 
 	private ITextEditor fTextEditor;
 
@@ -126,5 +128,9 @@ public class ModelElementHyperlinkDetector implements IHyperlinkDetector {
 		}
 
 		return null;
+	}
+
+	public void dispose() {
+		this.fTextEditor = null;
 	}
 }
