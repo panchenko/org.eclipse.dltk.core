@@ -11,12 +11,15 @@
  *******************************************************************************/
 package org.eclipse.dltk.ui.tests;
 
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.intro.IIntroManager;
+import org.eclipse.ui.intro.IIntroPart;
 
 public class UITestUtils {
 
@@ -41,4 +44,20 @@ public class UITestUtils {
 			}
 		}
 	}
+
+	public static void closeIntro() {
+		final IIntroManager introManager = PlatformUI.getWorkbench()
+				.getIntroManager();
+		final IIntroPart part = introManager.getIntro();
+		if (part != null) {
+			introManager.closeIntro(part);
+		}
+	}
+
+	public static void processEvents() {
+		final Display display = Display.getCurrent();
+		while (!display.isDisposed() && display.readAndDispatch())
+			;
+	}
+
 }
