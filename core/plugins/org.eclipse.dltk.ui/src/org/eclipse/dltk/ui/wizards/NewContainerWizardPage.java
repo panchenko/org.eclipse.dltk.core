@@ -49,6 +49,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.dialogs.ElementTreeSelectionDialog;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
 import org.eclipse.ui.views.contentoutline.ContentOutline;
 
 /**
@@ -66,7 +67,9 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 	/** Id of the container field */
 	protected static final String CONTAINER = "NewContainerWizardPage.container"; //$NON-NLS-1$
 
-	// The status of the last validation
+	/**
+	 * The status of the last validation of the container.
+	 */
 	protected IStatus containerStatus;
 
 	private StringButtonDialogField containerDialogField;
@@ -75,6 +78,37 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 	private IScriptFolder currRoot;
 
 	private IWorkspaceRoot workspaceRoot;
+
+	/**
+	 * Filter used in {@link NewContainerWizardPage#chooseContainer()} to show
+	 * only selectable elements.
+	 */
+	protected static class ContainerViewerFilter extends TypedViewerFilter {
+		public ContainerViewerFilter() {
+			this(new Class[] { IScriptModel.class, IScriptFolder.class,
+					IScriptProject.class, IProjectFragment.class });
+		}
+
+		public ContainerViewerFilter(Class<?>[] acceptedTypes) {
+			super(acceptedTypes);
+		}
+
+		@Override
+		public boolean select(Viewer viewer, Object parent, Object element) {
+			if (element instanceof IProjectFragment) {
+				try {
+					IProjectFragment fragment = (IProjectFragment) element;
+					if (fragment.getKind() != IProjectFragment.K_SOURCE
+							|| fragment.isExternal())
+						return false;
+				} catch (ModelException e) {
+					return false;
+				}
+				return true;
+			}
+			return super.select(viewer, parent, element);
+		}
+	}
 
 	private class ContainerFieldAdapter implements IStringButtonAdapter,
 			IDialogFieldListener {
@@ -284,7 +318,10 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 		containerDialogField.setFocus();
 	}
 
-	private void containerChangeControlPressed(DialogField field) {
+	/*
+	 * Overridden in NewSourceModuleInPackagePage
+	 */
+	void containerChangeControlPressed(DialogField field) {
 		IScriptFolder root = chooseContainer();
 		if (root != null) {
 			setScriptFolder(root, true);
@@ -511,27 +548,25 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 	 */
 	protected IScriptFolder chooseContainer() {
 		IModelElement initElement = getProjectFragment();
-		Class[] acceptedClasses = new Class[] { IScriptModel.class,
-				IScriptFolder.class, IScriptProject.class,
-				IProjectFragment.class };
 
-		ViewerFilter filter = new TypedViewerFilter(acceptedClasses) {
-			public boolean select(Viewer viewer, Object parent, Object element) {
-				if (element instanceof IProjectFragment) {
-					try {
-						IProjectFragment fragment = (IProjectFragment) element;
-						if (fragment.getKind() != IProjectFragment.K_SOURCE
-								|| fragment.isExternal())
-							return false;
-					} catch (ModelException e) {
-						return false;
-					}
-					return true;
-				}
-				return super.select(viewer, parent, element);
-			}
-		};
+		ViewerFilter filter = new ContainerViewerFilter();
 
+		return doChooseContainer(initElement, filter, null);
+	}
+
+	/**
+	 * Called by {@link #chooseContainer()} with initial element and viewer
+	 * filter.
+	 * 
+	 * @param initElement
+	 *            initially selected element
+	 * @param filter
+	 *            viewer filter
+	 * @param validator
+	 *            selection validator, may be null
+	 */
+	protected IScriptFolder doChooseContainer(IModelElement initElement,
+			ViewerFilter filter, ISelectionStatusValidator validator) {
 		StandardModelElementContentProvider provider = new StandardModelElementContentProvider();
 		ILabelProvider labelProvider = new ModelElementLabelProvider(
 				ModelElementLabelProvider.SHOW_DEFAULT);
@@ -539,11 +574,12 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 				getShell(), labelProvider, provider);
 
 		dialog.setComparator(new ModelElementSorter());
-		dialog
-				.setTitle(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_title);
-		dialog
-				.setMessage(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_description);
+		dialog.setTitle(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_title);
+		dialog.setMessage(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_description);
 		dialog.addFilter(filter);
+		if (validator != null) {
+			dialog.setValidator(validator);
+		}
 		dialog.setInput(DLTKCore.create(workspaceRoot));
 		dialog.setInitialSelection(initElement);
 		dialog.setHelpAvailable(false);
