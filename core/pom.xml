@@ -15,6 +15,7 @@
 	<packaging>pom</packaging>
 
 	<modules>
+		<module>releng/org.eclipse.dltk.core.targetplatform</module>
 		<module>features/org.eclipse.dltk.core-feature</module>
 		<module>features/org.eclipse.dltk.core.sdk</module>
 		<module>features/org.eclipse.dltk.core.tests</module>
