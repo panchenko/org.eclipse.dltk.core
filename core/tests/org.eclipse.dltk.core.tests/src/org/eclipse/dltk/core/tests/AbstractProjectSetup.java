@@ -12,6 +12,7 @@
 package org.eclipse.dltk.core.tests;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
@@ -36,12 +37,15 @@ import org.eclipse.dltk.core.search.SearchParticipant;
 import org.eclipse.dltk.core.search.SearchPattern;
 import org.eclipse.dltk.core.tests.model.TestSearchResults;
 import org.eclipse.dltk.internal.core.util.Util;
+import org.eclipse.osgi.util.NLS;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 
 public abstract class AbstractProjectSetup extends ExternalResource {
 
 	public abstract IProject get();
+
+	public abstract String getProjectName();
 
 	/**
 	 * Returns this project as {@link IScriptProject}
@@ -405,6 +409,16 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 		final SearchPattern pattern = SearchPattern.createPattern(
 				patternString, searchFor, limitTo, matchRule, toolkit);
 		return search(pattern, scope);
+	}
+
+	/**
+	 * Returns all the problems of the resource with the specified name.
+	 */
+	public IMarker[] findProblems(String resourceName) throws CoreException {
+		final IResource resource = get().findMember(resourceName);
+		Assert.assertNotNull(NLS.bind("Resource {0} not found in {1}",
+				resourceName, getProjectName()), resource);
+		return ProblemTestUtil.findProblems(resource);
 	}
 
 }

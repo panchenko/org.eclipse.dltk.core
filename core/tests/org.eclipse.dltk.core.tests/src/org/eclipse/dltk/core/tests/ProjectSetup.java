@@ -21,6 +21,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.dltk.internal.core.ModelManager;
 import org.eclipse.dltk.utils.TextUtils;
 import org.junit.Assert;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 /**
  * The ProjectSetup Rule provides convenient way of creating workspace project
@@ -103,7 +105,7 @@ public class ProjectSetup extends AbstractProjectSetup {
 		project = helper.setUpProject(projectName);
 		if (options.contains(Option.BUILD)) {
 			final long start = System.currentTimeMillis();
-			get().build(IncrementalProjectBuilder.FULL_BUILD, null);
+			buildProject();
 			if (isVerbose()) {
 				System.out.println((System.currentTimeMillis() - start)
 						+ " ms to build " + projectName + " project");
@@ -112,6 +114,10 @@ public class ProjectSetup extends AbstractProjectSetup {
 		if (options.contains(Option.WAIT_INDEXES_READY)) {
 			ModelManager.getModelManager().getIndexManager().waitUntilReady();
 		}
+	}
+
+	protected void buildProject() throws CoreException {
+		get().build(IncrementalProjectBuilder.FULL_BUILD, null);
 	}
 
 	@Override
@@ -131,6 +137,7 @@ public class ProjectSetup extends AbstractProjectSetup {
 		workspaceSetup.after();
 	}
 
+	@Override
 	public String getProjectName() {
 		return projectName;
 	}
@@ -143,6 +150,19 @@ public class ProjectSetup extends AbstractProjectSetup {
 		Assert.assertNotNull(
 				"ProjectSetup " + projectName + " not initialized", project);
 		return project;
+	}
+
+	/**
+	 * Creates {@link RuleChain} initializing the specified rules in the
+	 * specified order.
+	 */
+	public static RuleChain chainOf(TestRule first, TestRule second,
+			TestRule... rest) {
+		RuleChain chain = RuleChain.outerRule(first).around(second);
+		for (TestRule rule : rest) {
+			chain = chain.around(rule);
+		}
+		return chain;
 	}
 
 }
