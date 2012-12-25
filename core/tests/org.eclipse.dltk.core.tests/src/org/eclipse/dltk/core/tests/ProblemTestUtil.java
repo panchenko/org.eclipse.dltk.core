@@ -80,6 +80,13 @@ public class ProblemTestUtil extends Assert {
 	}
 
 	/**
+	 * Asserts the expected number of problems in the specified array.
+	 */
+	public static void assertProblemCount(int expectedCount, IMarker[] problems) {
+		assertEquals(toString(problems), expectedCount, problems.length);
+	}
+
+	/**
 	 * Returns string representation of the specified problem marker.
 	 */
 	public static String toString(IMarker marker) {

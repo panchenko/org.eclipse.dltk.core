@@ -17,6 +17,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -419,6 +420,13 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 		Assert.assertNotNull(NLS.bind("Resource {0} not found in {1}",
 				resourceName, getProjectName()), resource);
 		return ProblemTestUtil.findProblems(resource);
+	}
+
+	/**
+	 * Performs the incremental build in this project.
+	 */
+	public void build() throws CoreException {
+		get().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, null);
 	}
 
 }
