@@ -11,50 +11,126 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+
+import org.eclipse.dltk.codeassist.ICompletionEngine;
+import org.eclipse.dltk.compiler.env.IModuleSource;
+import org.eclipse.dltk.core.CompletionProposal;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ModelException;
+import org.eclipse.dltk.core.tests.util.StringList;
 import org.eclipse.osgi.util.NLS;
 import org.junit.Assert;
 
 public class CodeAssistUtil {
 
-	private final ISourceModule module;
+	static abstract class Module<M> {
+		final M module;
+
+		public Module(M module) {
+			this.module = module;
+		}
+
+		abstract String getSource();
+
+		abstract String getName();
+
+		abstract IModelElement[] codeSelect(int offset, int length)
+				throws ModelException;
+	}
+
+	private static class SourceModule extends Module<ISourceModule> {
+
+		public SourceModule(ISourceModule module) {
+			super(module);
+		}
+
+		@Override
+		String getSource() {
+			try {
+				return module.getSource();
+			} catch (ModelException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+
+		@Override
+		String getName() {
+			return module.getElementName();
+		}
+
+		@Override
+		IModelElement[] codeSelect(int offset, int length)
+				throws ModelException {
+			return module.codeSelect(offset, length);
+		}
+	}
+
+	private static class Source extends Module<IModuleSource> {
+		public Source(IModuleSource source) {
+			super(source);
+		}
+
+		@Override
+		String getSource() {
+			return module.getSourceContents();
+		}
+
+		@Override
+		String getName() {
+			return module.getFileName();
+		}
+
+		@Override
+		IModelElement[] codeSelect(int offset, int length) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private final Module<?> module;
 	private Integer offset;
 	private int length;
 
-	private CodeAssistUtil(ISourceModule module) {
+	private CodeAssistUtil(Module<?> module) {
 		this.module = module;
 	}
 
 	public static CodeAssistUtil on(ISourceModule module) {
-		return new CodeAssistUtil(module);
+		return new CodeAssistUtil(new SourceModule(module));
 	}
 
-	public CodeAssistUtil after(String marker) throws ModelException {
+	public static CodeAssistUtil on(IModuleSource module) {
+		return new CodeAssistUtil(new Source(module));
+	}
+
+	public CodeAssistUtil after(String marker) {
 		return calculateOffset(marker, false, true);
 	}
 
-	public CodeAssistUtil afterLast(String marker) throws ModelException {
+	public CodeAssistUtil afterLast(String marker) {
 		return calculateOffset(marker, true, true);
 	}
 
-	public CodeAssistUtil before(String marker) throws ModelException {
+	public CodeAssistUtil before(String marker) {
 		return calculateOffset(marker, false, false);
 	}
 
-	public CodeAssistUtil beforeLast(String marker) throws ModelException {
+	public CodeAssistUtil beforeLast(String marker) {
 		return calculateOffset(marker, true, false);
 	}
 
 	private CodeAssistUtil calculateOffset(String marker, boolean last,
-			boolean after) throws ModelException {
+			boolean after) {
 		final String text = module.getSource();
 		final int offset = last ? text.lastIndexOf(marker) : text
 				.indexOf(marker);
 		Assert.assertTrue(
 				NLS.bind("Pattern \"{0}\" not found in {1}", marker,
-						module.getElementName()), offset != -1);
+						module.getName()), offset != -1);
 		this.offset = offset + (after ? marker.length() : 0);
 		return this;
 	}
@@ -64,8 +140,89 @@ public class CodeAssistUtil {
 		return this;
 	}
 
+	public int length() {
+		return length;
+	}
+
+	public int offset() {
+		return offset;
+	}
+
 	public IModelElement[] codeSelect() throws ModelException {
 		return module.codeSelect(offset, length);
+	}
+
+	private IModuleSource getModuleSource() {
+		return (IModuleSource) module.module;
+	}
+
+	public class CodeCompletionResult {
+
+		private final List<CompletionProposal> proposals;
+
+		public CodeCompletionResult(List<CompletionProposal> proposals) {
+			this.proposals = proposals;
+		}
+
+		public int size() {
+			return proposals.size();
+		}
+
+		public CompletionProposal get(int index) {
+			return proposals.get(index);
+		}
+
+		private boolean compareProposalNames(String[] names) {
+			if (names.length != proposals.size()) {
+				return false;
+			}
+			final CompletionProposal[] sorted = proposals
+					.toArray(new CompletionProposal[proposals.size()]);
+			Arrays.sort(sorted, new Comparator<CompletionProposal>() {
+				public int compare(CompletionProposal pr, CompletionProposal pr1) {
+					return pr.getName().compareTo(pr1.getName());
+				}
+
+			});
+			final String[] sortedNames = new String[names.length];
+			System.arraycopy(names, 0, sortedNames, 0, names.length);
+			Arrays.sort(sortedNames);
+			for (int i = 0, size = proposals.size(); i < size; ++i) {
+				if (!names[i].equals(proposals.get(i).getName())) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private StringList exractProposalNames(boolean withKinds) {
+			final StringList list = new StringList(proposals.size());
+			for (int i = 0, size = proposals.size(); i < size; ++i) {
+				final CompletionProposal proposal = proposals.get(i);
+				String name = proposal.getName();
+				if (withKinds
+						&& proposal.getKind() == CompletionProposal.METHOD_REF) {
+					name += "()";
+				}
+				list.add(name);
+			}
+			return list;
+		}
+
+		public void assertEquals(String[] expectedProposalNames) {
+			if (!compareProposalNames(expectedProposalNames)) {
+				Assert.assertEquals(new StringList(expectedProposalNames)
+						.sort().toString(), exractProposalNames(false).sort()
+						.toString());
+			}
+		}
+	}
+
+	public CodeCompletionResult codeComplete(ICompletionEngine engine) {
+		final List<CompletionProposal> proposals = new ArrayList<CompletionProposal>();
+		engine.setRequestor(new TestCompletionRequestor(proposals));
+		engine.complete(getModuleSource(), offset(), 0);
+		return new CodeCompletionResult(proposals);
 	}
 
 }
