@@ -13,14 +13,18 @@ package org.eclipse.dltk.core.tests;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.dltk.codeassist.ICompletionEngine;
+import org.eclipse.dltk.codeassist.ISelectionEngine;
+import org.eclipse.dltk.codeassist.ISelectionRequestor;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.core.CompletionProposal;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ISourceModule;
+import org.eclipse.dltk.core.ISourceRange;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.core.tests.util.StringList;
 import org.eclipse.osgi.util.NLS;
@@ -144,6 +148,11 @@ public class CodeAssistUtil {
 		return length;
 	}
 
+	public CodeAssistUtil offset(int offset) {
+		this.offset = offset;
+		return this;
+	}
+
 	public int offset() {
 		return offset;
 	}
@@ -223,6 +232,55 @@ public class CodeAssistUtil {
 		engine.setRequestor(new TestCompletionRequestor(proposals));
 		engine.complete(getModuleSource(), offset(), 0);
 		return new CodeCompletionResult(proposals);
+	}
+
+	public Object[] codeSelectAll(ISelectionEngine engine) {
+		final List<Object> elements = new ArrayList<Object>();
+		engine.setRequestor(new ISelectionRequestor() {
+			public void acceptModelElement(IModelElement element) {
+				elements.add(element);
+			}
+
+			public void acceptForeignElement(Object element) {
+				elements.add(element);
+			}
+
+			public void acceptElement(Object element, ISourceRange range) {
+				elements.add(element);
+			}
+		});
+		final IModelElement[] result = engine.select(getModuleSource(), offset,
+				offset);
+		if (result != null) {
+			Collections.addAll(elements, result);
+		}
+		return elements.toArray();
+	}
+
+	public IModelElement[] codeSelect(ISelectionEngine engine) {
+		final List<IModelElement> elements = new ArrayList<IModelElement>();
+		engine.setRequestor(new ISelectionRequestor() {
+
+			public void acceptModelElement(IModelElement element) {
+				elements.add(element);
+			}
+
+			public void acceptForeignElement(Object element) {
+				if (element instanceof IModelElement) {
+					elements.add((IModelElement) element);
+				}
+			}
+
+			public void acceptElement(Object element, ISourceRange range) {
+				acceptForeignElement(element);
+			}
+		});
+		final IModelElement[] result = engine.select(getModuleSource(), offset,
+				offset);
+		if (result != null) {
+			Collections.addAll(elements, result);
+		}
+		return elements.toArray(new IModelElement[elements.size()]);
 	}
 
 }
