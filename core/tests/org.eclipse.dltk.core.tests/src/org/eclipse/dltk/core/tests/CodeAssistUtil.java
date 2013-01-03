@@ -218,7 +218,7 @@ public class CodeAssistUtil {
 			return list;
 		}
 
-		public void assertEquals(String[] expectedProposalNames) {
+		public void assertEquals(String... expectedProposalNames) {
 			if (!compareProposalNames(expectedProposalNames)) {
 				Assert.assertEquals(new StringList(expectedProposalNames)
 						.sort().toString(), exractProposalNames(false).sort()
