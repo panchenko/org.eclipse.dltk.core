@@ -18,14 +18,16 @@ import org.eclipse.dltk.utils.NatureExtensionManager;
 
 public class ScriptCompletionProposalFactoryRegistry {
 
+	public static final String EXT_POINT = DLTKUIPlugin.PLUGIN_ID
+			+ ".completion";
+
 	private static NatureExtensionManager<IScriptCompletionProposalFactory> manager = null;
 
 	public static synchronized IScriptCompletionProposalFactory[] getFactories(
 			String natureId) {
 		if (manager == null) {
 			manager = new NatureExtensionManager<IScriptCompletionProposalFactory>(
-					DLTKUIPlugin.PLUGIN_ID + ".completion",
-					IScriptCompletionProposalFactory.class) {
+					EXT_POINT, IScriptCompletionProposalFactory.class) {
 				@Override
 				protected boolean isValidElement(IConfigurationElement element) {
 					return "proposalFactory".equals(element.getName());
