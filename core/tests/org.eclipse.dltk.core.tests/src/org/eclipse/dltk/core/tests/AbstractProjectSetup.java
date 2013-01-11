@@ -11,7 +11,12 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import java.io.ByteArrayInputStream;
+import java.io.UnsupportedEncodingException;
+
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -22,6 +27,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
 import org.eclipse.dltk.core.IModelElement;
@@ -36,13 +42,19 @@ import org.eclipse.dltk.core.search.IDLTKSearchScope;
 import org.eclipse.dltk.core.search.SearchEngine;
 import org.eclipse.dltk.core.search.SearchParticipant;
 import org.eclipse.dltk.core.search.SearchPattern;
+import org.eclipse.dltk.core.tests.ProjectSetup.Option;
 import org.eclipse.dltk.core.tests.model.TestSearchResults;
 import org.eclipse.dltk.internal.core.util.Util;
+import org.eclipse.dltk.utils.ResourceUtil;
 import org.eclipse.osgi.util.NLS;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 
 public abstract class AbstractProjectSetup extends ExternalResource {
+
+	protected boolean isVerbose() {
+		return false;
+	}
 
 	public abstract IProject get();
 
@@ -53,6 +65,13 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 	 */
 	public IScriptProject getScriptProject() {
 		return DLTKCore.create(get());
+	}
+
+	/**
+	 * Returns the specified folder from this project.
+	 */
+	public IFolder getFolder(String name) {
+		return get().getFolder(name);
 	}
 
 	/**
@@ -426,7 +445,77 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 	 * Performs the incremental build in this project.
 	 */
 	public void build() throws CoreException {
+		final long start = System.currentTimeMillis();
 		get().build(IncrementalProjectBuilder.INCREMENTAL_BUILD, null);
+		if (isVerbose()) {
+			System.out.println((System.currentTimeMillis() - start)
+					+ " ms for incremental build of " + getProjectName()
+					+ " project");
+		}
+	}
+
+	/**
+	 * Writes the specified content to the specfied content, creating the file
+	 * and all the parent folders if the don't exist.
+	 * 
+	 * @param fileName
+	 * @param contents
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 * @throws CoreException
+	 */
+	public IFile writeFile(String fileName, String contents)
+			throws CoreException {
+		final IFile file = getFile(fileName);
+		final byte[] bytes;
+		try {
+			bytes = contents.getBytes(file.getCharset());
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
+		final ByteArrayInputStream input = new ByteArrayInputStream(bytes);
+		if (file.exists()) {
+			file.setContents(input, IResource.NONE, null);
+		} else {
+			final IContainer parent = file.getParent();
+			if (parent instanceof IFolder) {
+				ResourceUtil.createFolder((IFolder) parent, null);
+			}
+			file.create(input, IResource.NONE, null);
+		}
+		return file;
+	}
+
+	/**
+	 * Deletes all the members in the specified folder. If some members were
+	 * deleted and option == {@link Option#BUILD} then the build operation is
+	 * also executed.
+	 * 
+	 * @param folderName
+	 *            folder name
+	 * @param option
+	 *            {@link Option#BUILD} or <code>null</code>
+	 * @throws CoreException
+	 */
+	public void deleteFolderMembers(String folderName, @Nullable Option option)
+			throws CoreException {
+		if (option != null) {
+			if (option != Option.BUILD) {
+				throw new IllegalArgumentException();
+			}
+		}
+		final IFolder folder = getFolder(folderName);
+		if (!folder.exists()) {
+			return;
+		}
+		int count = 0;
+		for (IResource member : folder.members()) {
+			member.delete(true, null);
+			++count;
+		}
+		if (count != 0 && option == Option.BUILD) {
+			build();
+		}
 	}
 
 }

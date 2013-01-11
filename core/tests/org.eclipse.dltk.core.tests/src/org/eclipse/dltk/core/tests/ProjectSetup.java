@@ -41,7 +41,7 @@ import org.junit.rules.TestRule;
 public class ProjectSetup extends AbstractProjectSetup {
 
 	public static enum Option {
-		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY
+		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY, VERBOSE
 	}
 
 	/**
@@ -91,8 +91,9 @@ public class ProjectSetup extends AbstractProjectSetup {
 		}
 	}
 
+	@Override
 	protected boolean isVerbose() {
-		return false;
+		return options.contains(Option.VERBOSE);
 	}
 
 	@Override
@@ -108,7 +109,7 @@ public class ProjectSetup extends AbstractProjectSetup {
 			buildProject();
 			if (isVerbose()) {
 				System.out.println((System.currentTimeMillis() - start)
-						+ " ms to build " + projectName + " project");
+						+ " ms for full build of " + projectName + " project");
 			}
 		}
 		if (options.contains(Option.WAIT_INDEXES_READY)) {

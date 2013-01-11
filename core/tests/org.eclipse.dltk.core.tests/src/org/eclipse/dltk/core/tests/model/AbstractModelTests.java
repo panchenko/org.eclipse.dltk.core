@@ -213,6 +213,9 @@ public abstract class AbstractModelTests extends SuiteOfTestCases {
 			if (sourceChild.isDirectory()) {
 				copyDirectory(sourceChild, targetChild);
 			} else {
+				if (".emptydir".equals(name)) {
+					continue;
+				}
 				copy(sourceChild, targetChild);
 			}
 		}
