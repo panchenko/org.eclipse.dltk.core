@@ -444,18 +444,10 @@ public class DeltaProcessor {
 					// https://bugs.eclipse.org/bugs/show_bug.cgi?id=121569)
 					try {
 						this.state.updateProjectReferences(scriptProject,
-								null/* no old buildpath */, null/*
-																 * compute new
-																 * resolved
-																 * buildpath
-																 * later
-																 */, null/*
-																		 * read
-																		 * raw
-																		 * buildpath
-																		 * later
-																		 */,
-								false/* cannot change resources */);
+								null/* no old buildpath */, false/*
+																 * cannot change
+																 * resources
+																 */);
 					} catch (ModelException e1) {
 						// project always exists
 					}
@@ -731,8 +723,7 @@ public class DeltaProcessor {
 		case IModelElement.SCRIPT_FOLDER:
 			if (rootInfo != null) {
 				if (rootInfo.project.contains(resource)) {
-					IProjectFragment root = (IProjectFragment) rootInfo
-							.getProjectFragment(null);
+					IProjectFragment root = rootInfo.getProjectFragment(null);
 					// create package handle
 					IPath pkgPath = path.removeFirstSegments(rootInfo.rootPath
 							.segmentCount());

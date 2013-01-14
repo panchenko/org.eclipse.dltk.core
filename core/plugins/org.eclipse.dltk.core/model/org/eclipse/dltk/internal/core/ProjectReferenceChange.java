@@ -10,12 +10,16 @@
 package org.eclipse.dltk.internal.core;
 
 import java.util.HashSet;
-import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.dltk.compiler.CharOperation;
 import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.ModelException;
@@ -45,18 +49,21 @@ public class ProjectReferenceChange {
 				.getResolvedBuildpath();
 		String[] newRequired = this.project
 				.projectPrerequisites(newResolvedBuildpath);
+		final IProject projectResource = this.project.getProject();
 		try {
-			IProject projectResource = this.project.getProject();
 			IProjectDescription description = projectResource.getDescription();
 
 			IProject[] projectReferences = description.getDynamicReferences();
 
-			HashSet oldReferences = new HashSet(projectReferences.length);
+			HashSet<String> oldReferences = new HashSet<String>(
+					projectReferences.length);
 			for (int i = 0; i < projectReferences.length; i++) {
 				String projectName = projectReferences[i].getName();
 				oldReferences.add(projectName);
 			}
-			HashSet newReferences = (HashSet) oldReferences.clone();
+			@SuppressWarnings("unchecked")
+			HashSet<String> newReferences = (HashSet<String>) oldReferences
+					.clone();
 
 			for (int i = 0; i < oldRequired.length; i++) {
 				String projectName = oldRequired[i];
@@ -67,14 +74,12 @@ public class ProjectReferenceChange {
 				newReferences.add(projectName);
 			}
 
-			Iterator iter;
 			int newSize = newReferences.size();
 
 			checkIdentity: {
 				if (oldReferences.size() == newSize) {
-					iter = newReferences.iterator();
-					while (iter.hasNext()) {
-						if (!oldReferences.contains(iter.next())) {
+					for (String newRef : newReferences) {
+						if (!oldReferences.contains(newRef)) {
 							break checkIdentity;
 						}
 					}
@@ -83,27 +88,43 @@ public class ProjectReferenceChange {
 			}
 			String[] requiredProjectNames = new String[newSize];
 			int index = 0;
-			iter = newReferences.iterator();
-			while (iter.hasNext()) {
-				requiredProjectNames[index++] = (String) iter.next();
+			for (String newRef : newReferences) {
+				requiredProjectNames[index++] = newRef;
 			}
 			Util.sort(requiredProjectNames); // ensure that if changed, the
 												// order is consistent
 
-			IProject[] requiredProjectArray = new IProject[newSize];
+			final IProject[] requiredProjectArray = new IProject[newSize];
 			IWorkspaceRoot wksRoot = projectResource.getWorkspace().getRoot();
 			for (int i = 0; i < newSize; i++) {
 				requiredProjectArray[i] = wksRoot
 						.getProject(requiredProjectNames[i]);
 			}
-			description.setDynamicReferences(requiredProjectArray);
-			projectResource.setDescription(description, null);
 
+			// ensure that a scheduling rule is used so that the project
+			// description is not modified by another thread while we update it
+			// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=214981
+			// also ensure that if no change (checkIdentify block returned
+			// above) we don't reach here
+			// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=241751
+			IWorkspace workspace = projectResource.getWorkspace();
+			ISchedulingRule rule = workspace.getRuleFactory().modifyRule(
+					projectResource); // scheduling rule for modifying the
+										// project
+			IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
+				public void run(IProgressMonitor monitor) throws CoreException {
+					IProjectDescription description = projectResource
+							.getDescription();
+					description.setDynamicReferences(requiredProjectArray);
+					projectResource.setDescription(description,
+							IResource.AVOID_NATURE_CONFIG, null);
+				}
+			};
+			workspace.run(runnable, rule, IWorkspace.AVOID_UPDATE, null);
 		} catch (CoreException e) {
-			// TODO: DLTK: External project support
-			// if
-			// (!ExternalScriptProject.EXTERNAL_PROJECT_NAME.equals(this.project.getElementName()))
-			// throw new ModelException(e);
+			if (!ExternalScriptProject.EXTERNAL_PROJECT_NAME
+					.equals(this.project.getElementName()))
+				throw new ModelException(e);
 		}
 	}
 }

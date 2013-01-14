@@ -18,17 +18,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.SafeRunner;
-import org.eclipse.dltk.compiler.CharOperation;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.IElementChangedListener;
@@ -107,109 +103,10 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	private HashMap<ScriptProject, BuildpathValidation> buildpathValidations = new HashMap<ScriptProject, BuildpathValidation>();
 
 	/* A table from ScriptProject to ProjectReferenceChange */
-	private HashMap projectReferenceChanges = new HashMap();
+	private HashMap<ScriptProject, ProjectReferenceChange> projectReferenceChanges = new HashMap<ScriptProject, ProjectReferenceChange>();
 
 	/* A table from JavaProject to ExternalFolderChange */
 	private HashMap externalFolderChanges = new HashMap();
-
-	public HashMap<IScriptProject, ProjectUpdateInfo> projectUpdates = new HashMap<IScriptProject, ProjectUpdateInfo>();
-
-	public static class ProjectUpdateInfo {
-		ScriptProject project;
-		IBuildpathEntry[] oldResolvedPath;
-		IBuildpathEntry[] newResolvedPath;
-		IBuildpathEntry[] newRawPath;
-
-		/**
-		 * Update projects references so that the build order is consistent with
-		 * the buildpath
-		 */
-		public void updateProjectReferencesIfNecessary() throws ModelException {
-
-			String[] oldRequired = this.oldResolvedPath == null ? CharOperation.NO_STRINGS
-					: this.project.projectPrerequisites(this.oldResolvedPath);
-
-			if (this.newResolvedPath == null) {
-				if (this.newRawPath == null)
-					this.newRawPath = this.project.getRawBuildpath(true/*
-																		 * create
-																		 * markers
-																		 */,
-							false/* don't log problems */);
-				this.newResolvedPath = this.project.getResolvedBuildpath(
-						this.newRawPath, true/* ignore unresolved entry */,
-						true/* generate marker on error */, null/*
-																 * no reverse
-																 * map
-																 */);
-			}
-			String[] newRequired = this.project
-					.projectPrerequisites(this.newResolvedPath);
-			try {
-				IProject projectResource = this.project.getProject();
-				IProjectDescription description = projectResource
-						.getDescription();
-
-				IProject[] projectReferences = description
-						.getDynamicReferences();
-
-				HashSet<String> oldReferences = new HashSet<String>(
-						projectReferences.length);
-				for (int i = 0; i < projectReferences.length; i++) {
-					String projectName = projectReferences[i].getName();
-					oldReferences.add(projectName);
-				}
-				HashSet newReferences = (HashSet) oldReferences.clone();
-
-				for (int i = 0; i < oldRequired.length; i++) {
-					String projectName = oldRequired[i];
-					newReferences.remove(projectName);
-				}
-				for (int i = 0; i < newRequired.length; i++) {
-					String projectName = newRequired[i];
-					newReferences.add(projectName);
-				}
-
-				Iterator iter;
-				int newSize = newReferences.size();
-
-				checkIdentity: {
-					if (oldReferences.size() == newSize) {
-						iter = newReferences.iterator();
-						while (iter.hasNext()) {
-							if (!oldReferences.contains(iter.next())) {
-								break checkIdentity;
-							}
-						}
-						return;
-					}
-				}
-				String[] requiredProjectNames = new String[newSize];
-				int index = 0;
-				iter = newReferences.iterator();
-				while (iter.hasNext()) {
-					requiredProjectNames[index++] = (String) iter.next();
-				}
-				Util.sort(requiredProjectNames); // ensure that if changed, the
-				// order is consistent
-
-				IProject[] requiredProjectArray = new IProject[newSize];
-				IWorkspaceRoot wksRoot = projectResource.getWorkspace()
-						.getRoot();
-				for (int i = 0; i < newSize; i++) {
-					requiredProjectArray[i] = wksRoot
-							.getProject(requiredProjectNames[i]);
-				}
-				description.setDynamicReferences(requiredProjectArray);
-				projectResource.setDescription(description, null);
-
-			} catch (CoreException e) {
-				if (!ExternalScriptProject.EXTERNAL_PROJECT_NAME
-						.equals(this.project.getElementName()))
-					throw new ModelException(e);
-			}
-		}
-	}
 
 	/**
 	 * Workaround for bug 15168 circular errors not reported This is a cache of
@@ -321,7 +218,7 @@ public class DeltaProcessingState implements IResourceChangeListener {
 
 	public synchronized void addProjectReferenceChange(ScriptProject project,
 			IBuildpathEntry[] oldResolvedBuildpath) {
-		ProjectReferenceChange change = (ProjectReferenceChange) this.projectReferenceChanges
+		ProjectReferenceChange change = this.projectReferenceChanges
 				.get(project);
 		if (change == null) {
 			change = new ProjectReferenceChange(project, oldResolvedBuildpath);
@@ -697,43 +594,13 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	}
 
 	public void updateProjectReferences(ScriptProject project,
-			IBuildpathEntry[] oldResolvedPath,
-			IBuildpathEntry[] newResolvedPath, IBuildpathEntry[] newRawPath,
-			boolean canChangeResources) throws ModelException {
-		ProjectUpdateInfo info;
-		synchronized (this) {
-			info = (canChangeResources ? this.projectUpdates.remove(project) /*
-																			 * remove
-																			 * possibly
-																			 * awaiting
-																			 * one
-																			 */
-			: this.projectUpdates.get(project));
-			if (info == null) {
-				info = new ProjectUpdateInfo();
-				info.project = project;
-				info.oldResolvedPath = oldResolvedPath;
-				if (!canChangeResources) {
-					this.projectUpdates.put(project, info);
-				}
-			} // else refresh new buildpath information
-			info.newResolvedPath = newResolvedPath;
-			info.newRawPath = newRawPath;
-		}
-
+			IBuildpathEntry[] oldResolvedPath, boolean canChangeResources)
+			throws ModelException {
 		if (canChangeResources) {
-			info.updateProjectReferencesIfNecessary();
-		} // else project references will be updated on next PRE_BUILD
-		// notification
-	}
-
-	public synchronized ProjectUpdateInfo[] removeAllProjectUpdates() {
-		int length = this.projectUpdates.size();
-		if (length == 0)
-			return null;
-		ProjectUpdateInfo[] updates = new ProjectUpdateInfo[length];
-		this.projectUpdates.values().toArray(updates);
-		this.projectUpdates.clear();
-		return updates;
+			new ProjectReferenceChange(project, oldResolvedPath)
+					.updateProjectReferencesIfNecessary();
+		} else {
+			addProjectReferenceChange(project, oldResolvedPath);
+		}
 	}
 }

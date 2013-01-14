@@ -105,6 +105,7 @@ public class SetBuildpathOperation extends ModelOperation {
 		}
 	}
 
+	@Override
 	protected boolean canModifyRoots() {
 		// setting buildpath can modify roots
 		return true;
@@ -244,6 +245,7 @@ public class SetBuildpathOperation extends ModelOperation {
 	/**
 	 * Sets the buildpath of the pre-specified project.
 	 */
+	@Override
 	protected void executeOperation() throws ModelException {
 		// project reference updated - may throw an exception if unable to write
 		// .project file
@@ -575,6 +577,7 @@ public class SetBuildpathOperation extends ModelOperation {
 		}
 	}
 
+	@Override
 	protected ISchedulingRule getSchedulingRule() {
 		return null; // no lock taken while setting the buildpath
 	}
@@ -583,6 +586,7 @@ public class SetBuildpathOperation extends ModelOperation {
 	 * Returns <code>true</code> if this operation performs no resource
 	 * modifications, otherwise <code>false</code>. Subclasses must override.
 	 */
+	@Override
 	public boolean isReadOnly() {
 		return !this.canChangeResources;
 	}
@@ -608,6 +612,7 @@ public class SetBuildpathOperation extends ModelOperation {
 		}
 	}
 
+	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer(20);
 		buffer.append("SetBuildpathOperation\n"); //$NON-NLS-1$
@@ -780,10 +785,10 @@ public class SetBuildpathOperation extends ModelOperation {
 		// will run now, or be deferred until next pre-auto-build notification
 		// if resource tree is locked
 		ModelManager.getModelManager().deltaState.updateProjectReferences(
-				this.project, this.oldResolvedPath, this.newResolvedPath,
-				this.newRawPath, this.canChangeResources);
+				this.project, this.oldResolvedPath, this.canChangeResources);
 	}
 
+	@Override
 	public IModelStatus verify() {
 
 		IModelStatus status = super.verify();
