@@ -11,15 +11,22 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.tests;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.dltk.core.tests.model.AbstractModelTests;
 import org.eclipse.dltk.internal.core.ModelManager;
 import org.eclipse.dltk.utils.TextUtils;
+import org.eclipse.osgi.util.NLS;
 import org.junit.Assert;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
@@ -41,7 +48,7 @@ import org.junit.rules.TestRule;
 public class ProjectSetup extends AbstractProjectSetup {
 
 	public static enum Option {
-		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY, VERBOSE
+		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY, VERBOSE, CLOSED
 	}
 
 	/**
@@ -68,7 +75,6 @@ public class ProjectSetup extends AbstractProjectSetup {
 
 	private final IWorkspaceSetup workspaceSetup;
 	private final String projectName;
-	private BundledProjectSetup.Helper helper;
 	private IProject project;
 	private final Set<Option> options;
 
@@ -83,38 +89,70 @@ public class ProjectSetup extends AbstractProjectSetup {
 		this.workspaceSetup = workspaceSetup;
 		this.projectName = projectName;
 		this.options = EnumSet.of(option, restOptions);
-		if (options.contains(Option.INDEXER_DISABLED)
-				&& options.contains(Option.WAIT_INDEXES_READY)) {
+		if (hasOption(Option.INDEXER_DISABLED)
+				&& hasOption(Option.WAIT_INDEXES_READY)) {
 			throw new IllegalStateException("Conflicting options: "
 					+ TextUtils.join(Arrays.asList(Option.INDEXER_DISABLED,
 							Option.WAIT_INDEXES_READY), ","));
 		}
 	}
 
+	protected boolean hasOption(Option option) {
+		return options.contains(option);
+	}
+
 	@Override
 	protected boolean isVerbose() {
-		return options.contains(Option.VERBOSE);
+		return hasOption(Option.VERBOSE);
 	}
 
 	@Override
 	protected void before() throws Throwable {
 		workspaceSetup.before();
-		if (options.contains(Option.INDEXER_DISABLED)) {
+		if (hasOption(Option.INDEXER_DISABLED)) {
 			ModelManager.getModelManager().getIndexManager().disable();
 		}
-		helper = new BundledProjectSetup.Helper(workspaceSetup.getBundleName());
-		project = helper.setUpProject(projectName);
-		if (options.contains(Option.BUILD)) {
+		project = createProject(getProjectName());
+		if (hasOption(Option.BUILD)) {
 			final long start = System.currentTimeMillis();
 			buildProject();
 			if (isVerbose()) {
 				System.out.println((System.currentTimeMillis() - start)
-						+ " ms for full build of " + projectName + " project");
+						+ " ms for full build of " + getProjectName()
+						+ " project");
 			}
 		}
-		if (options.contains(Option.WAIT_INDEXES_READY)) {
+		if (hasOption(Option.WAIT_INDEXES_READY)) {
 			ModelManager.getModelManager().getIndexManager().waitUntilReady();
 		}
+	}
+
+	protected IProject createProject(String workspaceProjectName)
+			throws IOException, CoreException {
+		final File source = getSourceDirectory();
+		if (!source.isDirectory()) {
+			throw new IllegalStateException(NLS.bind(
+					"Source directory \"{0}\" doesn't exist", source));
+		}
+		final File target = getWorkspaceRoot().getLocation()
+				.append(workspaceProjectName).toFile();
+		FileUtil.copyDirectory(source, target);
+		final IProject project = getWorkspaceRoot().getProject(
+				workspaceProjectName);
+		ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+			public void run(IProgressMonitor monitor) throws CoreException {
+				project.create(null);
+				if (!hasOption(Option.CLOSED)) {
+					project.open(null);
+				}
+			}
+		}, null);
+		return project;
+	}
+
+	public File getSourceDirectory() {
+		return new File(workspaceSetup.getSourceWorkspaceDirectory(),
+				getSourceProjectName());
 	}
 
 	protected void buildProject() throws CoreException {
@@ -123,21 +161,45 @@ public class ProjectSetup extends AbstractProjectSetup {
 
 	@Override
 	protected void after() {
-		if (helper != null) {
+		if (project != null) {
 			try {
-				helper.deleteProject(projectName);
+				deleteProject(project);
 			} catch (CoreException e) {
 				e.printStackTrace();
 			}
-			helper = null;
+			project = null;
 		}
-		project = null;
-		if (options.contains(Option.INDEXER_DISABLED)) {
+		try {
+			deleteProject(getWorkspaceRoot().getProject(getProjectName()));
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+		if (hasOption(Option.INDEXER_DISABLED)) {
 			ModelManager.getModelManager().getIndexManager().enable();
 		}
 		workspaceSetup.after();
 	}
 
+	private static void deleteProject(IProject project) throws CoreException {
+		if (project.exists() && !project.isOpen()) {
+			// force opening so that project can be deleted without
+			// logging (see bug 23629)
+			project.open(null);
+		}
+		AbstractModelTests.deleteResource(project);
+	}
+
+	/**
+	 * Returns name of the project in the {@link #workspaceSetup source
+	 * workspace}.
+	 */
+	public String getSourceProjectName() {
+		return projectName;
+	}
+
+	/**
+	 * Returns workspace name of the project.
+	 */
 	@Override
 	public String getProjectName() {
 		return projectName;
@@ -148,8 +210,8 @@ public class ProjectSetup extends AbstractProjectSetup {
 	 */
 	@Override
 	public IProject get() {
-		Assert.assertNotNull(
-				"ProjectSetup " + projectName + " not initialized", project);
+		Assert.assertNotNull("ProjectSetup " + getProjectName()
+				+ " not initialized", project);
 		return project;
 	}
 

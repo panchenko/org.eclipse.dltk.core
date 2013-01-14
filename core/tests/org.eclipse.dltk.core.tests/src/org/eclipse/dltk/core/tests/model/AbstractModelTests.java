@@ -12,7 +12,6 @@ package org.eclipse.dltk.core.tests.model;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +54,7 @@ import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.core.WorkingCopyOwner;
+import org.eclipse.dltk.core.tests.FileUtil;
 import org.eclipse.dltk.core.tests.WorkspaceAutoBuild;
 import org.eclipse.dltk.internal.core.BuildpathEntry;
 import org.eclipse.dltk.internal.core.ModelElement;
@@ -63,6 +63,7 @@ import org.eclipse.dltk.internal.core.util.Util;
 import org.eclipse.dltk.internal.core.util.Util.Comparer;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.Bundle;
+
 
 public abstract class AbstractModelTests extends SuiteOfTestCases {
 	protected boolean displayName = false;
@@ -198,27 +199,7 @@ public abstract class AbstractModelTests extends SuiteOfTestCases {
 	 * target directory.
 	 */
 	protected void copyDirectory(File source, File target) throws IOException {
-		if (!target.exists()) {
-			target.mkdirs();
-		}
-		File[] files = source.listFiles();
-		if (files == null)
-			return;
-		for (int i = 0; i < files.length; i++) {
-			File sourceChild = files[i];
-			String name = sourceChild.getName();
-			if (name.equals("CVS") || name.equals(".svn"))
-				continue;
-			File targetChild = new File(target, name);
-			if (sourceChild.isDirectory()) {
-				copyDirectory(sourceChild, targetChild);
-			} else {
-				if (".emptydir".equals(name)) {
-					continue;
-				}
-				copy(sourceChild, targetChild);
-			}
-		}
+		FileUtil.copyDirectory(source, target);
 	}
 
 	/**
@@ -226,30 +207,7 @@ public abstract class AbstractModelTests extends SuiteOfTestCases {
 	 * destination file).
 	 */
 	public static void copy(File src, File dest) throws IOException {
-		InputStream in = null;
-		OutputStream out = null;
-		byte[] buffer = new byte[12 * 1024];
-		int read;
-
-		try {
-			in = new FileInputStream(src);
-
-			try {
-				out = new FileOutputStream(dest);
-
-				while ((read = in.read(buffer)) != -1) {
-					out.write(buffer, 0, read);
-				}
-			} finally {
-				if (out != null) {
-					out.close();
-				}
-			}
-		} finally {
-			if (in != null) {
-				in.close();
-			}
-		}
+		FileUtil.copyFile(src, dest);
 	}
 
 	public IProject setUpProject(final String projectName)
@@ -568,7 +526,7 @@ public abstract class AbstractModelTests extends SuiteOfTestCases {
 	/**
 	 * Delete this resource.
 	 */
-	public void deleteResource(IResource resource) throws CoreException {
+	public static void deleteResource(IResource resource) throws CoreException {
 		CoreException lastException = null;
 		try {
 			resource.delete(true, null);

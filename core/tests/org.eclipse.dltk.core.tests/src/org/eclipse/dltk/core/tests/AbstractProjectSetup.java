@@ -518,4 +518,8 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 		}
 	}
 
+	protected IWorkspaceRoot getWorkspaceRoot() {
+		return ResourcesPlugin.getWorkspace().getRoot();
+	}
+
 }

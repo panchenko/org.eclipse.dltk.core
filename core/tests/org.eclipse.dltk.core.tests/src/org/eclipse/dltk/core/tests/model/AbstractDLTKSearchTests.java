@@ -427,6 +427,7 @@ public class AbstractDLTKSearchTests extends AbstractModelTests implements
 		assertEquals(message, expected, actual);
 	}
 
+	@Override
 	protected void copyDirectory(File sourceDir, File targetDir)
 			throws IOException {
 		if (COPY_DIRS) {
