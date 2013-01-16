@@ -12,7 +12,6 @@
 package org.eclipse.dltk.internal.ui.preferences;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,13 +21,13 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.dltk.annotations.Internal;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.utils.DLTKLogging;
 import org.eclipse.jface.preference.PreferencePage;
+import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -49,26 +48,8 @@ public class DLTKLoggingPreferencePage extends PreferencePage implements
 
 	}
 
-	private static class OptionContentProvider implements
-			IStructuredContentProvider {
-
-		public void dispose() {
-		}
-
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		}
-
-		public Object[] getElements(Object inputElement) {
-			if (inputElement instanceof Collection<?>) {
-				return ((Collection<?>) inputElement).toArray();
-			} else {
-				return new Object[0];
-			}
-		}
-
-	}
-
-	private static class OptionLableProvider extends LabelProvider {
+	@Internal
+	static class OptionLableProvider extends LabelProvider {
 		@Override
 		public String getText(Object element) {
 			if (element instanceof Option) {
@@ -88,7 +69,7 @@ public class DLTKLoggingPreferencePage extends PreferencePage implements
 	protected Control createContents(Composite parent) {
 		viewer = CheckboxTableViewer.newCheckList(parent, SWT.BORDER
 				| SWT.FULL_SELECTION);
-		viewer.setContentProvider(new OptionContentProvider());
+		viewer.setContentProvider(ArrayContentProvider.getInstance());
 		viewer.setLabelProvider(new OptionLableProvider());
 		final List<Option> options = collectOptions();
 		viewer.setInput(options);

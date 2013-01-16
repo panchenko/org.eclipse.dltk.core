@@ -14,19 +14,23 @@ import org.eclipse.dltk.ui.DLTKUIPlugin;
 public class ScriptCorePreferencePage extends
 		AbstractConfigurationBlockPreferencePage {
 
+	@Override
 	protected IPreferenceConfigurationBlock createConfigurationBlock(
 			OverlayPreferenceStore store) {
 		return new ScriptCorePreferenceBlock(store, this);
 	}
 
+	@Override
 	protected String getHelpId() {
 		return null;
 	}
 
+	@Override
 	protected void setDescription() {
 		setDescription(Messages.ScriptCorePreferenceBlock_globalDLTKSettings);
 	}
 
+	@Override
 	protected void setPreferenceStore() {
 		setPreferenceStore(DLTKUIPlugin.getDefault().getPreferenceStore());
 	}

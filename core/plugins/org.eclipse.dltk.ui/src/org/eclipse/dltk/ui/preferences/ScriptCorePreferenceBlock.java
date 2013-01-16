@@ -61,8 +61,11 @@ final class ScriptCorePreferenceBlock extends
 		super(store, page);
 	}
 
-	private static final String[] names = new String[] { "Warning", "Error" };
-	private static final String[] ids = new String[] { "warning", "error" };
+	private static final String[] names = new String[] {
+			Messages.ScriptCorePreferenceBlock_Warning,
+			Messages.ScriptCorePreferenceBlock_Error };
+	private static final String[] ids = new String[] { DLTKCore.WARNING,
+			DLTKCore.ERROR };
 
 	private Combo circularBuildPathCombo;
 
@@ -70,9 +73,9 @@ final class ScriptCorePreferenceBlock extends
 		Composite composite = SWTFactory.createComposite(parent,
 				parent.getFont(), 1, 1, GridData.FILL_BOTH);
 
-		Group coreGroup = SWTFactory.createGroup(composite,
-				Messages.ScriptCorePreferenceBlock_coreOptions, 2, 1,
-				GridData.FILL_HORIZONTAL);
+		// Group coreGroup = SWTFactory.createGroup(composite,
+		// Messages.ScriptCorePreferenceBlock_coreOptions, 2, 1,
+		// GridData.FILL_HORIZONTAL);
 
 		Group editorGroup = SWTFactory.createGroup(composite,
 				Messages.ScriptCorePreferenceBlock_editOptions, 2, 1,
@@ -86,7 +89,7 @@ final class ScriptCorePreferenceBlock extends
 				PreferenceConstants.EDITOR_EVALUTE_TEMPORARY_PROBLEMS);
 		// Connection timeout
 		SWTFactory.createLabel(editorGroup,
-				"Codeassist completion timeout(ms):", 1);
+				Messages.ScriptCorePreferenceBlock_CodeAssistTimeout, 1);
 		final Text connectionTimeout = SWTFactory.createText(editorGroup,
 				SWT.BORDER, 1, ""); //$NON-NLS-1$
 		bindControl(connectionTimeout, PreferenceConstants.CODEASSIST_TIMEOUT,
@@ -156,6 +159,7 @@ final class ScriptCorePreferenceBlock extends
 		}
 	}
 
+	@Override
 	protected List<OverlayKey> createOverlayKeys() {
 		ArrayList<OverlayKey> overlayKeys = new ArrayList<OverlayKey>();
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(
@@ -170,6 +174,7 @@ final class ScriptCorePreferenceBlock extends
 		return overlayKeys;
 	}
 
+	@Override
 	public void initialize() {
 		super.initialize();
 		initializeBuildPathField(DLTKCore.getPlugin().getPluginPreferences()
@@ -177,6 +182,7 @@ final class ScriptCorePreferenceBlock extends
 
 	}
 
+	@Override
 	public void performDefaults() {
 		super.performDefaults();
 		initializeBuildPathField(DLTKCore.getPlugin().getPluginPreferences()
@@ -195,10 +201,12 @@ final class ScriptCorePreferenceBlock extends
 		}
 	}
 
+	@Override
 	protected void initializeFields() {
 		super.initializeFields();
 	}
 
+	@Override
 	public void performOk() {
 		super.performOk();
 		final int buildPathIndex = circularBuildPathCombo.getSelectionIndex();

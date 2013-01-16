@@ -13,9 +13,13 @@ public class Messages extends NLS {
 	public static String ScriptCorePreferencePage_manualReindex;
 	public static String ScriptCorePreferencePage_reindex;
 	public static String ScriptCorePreferenceBlock_UI_Options;
+	public static String ScriptCorePreferenceBlock_CodeAssistTimeout;
 	public static String ScriptCorePreferenceBlock_Builder_Options;
 	public static String ScriptCorePreferenceBlock_Builder_CircularDependencies;
 	public static String EditorPreferencePage_ResourceShowError_InvalidResourceName;
+
+	public static String ScriptCorePreferenceBlock_Warning;
+	public static String ScriptCorePreferenceBlock_Error;
 
 	static {
 		// initialize resource bundle
