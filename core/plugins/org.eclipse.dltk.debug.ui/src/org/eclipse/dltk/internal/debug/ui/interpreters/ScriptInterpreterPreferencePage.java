@@ -22,7 +22,6 @@ import org.eclipse.dltk.debug.ui.interpreters.InterpretersUpdater;
 import org.eclipse.dltk.internal.debug.ui.IScriptDebugHelpContextIds;
 import org.eclipse.dltk.launching.IInterpreterInstall;
 import org.eclipse.dltk.launching.ScriptRuntime;
-import org.eclipse.dltk.launching.ScriptRuntime.DefaultInterpreterEntry;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.preference.PreferencePage;
@@ -70,9 +69,9 @@ public abstract class ScriptInterpreterPreferencePage extends PreferencePage
 		IEnvironment[] environments = EnvironmentManager.getEnvironments();
 		for (int j = 0; j < environments.length; j++) {
 			IInterpreterInstall realDefault = ScriptRuntime
-					.getDefaultInterpreterInstall(new DefaultInterpreterEntry(
+					.getDefaultInterpreterInstall(
 							fInterpretersBlock.getCurrentNature(),
-							environments[j].getId()));
+							environments[j]);
 
 			boolean verified = false;
 			if (realDefault != null) {
@@ -210,11 +209,9 @@ public abstract class ScriptInterpreterPreferencePage extends PreferencePage
 				fInterpretersBlock
 						.removeInterpreters(new IInterpreterInstall[] { interpreter });
 				IInterpreterInstall def = null;
-				def = ScriptRuntime
-						.getDefaultInterpreterInstall(new DefaultInterpreterEntry(
-								fInterpretersBlock.getCurrentNature(),
-								fInterpretersBlock.getCurrentEnvironment()
-										.getId()));
+				def = ScriptRuntime.getDefaultInterpreterInstall(
+						fInterpretersBlock.getCurrentNature(),
+						fInterpretersBlock.getCurrentEnvironment());
 				if (def == null) {
 					fInterpretersBlock.setCheckedInterpreter(null);
 				} else {

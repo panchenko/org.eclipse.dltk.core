@@ -7,7 +7,6 @@ import org.eclipse.dltk.core.internal.environment.LocalEnvironment;
 import org.eclipse.dltk.launching.IInterpreterInstall;
 import org.eclipse.dltk.launching.IInterpreterInstallType;
 import org.eclipse.dltk.launching.ScriptRuntime;
-import org.eclipse.dltk.launching.ScriptRuntime.DefaultInterpreterEntry;
 import org.eclipse.dltk.ui.preferences.ComboViewerBlock;
 import org.eclipse.dltk.ui.preferences.ImprovedAbstractConfigurationBlock;
 import org.eclipse.dltk.ui.preferences.OverlayPreferenceStore;
@@ -105,9 +104,8 @@ public abstract class InternalScriptInterpreterPreferenceBlock extends
 	 * interpreter id is not found in the preference store.
 	 */
 	protected Object getDefaultSelectedInterpreter() {
-		DefaultInterpreterEntry entry = new DefaultInterpreterEntry(
-				getNatureId(), LocalEnvironment.ENVIRONMENT_ID);
-		return ScriptRuntime.getDefaultInterpreterInstall(entry);
+		return ScriptRuntime.getDefaultInterpreterInstall(getNatureId(),
+				LocalEnvironment.getInstance());
 	}
 
 	/*

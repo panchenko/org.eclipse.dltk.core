@@ -44,7 +44,6 @@ import org.eclipse.dltk.internal.ui.wizards.BuildpathDetector;
 import org.eclipse.dltk.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.dltk.launching.IInterpreterInstall;
 import org.eclipse.dltk.launching.ScriptRuntime;
-import org.eclipse.dltk.launching.ScriptRuntime.DefaultInterpreterEntry;
 import org.eclipse.dltk.ui.DLTKUILanguageManager;
 import org.eclipse.dltk.ui.IDLTKUILanguageToolkit;
 import org.eclipse.dltk.ui.PreferenceConstants;
@@ -534,8 +533,8 @@ public class ProjectCreator {
 			final String nature = getScriptNature();
 			if (nature != null) {
 				projectInterpreter = ScriptRuntime
-						.getDefaultInterpreterInstall(new DefaultInterpreterEntry(
-								nature, fLocation.getEnvironment().getId()));
+						.getDefaultInterpreterInstall(nature,
+								fLocation.getEnvironment());
 			}
 		}
 		if (projectInterpreter != null) {

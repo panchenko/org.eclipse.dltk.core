@@ -207,6 +207,12 @@ public final class ScriptRuntime {
 
 	private static IInterpreterInstallType[] fgInterpreterTypes = null;
 
+	/**
+	 * This class is deprecated in 5.0 and should not be used outside of DLTK
+	 * core plugins. The affected APIs will be updated, e.g. see
+	 * {@link ScriptRuntime#getDefaultInterpreterInstall(String, IEnvironment)}
+	 */
+	@Deprecated
 	public static class DefaultInterpreterEntry {
 		private final String nature;
 		private final String environment;
@@ -505,11 +511,24 @@ public final class ScriptRuntime {
 	}
 
 	/**
+	 * Return the default interpreter set with
+	 * <code>setDefaultInterpreter()</code> for the specified
+	 * <code>natureId</code> and <code>environment</code> or <code>null</code>.
+	 */
+	public static IInterpreterInstall getDefaultInterpreterInstall(
+			String natureId, IEnvironment environment) {
+		return getDefaultInterpreterInstall(new DefaultInterpreterEntry(
+				natureId, environment != null ? environment.getId()
+						: LocalEnvironment.ENVIRONMENT_ID));
+	}
+
+	/**
 	 * Return the default Interpreter set with
 	 * <code>setDefaultInterpreter()</code>.
 	 * 
 	 * @return Returns the default Interpreter.
 	 */
+	@Deprecated
 	public static IInterpreterInstall getDefaultInterpreterInstall(
 			DefaultInterpreterEntry entry) {
 		IInterpreterInstall install = getInterpreterFromCompositeId(getDefaultInterpreterId(entry));

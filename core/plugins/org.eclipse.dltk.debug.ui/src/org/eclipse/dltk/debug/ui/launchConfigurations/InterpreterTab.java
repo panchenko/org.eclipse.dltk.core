@@ -30,7 +30,6 @@ import org.eclipse.dltk.internal.debug.ui.interpreters.InterpreterDescriptor;
 import org.eclipse.dltk.launching.IInterpreterInstall;
 import org.eclipse.dltk.launching.ScriptLaunchConfigurationConstants;
 import org.eclipse.dltk.launching.ScriptRuntime;
-import org.eclipse.dltk.launching.ScriptRuntime.DefaultInterpreterEntry;
 import org.eclipse.dltk.ui.DLTKPluginImages;
 import org.eclipse.dltk.ui.viewsupport.ImageDescriptorRegistry;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -540,11 +539,8 @@ public class InterpreterTab extends CommonScriptLaunchTab {
 					IScriptProject project) {
 				final IEnvironment environment = EnvironmentManager
 						.getEnvironment(project);
-				final String id = environment != null ? environment.getId()
-						: EnvironmentManager.getLocalEnvironment().getId();
-				return ScriptRuntime
-						.getDefaultInterpreterInstall(new DefaultInterpreterEntry(
-								getNature(), id));
+				return ScriptRuntime.getDefaultInterpreterInstall(getNature(),
+						environment);
 			}
 
 			@Override

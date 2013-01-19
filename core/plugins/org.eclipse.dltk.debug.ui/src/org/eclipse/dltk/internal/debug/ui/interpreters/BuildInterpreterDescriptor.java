@@ -12,7 +12,6 @@ package org.eclipse.dltk.internal.debug.ui.interpreters;
 import org.eclipse.dltk.debug.ui.messages.ScriptLaunchMessages;
 import org.eclipse.dltk.launching.IInterpreterInstall;
 import org.eclipse.dltk.launching.ScriptRuntime;
-import org.eclipse.dltk.launching.ScriptRuntime.DefaultInterpreterEntry;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -44,8 +43,7 @@ public class BuildInterpreterDescriptor extends InterpreterDescriptor {
 	 */
 	@Override
 	public IInterpreterInstall getInterpreter() {
-		return ScriptRuntime
-				.getDefaultInterpreterInstall(new DefaultInterpreterEntry(fContext
-						.getNatureId(), fContext.getEnvironment().getId()));
+		return ScriptRuntime.getDefaultInterpreterInstall(
+				fContext.getNatureId(), fContext.getEnvironment());
 	}
 }

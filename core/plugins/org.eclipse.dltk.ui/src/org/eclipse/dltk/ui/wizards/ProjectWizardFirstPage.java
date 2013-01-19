@@ -49,7 +49,6 @@ import org.eclipse.dltk.launching.IInterpreterInstall;
 import org.eclipse.dltk.launching.IInterpreterInstallType;
 import org.eclipse.dltk.launching.InterpreterStandin;
 import org.eclipse.dltk.launching.ScriptRuntime;
-import org.eclipse.dltk.launching.ScriptRuntime.DefaultInterpreterEntry;
 import org.eclipse.dltk.ui.DLTKUILanguageManager;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
 import org.eclipse.dltk.ui.IDLTKUILanguageToolkit;
@@ -674,9 +673,8 @@ public abstract class ProjectWizardFirstPage extends WizardPage implements
 
 		private String getDefaultInterpreterName() {
 			IInterpreterInstall inst = ScriptRuntime
-					.getDefaultInterpreterInstall(new DefaultInterpreterEntry(
-							getCurrentLanguageNature(), getEnvironment()
-									.getId()));
+					.getDefaultInterpreterInstall(getCurrentLanguageNature(),
+							getEnvironment());
 			if (inst != null)
 				return inst.getName();
 			else
