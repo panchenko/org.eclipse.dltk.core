@@ -1841,33 +1841,31 @@ public final class ScriptRuntime {
 		return new Path(path);
 	}
 
-	private static InterpreterStandin detectInterpreterInstall(String natureId,
-			List<IInterpreterInstallType> interpTypes) {
+	private static InterpreterStandin[] detectInterpreterInstall(
+			String natureId, List<IInterpreterInstallType> interpTypes) {
 		// Try to create a interpreter install using the install location
-		for (int i = 0; i < interpTypes.size(); i++) {
-			IInterpreterInstallType interpType = interpTypes.get(i);
-			IFileHandle[] detectedLocations = interpType
+		for (IInterpreterInstallType interpType : interpTypes) {
+			final IFileHandle[] detectedLocations = interpType
 					.detectInstallLocations();
 			if (detectedLocations != null && detectedLocations.length != 0) {
 				// Make sure the interpreter id is unique
 				long unique = System.currentTimeMillis();
-
-				while (interpType
-						.findInterpreterInstall(String.valueOf(unique)) != null) {
-					unique++;
+				final InterpreterStandin[] result = new InterpreterStandin[detectedLocations.length];
+				for (int j = 0; j < detectedLocations.length; ++j) {
+					while (interpType.findInterpreterInstall(String
+							.valueOf(unique)) != null) {
+						unique++;
+					}
+					final IFileHandle location = detectedLocations[j];
+					// Create a standin for the detected interpreter
+					final InterpreterStandin detected = new InterpreterStandin(
+							interpType, String.valueOf(unique++));
+					detected.setInstallLocation(location);
+					detected.setName(interpType
+							.generateDetectedInterpreterName(location));
+					result[j] = detected;
 				}
-
-				// Create a standin for the detected interpreter and add it to
-				// the result collector
-				// TODO (alex) handle all instances
-				String interpID = String.valueOf(unique);
-				InterpreterStandin detected = new InterpreterStandin(
-						interpType, interpID);
-				detected.setInstallLocation(detectedLocations[0]);
-				detected.setName(interpType
-						.generateDetectedInterpreterName(detected
-								.getInstallLocation()));
-				return detected;
+				return result;
 			}
 		}
 		return null;
@@ -1932,29 +1930,29 @@ public final class ScriptRuntime {
 							InterpreterListener listener = new InterpreterListener();
 							addInterpreterInstallChangedListener(listener);
 							setPref = true;
-							InterpreterStandin interp = detectInterpreterInstall(
+							InterpreterStandin[] interp = detectInterpreterInstall(
 									natureId, typesByNature.get(natureId));
-							DefaultInterpreterEntry entry = null;
-							if (interp != null) {
-								entry = new DefaultInterpreterEntry(natureId,
-										interp.getEnvironmentId());
-							}
 							removeInterpreterInstallChangedListener(listener);
 							if (!listener.isChanged()) {
 								if (interp != null) {
-									defs.addInterpreter(interp);
+									for (InterpreterStandin standin : interp) {
+										defs.addInterpreter(standin);
+									}
 									defs.setDefaultInterpreterInstallCompositeID(
-											entry,
-											getCompositeIdFromInterpreter(interp));
+											new DefaultInterpreterEntry(
+													natureId, interp[0]
+															.getEnvironmentId()),
+											getCompositeIdFromInterpreter(interp[0]));
 								}
 							} else {
 								// interpreters were changed - reflect current
 								// settings
 								addPersistedInterpreters(defs);
-								if (entry != null) {
+								// copy default interpreters
+								for (Map.Entry<DefaultInterpreterEntry, String> entry : fgDefaultInterpreterId
+										.entrySet()) {
 									defs.setDefaultInterpreterInstallCompositeID(
-											entry,
-											fgDefaultInterpreterId.get(entry));
+											entry.getKey(), entry.getValue());
 								}
 							}
 						}
