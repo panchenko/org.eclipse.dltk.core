@@ -160,4 +160,9 @@ public class FileAsFileHandle implements IFileHandle {
 		return file;
 	}
 
+	@Override
+	public String toString() {
+		return file.toString();
+	}
+
 }
