@@ -209,16 +209,18 @@ public abstract class AbstractInterpreterInstall implements
 		fNotify = notify;
 	}
 
+	@Override
 	public boolean equals(Object object) {
 		if (object instanceof IInterpreterInstall) {
-			IInterpreterInstall Interpreter = (IInterpreterInstall) object;
+			IInterpreterInstall interpreter = (IInterpreterInstall) object;
 			return getInterpreterInstallType().equals(
-					Interpreter.getInterpreterInstallType())
-					&& getId().equals(Interpreter.getId());
+					interpreter.getInterpreterInstallType())
+					&& getId().equals(interpreter.getId());
 		}
 		return false;
 	}
 
+	@Override
 	public int hashCode() {
 		return getInterpreterInstallType().hashCode() + getId().hashCode();
 	}

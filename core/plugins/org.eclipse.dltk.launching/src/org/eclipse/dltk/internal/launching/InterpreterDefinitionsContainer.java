@@ -65,18 +65,8 @@ import org.xml.sax.helpers.DefaultHandler;
  * Clients may instantiate this class; it is not intended to be subclassed.
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class InterpreterDefinitionsContainer {
-
-	private final class DefaultInterpreterComparator implements
-			Comparator<DefaultInterpreterEntry> {
-		public int compare(DefaultInterpreterEntry entry0,
-				DefaultInterpreterEntry entry1) {
-			String k0 = entry0.getEnvironment() + ":" + entry0.getNature(); //$NON-NLS-1$
-			String k1 = entry1.getEnvironment() + ":" + entry1.getNature(); //$NON-NLS-1$
-			return k0.compareTo(k1);
-		}
-	}
-
 	private static final String PATH_ATTR = "path"; //$NON-NLS-1$
 	private static final String INTERPRETER_NAME_ATTR = "name"; //$NON-NLS-1$
 	private static final String INTERPRETER_TAG = "interpreter"; //$NON-NLS-1$
@@ -162,11 +152,11 @@ public class InterpreterDefinitionsContainer {
 	 * invalid Interpreter is one whose install location doesn't exist.
 	 * </p>
 	 * 
-	 * @param Interpreter
+	 * @param interpreter
 	 *            the Interpreter to be added to this container
 	 */
-	public void addInterpreter(IInterpreterInstall Interpreter) {
-		addInterpreter(Interpreter, false);
+	public void addInterpreter(IInterpreterInstall interpreter) {
+		addInterpreter(interpreter, false);
 	}
 
 	/**
@@ -189,13 +179,13 @@ public class InterpreterDefinitionsContainer {
 			fInterpreterList.remove(interpreter);
 		}
 		if (!fInterpreterList.contains(interpreter) || overwrite) {
-			IInterpreterInstallType InterpreterInstallType = interpreter
+			IInterpreterInstallType interpreterInstallType = interpreter
 					.getInterpreterInstallType();
 			List<IInterpreterInstall> interpreterList = fInterTypeToInterMap
-					.get(InterpreterInstallType);
+					.get(interpreterInstallType);
 			if (interpreterList == null) {
 				interpreterList = new ArrayList<IInterpreterInstall>(3);
-				fInterTypeToInterMap.put(InterpreterInstallType,
+				fInterTypeToInterMap.put(interpreterInstallType,
 						interpreterList);
 			}
 			if (interpreterList.contains(interpreter)) {
@@ -221,11 +211,11 @@ public class InterpreterDefinitionsContainer {
 	 * An invalid Interpreter is one whose install location doesn't exist.
 	 * </p>
 	 * 
-	 * @param InterpreterList
+	 * @param interpreterList
 	 *            a list of Interpreters to be added to this container
 	 */
-	public void addInterpreterList(List<IInterpreterInstall> InterpreterList) {
-		Iterator<IInterpreterInstall> iterator = InterpreterList.iterator();
+	public void addInterpreterList(List<IInterpreterInstall> interpreterList) {
+		Iterator<IInterpreterInstall> iterator = interpreterList.iterator();
 		while (iterator.hasNext()) {
 			IInterpreterInstall Interpreter = iterator.next();
 			addInterpreter(Interpreter, false);
@@ -401,10 +391,19 @@ public class InterpreterDefinitionsContainer {
 		Element config = doc.createElement(INTERPRETER_SETTINGS_TAG);
 		doc.appendChild(config);
 
+		final Comparator<DefaultInterpreterEntry> comparator = new Comparator<DefaultInterpreterEntry>() {
+			public int compare(DefaultInterpreterEntry entry0,
+					DefaultInterpreterEntry entry1) {
+				String k0 = entry0.getEnvironment() + ":" + entry0.getNature(); //$NON-NLS-1$
+				String k1 = entry1.getEnvironment() + ":" + entry1.getNature(); //$NON-NLS-1$
+				return k0.compareTo(k1);
+			}
+		};
+
 		// Set the defaultInterpreter attribute on the top-level node
 		List<DefaultInterpreterEntry> keys = new ArrayList<DefaultInterpreterEntry>();
 		keys.addAll(fDefaultInterpreterInstallCompositeID.keySet());
-		Collections.sort(keys, new DefaultInterpreterComparator());
+		Collections.sort(keys, comparator);
 
 		for (Iterator<DefaultInterpreterEntry> iter = keys.iterator(); iter
 				.hasNext();) {
@@ -419,7 +418,7 @@ public class InterpreterDefinitionsContainer {
 
 		List<DefaultInterpreterEntry> keys2 = new ArrayList<DefaultInterpreterEntry>();
 		keys2.addAll(fDefaultInterpreterInstallConnectorTypeID.keySet());
-		Collections.sort(keys2, new DefaultInterpreterComparator());
+		Collections.sort(keys2, comparator);
 
 		// Set the defaultInterpreterConnector attribute on the top-level node
 		for (Iterator<DefaultInterpreterEntry> iter = keys2.iterator(); iter
@@ -680,19 +679,19 @@ public class InterpreterDefinitionsContainer {
 	 * Interpreter definitions and add them to the specified container.
 	 */
 	private static void populateInterpreterTypes(
-			Element InterpreterTypeElement,
+			Element interpreterTypeElement,
 			InterpreterDefinitionsContainer container) {
 
 		// Retrieve the 'id' attribute and the corresponding Interpreter type
 		// object
-		String id = InterpreterTypeElement.getAttribute(ID_ATTR);
+		String id = interpreterTypeElement.getAttribute(ID_ATTR);
 		IInterpreterInstallType InterpreterType = ScriptRuntime
 				.getInterpreterInstallType(id);
 		if (InterpreterType != null) {
 
 			// For each Interpreter child node, populate the container with a
 			// subordinate node
-			NodeList InterpreterNodeList = InterpreterTypeElement
+			NodeList InterpreterNodeList = interpreterTypeElement
 					.getChildNodes();
 			for (int i = 0; i < InterpreterNodeList.getLength(); ++i) {
 				Node InterpreterNode = InterpreterNodeList.item(i);
@@ -827,7 +826,7 @@ public class InterpreterDefinitionsContainer {
 	 * Set the LibraryLocations on the specified Interpreter, by extracting the
 	 * subordinate nodes from the specified 'lirbaryLocations' node.
 	 */
-	private static void setLibraryLocations(IInterpreterInstall Interpreter,
+	private static void setLibraryLocations(IInterpreterInstall interpreter,
 			Element libLocationsElement) {
 		NodeList list = libLocationsElement.getChildNodes();
 		int length = list.getLength();
@@ -843,12 +842,12 @@ public class InterpreterDefinitionsContainer {
 				}
 			}
 		}
-		Interpreter.setLibraryLocations(locations
+		interpreter.setLibraryLocations(locations
 				.toArray(new LibraryLocation[locations.size()]));
 	}
 
 	private static void setEnvironmentVariables(
-			IInterpreterInstall Interpreter, Element environmentVariablesElement) {
+			IInterpreterInstall interpreter, Element environmentVariablesElement) {
 		NodeList list = environmentVariablesElement.getChildNodes();
 		int length = list.getLength();
 		List<EnvironmentVariable> variables = new ArrayList<EnvironmentVariable>(
@@ -864,23 +863,23 @@ public class InterpreterDefinitionsContainer {
 				}
 			}
 		}
-		Interpreter.setEnvironmentVariables(variables
+		interpreter.setEnvironmentVariables(variables
 				.toArray(new EnvironmentVariable[variables.size()]));
 	}
 
 	/**
 	 * Removes the Interpreter from this container.
 	 * 
-	 * @param Interpreter
+	 * @param interpreter
 	 *            Interpreter intall
 	 */
-	public void removeInterpreter(IInterpreterInstall Interpreter) {
-		fInterpreterList.remove(Interpreter);
+	public void removeInterpreter(IInterpreterInstall interpreter) {
+		fInterpreterList.remove(interpreter);
 		// fInvalidInterpreterList.remove(Interpreter);
-		List<IInterpreterInstall> list = fInterTypeToInterMap.get(Interpreter
+		List<IInterpreterInstall> list = fInterTypeToInterMap.get(interpreter
 				.getInterpreterInstallType());
 		if (list != null) {
-			list.remove(Interpreter);
+			list.remove(interpreter);
 		}
 	}
 

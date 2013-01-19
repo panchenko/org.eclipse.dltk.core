@@ -41,8 +41,9 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Preferences;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -73,6 +74,7 @@ import org.eclipse.dltk.internal.launching.RuntimeBuildpathProvider;
 import org.eclipse.dltk.internal.launching.ScriptSourceLookupUtil;
 import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.Bundle;
+import org.osgi.service.prefs.BackingStoreException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -124,31 +126,24 @@ public final class ScriptRuntime {
 	 * 
 	 */
 	public static final String INTERPRETER_CONTAINER = DLTKLaunchingPlugin
-			.getUniqueIdentifier()
-			+ ".INTERPRETER_CONTAINER"; //$NON-NLS-1$
+			.getUniqueIdentifier() + ".INTERPRETER_CONTAINER"; //$NON-NLS-1$
 
 	/**
 	 * Simple identifier constant (value
 	 * <code>"runtimeBuildpathEntryResolvers"</code>) for the runtime buildpath
 	 * entry resolvers extension point.
-	 * 
-	 * 
 	 */
 	public static final String EXTENSION_POINT_RUNTIME_BUILDPATH_ENTRY_RESOLVERS = "runtimeBuildpathEntryResolvers"; //$NON-NLS-1$	
 
 	/**
 	 * Simple identifier constant (value <code>"buildpathProviders"</code>) for
 	 * the runtime buildpath providers extension point.
-	 * 
-	 * 
 	 */
 	public static final String EXTENSION_POINT_RUNTIME_BUILDPATH_PROVIDERS = "buildpathProviders"; //$NON-NLS-1$		
 
 	/**
 	 * Simple identifier constant (value <code>"interpreterInstalls"</code>) for
 	 * the interpreters installs extension point.
-	 * 
-	 * 
 	 */
 	public static final String EXTENSION_POINT_INTERPRETER_INSTALLS = "interpreterInstalls"; //$NON-NLS-1$		
 
@@ -161,8 +156,6 @@ public final class ScriptRuntime {
 	 * project for which the path could not be resolved. The status handler must
 	 * return an <code>IInterpreterInstall</code> or <code>null</code>. The
 	 * container resolver will re-set the project's buildpath if required.
-	 * 
-	 * 
 	 */
 	public static final int ERR_UNABLE_TO_RESOLVE_INTERPRETER = 160;
 
@@ -170,27 +163,19 @@ public final class ScriptRuntime {
 	 * Preference key for launch/connect timeout. Interpreter Runners should
 	 * honor this timeout value when attempting to launch and connect to a
 	 * debugger. The value is an int, indicating a number of milliseconds.
-	 * 
-	 * 
 	 */
 	public static final String PREF_CONNECT_TIMEOUT = DLTKLaunchingPlugin
-			.getUniqueIdentifier()
-			+ ".PREF_CONNECT_TIMEOUT"; //$NON-NLS-1$
+			.getUniqueIdentifier() + ".PREF_CONNECT_TIMEOUT"; //$NON-NLS-1$
 
 	/**
 	 * Preference key for the String of XML that defines all installed
 	 * Interpreters.
-	 * 
-	 * 
 	 */
 	public static final String PREF_INTERPRETER_XML = DLTKLaunchingPlugin
-			.getUniqueIdentifier()
-			+ ".PREF_INTERPRETER_XML"; //$NON-NLS-1$
+			.getUniqueIdentifier() + ".PREF_INTERPRETER_XML"; //$NON-NLS-1$
 
 	/**
 	 * Default launch/connect timeout (ms).
-	 * 
-	 * 
 	 */
 	public static final int DEF_CONNECT_TIMEOUT = 20000;
 
@@ -212,11 +197,9 @@ public final class ScriptRuntime {
 	 * location. If the path is absolute, it is interpreted as an absolute path
 	 * in the local file system.
 	 * </p>
-	 * 
 	 */
 	public static final String BUILDPATH_ATTR_LIBRARY_PATH_ENTRY = DLTKLaunchingPlugin
-			.getUniqueIdentifier()
-			+ ".CLASSPATH_ATTR_LIBRARY_PATH_ENTRY"; //$NON-NLS-1$
+			.getUniqueIdentifier() + ".CLASSPATH_ATTR_LIBRARY_PATH_ENTRY"; //$NON-NLS-1$
 
 	// lock for interpreter initialization
 	private static Object fgInterpreterLock = new Object();
@@ -241,6 +224,7 @@ public final class ScriptRuntime {
 			return environment;
 		}
 
+		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
@@ -251,6 +235,7 @@ public final class ScriptRuntime {
 			return result;
 		}
 
+		@Override
 		public boolean equals(Object obj) {
 			if (this == obj)
 				return true;
@@ -310,15 +295,16 @@ public final class ScriptRuntime {
 	/**
 	 * Interpreter change listeners
 	 */
-	private static ListenerList fgInterpreterListeners = new ListenerList(ListenerList.IDENTITY);
+	private static ListenerList fgInterpreterListeners = new ListenerList(
+			ListenerList.IDENTITY);
 
 	/**
 	 * Cache of already resolved projects in container entries. Used to avoid
 	 * cycles in project dependencies when resolving buildpath container
 	 * entries. Counters used to know when entering/exiting to clear cache
 	 */
-	private static ThreadLocal<List<IScriptProject>> fgProjects = new ThreadLocal<List<IScriptProject>>(); // Lists
-	private static ThreadLocal<Integer> fgEntryCount = new ThreadLocal<Integer>(); // Integers
+	private static ThreadLocal<List<IScriptProject>> fgProjects = new ThreadLocal<List<IScriptProject>>();
+	private static ThreadLocal<Integer> fgEntryCount = new ThreadLocal<Integer>();
 
 	/**
 	 * Set of IDs of Interpreters contributed via InterpreterInstalls extension
@@ -343,8 +329,8 @@ public final class ScriptRuntime {
 		IConfigurationElement[] configs = extensionPoint
 				.getConfigurationElements();
 
-		MultiStatus status = new MultiStatus(DLTKLaunchingPlugin
-				.getUniqueIdentifier(), IStatus.OK,
+		MultiStatus status = new MultiStatus(
+				DLTKLaunchingPlugin.getUniqueIdentifier(), IStatus.OK,
 				LaunchingMessages.ScriptRuntime_exceptionsOccurred, null);
 		fgInterpreterTypes = new IInterpreterInstallType[configs.length];
 
@@ -632,21 +618,21 @@ public final class ScriptRuntime {
 	 * Returns a String that uniquely identifies the specified Interpreter
 	 * across all Interpreter types.
 	 * 
-	 * @param Interpreter
+	 * @param interpreter
 	 *            the instance of IInterpreterInstallType to be identified
 	 * 
 	 * 
 	 */
 	public static String getCompositeIdFromInterpreter(
-			IInterpreterInstall Interpreter) {
-		if (Interpreter == null) {
+			IInterpreterInstall interpreter) {
+		if (interpreter == null) {
 			return null;
 		}
-		IInterpreterInstallType InterpreterType = Interpreter
+		IInterpreterInstallType interpreterType = interpreter
 				.getInterpreterInstallType();
-		String typeID = InterpreterType.getId();
+		String typeID = interpreterType.getId();
 		CompositeId id = new CompositeId(new String[] { typeID,
-				Interpreter.getId() });
+				interpreter.getId() });
 		return id.toString();
 	}
 
@@ -697,16 +683,13 @@ public final class ScriptRuntime {
 		if (scriptProject != null && scriptProject.getProject().exists()
 				&& !scriptProject.getProject().isOpen()) {
 			abort(MessageFormat.format(LaunchingMessages.ScriptRuntime_28,
-					new String[] { configuration.getName(), projectName }),
+					configuration.getName(), projectName),
 					ScriptLaunchConfigurationConstants.ERR_PROJECT_CLOSED, null);
 		}
 		if ((scriptProject == null) || !scriptProject.exists()) {
-			abort(
-					MessageFormat
-							.format(
-									LaunchingMessages.ScriptRuntime_Launch_configuration__0__references_non_existing_project__1___1,
-									new String[] { configuration.getName(),
-											projectName }),
+			abort(MessageFormat
+					.format(LaunchingMessages.ScriptRuntime_Launch_configuration__0__references_non_existing_project__1___1,
+							configuration.getName(), projectName),
 					ScriptLaunchConfigurationConstants.ERR_NOT_A_SCRIPT_PROJECT,
 					null);
 		}
@@ -781,8 +764,7 @@ public final class ScriptRuntime {
 		}
 
 		if (nature == null) {
-			abort(
-					LaunchingMessages.ScriptRuntime_notDefaultInterpreter,
+			abort(LaunchingMessages.ScriptRuntime_notDefaultInterpreter,
 					ScriptLaunchConfigurationConstants.ERR_NO_DEFAULT_INTERPRETER_INSTALL,
 					null);
 		}
@@ -792,8 +774,7 @@ public final class ScriptRuntime {
 				environment);
 		IInterpreterInstall res = getDefaultInterpreterInstall(entry);
 		if (res == null) {
-			abort(
-					LaunchingMessages.ScriptRuntime_notDefaultInterpreter,
+			abort(LaunchingMessages.ScriptRuntime_notDefaultInterpreter,
 					ScriptLaunchConfigurationConstants.ERR_NO_DEFAULT_INTERPRETER_INSTALL,
 					null);
 		}
@@ -809,9 +790,10 @@ public final class ScriptRuntime {
 	 *            lower level exception associated with the error, or
 	 *            <code>null</code> if none
 	 */
-	private static void abort(String message, Throwable exception)
+	private static CoreException abort(String message, Throwable exception)
 			throws CoreException {
-		abort(message, ScriptLaunchConfigurationConstants.ERR_INTERNAL_ERROR,
+		throw abort(message,
+				ScriptLaunchConfigurationConstants.ERR_INTERNAL_ERROR,
 				exception);
 	}
 
@@ -827,8 +809,8 @@ public final class ScriptRuntime {
 	 * 
 	 *            error, or <code>null</code> if none
 	 */
-	private static void abort(String message, int code, Throwable exception)
-			throws CoreException {
+	private static CoreException abort(String message, int code,
+			Throwable exception) throws CoreException {
 		throw new CoreException(new Status(IStatus.ERROR,
 				DLTKLaunchingPlugin.PLUGIN_ID, code, message, exception));
 	}
@@ -851,7 +833,7 @@ public final class ScriptRuntime {
 		}
 		try {
 			String xml = getInterpretersAsXML();
-			getPreferences().setValue(PREF_INTERPRETER_XML, xml);
+			getPreferences().put(PREF_INTERPRETER_XML, xml);
 			savePreferences();
 		} catch (IOException e) {
 			throw new CoreException(new Status(IStatus.ERROR,
@@ -908,8 +890,8 @@ public final class ScriptRuntime {
 	private static boolean addPersistedInterpreters(
 			InterpreterDefinitionsContainer interpreterDefs) {
 		// Try retrieving the Interpreter preferences from the preference store
-		String interpreterXMLString = getPreferences().getString(
-				PREF_INTERPRETER_XML);
+		String interpreterXMLString = getPreferences().get(
+				PREF_INTERPRETER_XML, "");
 
 		// If the preference was found, load Interpreters from it into memory
 		if (interpreterXMLString.length() > 0) {
@@ -1227,12 +1209,12 @@ public final class ScriptRuntime {
 							case IBuildpathContainer.K_APPLICATION:
 								break;
 							case IBuildpathContainer.K_DEFAULT_SYSTEM:
-								return newRuntimeContainerBuildpathEntry(entry
-										.getPath(),
+								return newRuntimeContainerBuildpathEntry(
+										entry.getPath(),
 										IRuntimeBuildpathEntry.STANDARD_ENTRY);
 							case IBuildpathContainer.K_SYSTEM:
-								return newRuntimeContainerBuildpathEntry(entry
-										.getPath(),
+								return newRuntimeContainerBuildpathEntry(
+										entry.getPath(),
 										IRuntimeBuildpathEntry.BOOTSTRAP_ENTRY);
 							}
 						}
@@ -1363,10 +1345,10 @@ public final class ScriptRuntime {
 	 * Returns the preference store for the launching plug-in.
 	 * 
 	 * @return the preference store for the launching plug-in
-	 * 
+	 * @since 5.0 return type changed to {@link IEclipsePreferences}
 	 */
-	public static Preferences getPreferences() {
-		return DLTKLaunchingPlugin.getDefault().getPluginPreferences();
+	public static IEclipsePreferences getPreferences() {
+		return InstanceScope.INSTANCE.getNode(DLTKLaunchingPlugin.PLUGIN_ID);
 	}
 
 	/**
@@ -1375,7 +1357,11 @@ public final class ScriptRuntime {
 	 * 
 	 */
 	public static void savePreferences() {
-		DLTKLaunchingPlugin.getDefault().savePluginPreferences();
+		try {
+			getPreferences().flush();
+		} catch (BackingStoreException e) {
+			DLTKLaunchingPlugin.log(e);
+		}
 	}
 
 	/**
@@ -1593,8 +1579,8 @@ public final class ScriptRuntime {
 						entry.getPath(), project);
 				if (container != null) {
 					IBuildpathEntry[] requiredProjects = processScriptLibraryPathEntries(
-							project, collectRequired, container
-									.getBuildpathEntries(), entries);
+							project, collectRequired,
+							container.getBuildpathEntries(), entries);
 					if (requiredProjects != null) {
 						if (req == null) {
 							req = new ArrayList<IBuildpathEntry>();
@@ -1705,37 +1691,23 @@ public final class ScriptRuntime {
 					String InterpreterType = element
 							.getAttribute("interpreterInstallType"); //$NON-NLS-1$
 					if (InterpreterType == null) {
-						abort(
-								MessageFormat
-										.format(
-												"Missing required interpreterInstallType attribute for interpreterInstall contributed by {0}", //$NON-NLS-1$
-												new String[] { element
-														.getContributor()
-														.getName() }), null);
+						abort(MessageFormat.format(
+								"Missing required interpreterInstallType attribute for interpreterInstall contributed by {0}", //$NON-NLS-1$
+								element.getContributor().getName()), null);
 					}
 					String id = element.getAttribute("id"); //$NON-NLS-1$
 					if (id == null) {
-						abort(
-								MessageFormat
-										.format(
-												"Missing required id attribute for interpreterInstall contributed by {0}", //$NON-NLS-1$
-												new String[] { element
-														.getContributor()
-														.getName() }), null);
+						abort(MessageFormat.format(
+								"Missing required id attribute for interpreterInstall contributed by {0}", //$NON-NLS-1$
+								element.getContributor().getName()), null);
 					}
 					IInterpreterInstallType installType = getInterpreterInstallType(InterpreterType);
 					if (installType == null) {
-						abort(
-								MessageFormat
-										.format(
-												"InterpreterInstall {0} contributed by {1} references undefined Interpreter install type {2}", //$NON-NLS-1$
-												new String[] {
-														id,
-														element
-																.getContributor()
-																.getName(),
-														InterpreterType }),
-								null);
+						throw abort(
+								MessageFormat.format(
+										"InterpreterInstall {0} contributed by {1} references undefined Interpreter install type {2}", //$NON-NLS-1$
+										id, element.getContributor().getName(),
+										InterpreterType), null);
 					}
 					IInterpreterInstall install = installType
 							.findInterpreterInstall(id);
@@ -1744,28 +1716,16 @@ public final class ScriptRuntime {
 						// Interpreter install
 						String name = element.getAttribute("name"); //$NON-NLS-1$
 						if (name == null) {
-							abort(
-									MessageFormat
-											.format(
-													"interpreterInstall {0} contributed by {1} missing required attribute name", //$NON-NLS-1$
-													new String[] {
-															id,
-															element
-																	.getContributor()
-																	.getName() }),
+							abort(MessageFormat.format(
+									"interpreterInstall {0} contributed by {1} missing required attribute name", //$NON-NLS-1$
+									id, element.getContributor().getName()),
 									null);
 						}
 						final String home = element.getAttribute("home"); //$NON-NLS-1$
 						if (home == null) {
-							abort(
-									MessageFormat
-											.format(
-													"interpreterInstall {0} contributed by {1} missing required attribute home", //$NON-NLS-1$
-													new String[] {
-															id,
-															element
-																	.getContributor()
-																	.getName() }),
+							abort(MessageFormat.format(
+									"interpreterInstall {0} contributed by {1} missing required attribute home", //$NON-NLS-1$
+									id, element.getContributor().getName()),
 									null);
 						}
 						String InterpreterArgs = element
@@ -1791,17 +1751,10 @@ public final class ScriptRuntime {
 								standin.getLibraryLocations(),
 								new NullProgressMonitor());
 						if (!status.isOK()) {
-							abort(
-									MessageFormat
-											.format(
-													"Illegal install location {0} for interpreterInstall {1} contributed by {2}: {3}", //$NON-NLS-1$
-													new String[] {
-															home,
-															id,
-															element
-																	.getContributor()
-																	.getName(),
-															status.getMessage() }),
+							abort(MessageFormat.format(
+									"Illegal install location {0} for interpreterInstall {1} contributed by {2}: {3}", //$NON-NLS-1$
+									home, id, element.getContributor()
+											.getName(), status.getMessage()),
 									null);
 						}
 						standin.setInstallLocation(homeFile);
@@ -1819,16 +1772,10 @@ public final class ScriptRuntime {
 								String libPathStr = library
 										.getAttribute("path"); //$NON-NLS-1$
 								if (libPathStr == null) {
-									abort(
-											MessageFormat
-													.format(
-															"library for interpreterInstall {0} contributed by {1} missing required attribute libPath", //$NON-NLS-1$
-															new String[] {
-																	id,
-																	element
-																			.getContributor()
-																			.getName() }),
-											null);
+									abort(MessageFormat.format(
+											"library for interpreterInstall {0} contributed by {1} missing required attribute libPath", //$NON-NLS-1$
+											id, element.getContributor()
+													.getName()), null);
 								}
 
 								locations[j] = new LibraryLocation(homeFile
@@ -1837,18 +1784,14 @@ public final class ScriptRuntime {
 							}
 						}
 						standin.setLibraryLocations(locations);
-						InterpreterDefs.addInterpreter(standin,true);
+						InterpreterDefs.addInterpreter(standin, true);
 					}
 					fgContributedInterpreters.add(id);
 				} else {
-					abort(
-							MessageFormat
-									.format(
-											"Illegal element {0} in InterpreterInstalls extension contributed by {1}", //$NON-NLS-1$
-											new String[] {
-													element.getName(),
-													element.getContributor()
-															.getName() }), null);
+					abort(MessageFormat.format(
+							"Illegal element {0} in InterpreterInstalls extension contributed by {1}", //$NON-NLS-1$
+							element.getName(), element.getContributor()
+									.getName()), null);
 				}
 			} catch (CoreException e) {
 				DLTKLaunchingPlugin.log(e);
@@ -2026,10 +1969,9 @@ public final class ScriptRuntime {
 									.getValidInterpreterList(natures[i]);
 							if (!list.isEmpty()) {
 								IInterpreterInstall Interpreter = list.get(0);
-								defs
-										.setDefaultInterpreterInstallCompositeID(
-												natures[i],
-												getCompositeIdFromInterpreter(Interpreter));
+								defs.setDefaultInterpreterInstallCompositeID(
+										natures[i],
+										getCompositeIdFromInterpreter(Interpreter));
 							}
 						}
 
@@ -2075,8 +2017,7 @@ public final class ScriptRuntime {
 			if (setPref) {
 				try {
 					String xml = defs.getAsXML();
-					DLTKLaunchingPlugin.getDefault().getPluginPreferences()
-							.setValue(PREF_INTERPRETER_XML, xml);
+					getPreferences().put(PREF_INTERPRETER_XML, xml);
 				} catch (ParserConfigurationException e) {
 					DLTKLaunchingPlugin.log(e);
 				} catch (IOException e) {
@@ -2184,7 +2125,6 @@ public final class ScriptRuntime {
 	 * @return runtime buildpath entry
 	 * @exception CoreException
 	 *                if unable to construct a runtime buildpath entry
-	 * 
 	 */
 	public static IRuntimeBuildpathEntry newRuntimeContainerBuildpathEntry(
 			IPath path, int buildpathProperty, IScriptProject project)
@@ -2204,7 +2144,6 @@ public final class ScriptRuntime {
 	 * @return runtime buildpath entry
 	 * @exception CoreException
 	 *                if unable to construct a runtime buildpath entry
-	 * 
 	 */
 	public static IRuntimeBuildpathEntry newRuntimeBuildpathEntry(String memento)
 			throws CoreException {
@@ -2250,7 +2189,6 @@ public final class ScriptRuntime {
 	 * @param entry
 	 *            a buildpath entry
 	 * @return runtime buildpath entry
-	 * 
 	 */
 	private static IRuntimeBuildpathEntry newRuntimeBuildpathEntry(
 			IBuildpathEntry entry) {
@@ -2311,7 +2249,6 @@ public final class ScriptRuntime {
 	 * @return buildpath provider
 	 * @exception CoreException
 	 *                if unable to resolve the path provider
-	 * 
 	 */
 	public static IRuntimeBuildpathProvider getBuildpathProvider(
 			ILaunchConfiguration configuration) throws CoreException {
@@ -2325,7 +2262,7 @@ public final class ScriptRuntime {
 			provider = getBuildpathProviders().get(providerId);
 			if (provider == null) {
 				abort(MessageFormat.format(LaunchingMessages.ScriptRuntime_26,
-						new String[] { providerId }), null);
+						providerId), null);
 			}
 		}
 		return provider;
@@ -2344,7 +2281,7 @@ public final class ScriptRuntime {
 			provider = getBuildpathProviders().get(providerId);
 			if (provider == null) {
 				abort(MessageFormat.format(LaunchingMessages.ScriptRuntime_27,
-						new String[] { providerId }), null);
+						providerId), null);
 			}
 		}
 		return provider;
@@ -2376,15 +2313,12 @@ public final class ScriptRuntime {
 			// cannot resolve without entry or project context
 			return new IRuntimeBuildpathEntry[0];
 		}
-		IBuildpathContainer container = DLTKCore.getBuildpathContainer(entry
-				.getPath(), project);
+		IBuildpathContainer container = DLTKCore.getBuildpathContainer(
+				entry.getPath(), project);
 		if (container == null) {
-			abort(
-					MessageFormat
-							.format(
-									LaunchingMessages.ScriptRuntime_Could_not_resolve_classpath_container___0__1,
-									new String[] { entry.getPath().toString() }),
-					null);
+			abort(MessageFormat.format(
+					LaunchingMessages.ScriptRuntime_Could_not_resolve_classpath_container___0__1,
+					entry.getPath().toString()), null);
 			// execution will not reach here - exception will be thrown
 			return null;
 		}
@@ -2495,12 +2429,9 @@ public final class ScriptRuntime {
 					return new IRuntimeBuildpathEntry[0];
 				}
 			} else {
-				abort(
-						MessageFormat
-								.format(
-										LaunchingMessages.ScriptRuntime_Buildpath_references_non_existant_project___0__3,
-										new String[] { entry.getPath()
-												.lastSegment() }), null);
+				abort(MessageFormat.format(
+						LaunchingMessages.ScriptRuntime_Buildpath_references_non_existant_project___0__3,
+						entry.getPath().lastSegment()), null);
 			}
 			break;
 		case IRuntimeBuildpathEntry.CONTAINER:
@@ -2514,12 +2445,9 @@ public final class ScriptRuntime {
 			// verify the archive exists
 			String location = entry.getLocation();
 			if (location == null) {
-				abort(
-						MessageFormat
-								.format(
-										LaunchingMessages.ScriptRuntime_Buildpath_references_non_existant_archive___0__4,
-										new String[] { entry.getPath()
-												.toString() }), null);
+				abort(MessageFormat.format(
+						LaunchingMessages.ScriptRuntime_Buildpath_references_non_existant_archive___0__4,
+						entry.getPath().toString()), null);
 			}
 			IFileHandle fileHandle;
 			IPath path = entry.getPath();
@@ -2528,12 +2456,9 @@ public final class ScriptRuntime {
 			else
 				fileHandle = LocalEnvironment.getInstance().getFile(path);
 			if (fileHandle == null || !fileHandle.exists()) {
-				abort(
-						MessageFormat
-								.format(
-										LaunchingMessages.ScriptRuntime_Buildpath_references_non_existant_archive___0__4,
-										new String[] { entry.getPath()
-												.toString() }), null);
+				abort(MessageFormat.format(
+						LaunchingMessages.ScriptRuntime_Buildpath_references_non_existant_archive___0__4,
+						entry.getPath().toString()), null);
 			}
 			break;
 		case IRuntimeBuildpathEntry.OTHER:
@@ -2596,7 +2521,6 @@ public final class ScriptRuntime {
 	 * @return unresolved runtime buildpath entries
 	 * @exception CoreException
 	 *                if unable to compute the buildpath
-	 * 
 	 */
 	public static IRuntimeBuildpathEntry[] computeUnresolvedRuntimeBuildpath(
 			ILaunchConfiguration configuration) throws CoreException {
@@ -2615,7 +2539,6 @@ public final class ScriptRuntime {
 	 * @return resolved runtime buildpath entries
 	 * @exception CoreException
 	 *                if unable to compute the buildpath
-	 * 
 	 */
 	public static IRuntimeBuildpathEntry[] resolveRuntimeBuildpath(
 			IRuntimeBuildpathEntry[] entries, ILaunchConfiguration configuration)
