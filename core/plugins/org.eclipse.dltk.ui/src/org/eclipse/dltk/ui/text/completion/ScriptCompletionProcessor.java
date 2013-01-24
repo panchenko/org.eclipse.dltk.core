@@ -63,7 +63,7 @@ public abstract class ScriptCompletionProcessor extends ContentAssistProcessor {
 		if (preferenceQualifier == null) {
 			return;
 		}
-		final IEclipsePreferences node = new InstanceScope()
+		final IEclipsePreferences node = InstanceScope.INSTANCE
 				.getNode(preferenceQualifier);
 		if (node == null) {
 			return;

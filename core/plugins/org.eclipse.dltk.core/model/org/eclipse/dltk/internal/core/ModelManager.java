@@ -1210,7 +1210,7 @@ public class ModelManager implements ISaveParticipant {
 	}
 
 	private static IEclipsePreferences getPluginPreferences(String pluginId) {
-		return new InstanceScope().getNode(pluginId);
+		return InstanceScope.INSTANCE.getNode(pluginId);
 	}
 
 	private static void installPreferenceChangeListener(String pluginId,
@@ -1387,9 +1387,9 @@ public class ModelManager implements ISaveParticipant {
 	 */
 	public void initializePreferences() {
 		// Create lookups
-		preferencesLookup[PREF_INSTANCE] = ((IScopeContext) new InstanceScope())
+		preferencesLookup[PREF_INSTANCE] = InstanceScope.INSTANCE
 				.getNode(DLTKCore.PLUGIN_ID);
-		preferencesLookup[PREF_DEFAULT] = ((IScopeContext) new DefaultScope())
+		preferencesLookup[PREF_DEFAULT] = DefaultScope.INSTANCE
 				.getNode(DLTKCore.PLUGIN_ID);
 		// Listen to instance preferences node removal from parent in order to
 		// refresh stored one
@@ -1400,7 +1400,7 @@ public class ModelManager implements ISaveParticipant {
 
 			public void removed(IEclipsePreferences.NodeChangeEvent event) {
 				if (event.getChild() == preferencesLookup[PREF_INSTANCE]) {
-					preferencesLookup[PREF_INSTANCE] = ((IScopeContext) new InstanceScope())
+					preferencesLookup[PREF_INSTANCE] = InstanceScope.INSTANCE
 							.getNode(DLTKCore.PLUGIN_ID);
 					preferencesLookup[PREF_INSTANCE]
 							.addPreferenceChangeListener(new EclipsePreferencesListener());

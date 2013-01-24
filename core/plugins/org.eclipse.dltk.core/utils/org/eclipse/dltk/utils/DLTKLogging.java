@@ -44,7 +44,7 @@ public class DLTKLogging {
 	private static synchronized DLTKDebugOptions getDebugOptions() {
 		if (debugOptions == null) {
 			debugOptions = new DLTKDebugOptions();
-			final String loggingOptions = new InstanceScope().getNode(
+			final String loggingOptions = InstanceScope.INSTANCE.getNode(
 					DLTKCore.PLUGIN_ID).get(DLTKCore.LOGGING_OPTIONS, null);
 			if (loggingOptions != null) {
 				for (String option : TextUtils.split(loggingOptions,
@@ -103,7 +103,7 @@ public class DLTKLogging {
 				debugOptions.remove(entry.getKey());
 			}
 		}
-		final IEclipsePreferences node = new InstanceScope()
+		final IEclipsePreferences node = InstanceScope.INSTANCE
 				.getNode(DLTKCore.PLUGIN_ID);
 		if (!debugOptions.isEmpty()) {
 			node.put(DLTKCore.LOGGING_OPTIONS, TextUtils.join(debugOptions,

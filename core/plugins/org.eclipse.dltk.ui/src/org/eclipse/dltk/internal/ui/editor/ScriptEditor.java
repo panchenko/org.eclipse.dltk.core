@@ -768,9 +768,9 @@ public abstract class ScriptEditor extends AbstractDecoratedTextEditor
 		}
 		stores.add(getScriptPreferenceStore());
 		if (preferenceQualifier != null) {
-			stores.add(new EclipsePreferencesAdapter(new InstanceScope(),
+			stores.add(new EclipsePreferencesAdapter(InstanceScope.INSTANCE,
 					preferenceQualifier));
-			stores.add(new EclipsePreferencesAdapter(new DefaultScope(),
+			stores.add(new EclipsePreferencesAdapter(DefaultScope.INSTANCE,
 					preferenceQualifier));
 		}
 		stores.add(new PreferencesAdapter(DLTKCore.getDefault()

@@ -148,7 +148,7 @@ public abstract class AbstractScriptFormatterFactory extends
 		final PreferenceKey profilesKey = getProfilesKey();
 		if (profilesKey != null) {
 			final String profilesSource = profilesKey
-					.getStoredValue(new InstanceScope());
+					.getStoredValue(InstanceScope.INSTANCE);
 			if (profilesSource != null && profilesSource.length() > 0) {
 				final IProfileStore store = getProfileStore();
 				try {
@@ -168,7 +168,7 @@ public abstract class AbstractScriptFormatterFactory extends
 			final IProfileStore store = getProfileStore();
 			try {
 				String value = ((ProfileStore) store).writeProfiles(profiles);
-				profilesKey.setStoredValue(new InstanceScope(), value);
+				profilesKey.setStoredValue(InstanceScope.INSTANCE, value);
 			} catch (CoreException e) {
 				DLTKFormatterPlugin.error(e);
 			}
@@ -179,12 +179,11 @@ public abstract class AbstractScriptFormatterFactory extends
 		Map<String, String> settings = new HashMap<String, String>();
 		PreferenceKey[] keys = getPreferenceKeys();
 		if (keys != null) {
-			DefaultScope scope = new DefaultScope();
 			for (int i = 0; i < keys.length; i++) {
 				PreferenceKey key = keys[i];
 				String name = key.getName();
-				IEclipsePreferences preferences = scope.getNode(key
-						.getQualifier());
+				IEclipsePreferences preferences = DefaultScope.INSTANCE
+						.getNode(key.getQualifier());
 				String value = preferences.get(name, null);
 				if (value != null)
 					settings.put(name, value);

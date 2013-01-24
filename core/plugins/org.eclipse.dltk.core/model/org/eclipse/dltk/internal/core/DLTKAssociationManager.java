@@ -145,8 +145,7 @@ public class DLTKAssociationManager implements IDLTKAssociationManager {
 				return preferences;
 			}
 		}
-		final IScopeContext context = new InstanceScope();
-		final IEclipsePreferences eclipsePreferences = context
+		final IEclipsePreferences eclipsePreferences = InstanceScope.INSTANCE
 				.getNode(qualifier);
 		synchronized (preferencesLock) {
 			this.preferences = eclipsePreferences;

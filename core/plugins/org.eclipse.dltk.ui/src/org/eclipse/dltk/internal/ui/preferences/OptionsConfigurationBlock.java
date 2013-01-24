@@ -84,10 +84,10 @@ public abstract class OptionsConfigurationBlock {
 
 		if (fProject != null) {
 			fLookupOrder = new IScopeContext[] { new ProjectScope(fProject),
-					new InstanceScope(), new DefaultScope() };
+					InstanceScope.INSTANCE, DefaultScope.INSTANCE };
 		} else {
-			fLookupOrder = new IScopeContext[] { new InstanceScope(),
-					new DefaultScope() };
+			fLookupOrder = new IScopeContext[] { InstanceScope.INSTANCE,
+					DefaultScope.INSTANCE };
 		}
 
 		testIfOptionsComplete(allKeys);
