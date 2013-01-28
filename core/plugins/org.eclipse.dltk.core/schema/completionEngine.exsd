@@ -1,16 +1,21 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.eclipse.dltk.core">
+<schema targetNamespace="org.eclipse.dltk.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appInfo>
-         <meta.schema plugin="org.eclipse.dltk.core" id="sourceElementParsers" name="Source Element Parsers"/>
+         <meta.schema plugin="org.eclipse.dltk.core" id="completionEngine" name="Completion Engine"/>
       </appInfo>
       <documentation>
-         [Enter description of this extension point.]
+         This extension point allows to contribute language specific completion engines to provide completion proposals to the Script editor content assist.
       </documentation>
    </annotation>
 
    <element name="extension">
+      <annotation>
+         <appInfo>
+            <meta.element />
+         </appInfo>
+      </annotation>
       <complexType>
          <sequence minOccurs="0" maxOccurs="unbounded">
             <element ref="completionEngine"/>
@@ -47,26 +52,34 @@
          <appInfo>
             <meta.element labelAttribute="nature"/>
          </appInfo>
+         <documentation>
+            A completion engine contribution.
+         </documentation>
       </annotation>
       <complexType>
          <attribute name="nature" type="string" use="required">
             <annotation>
                <documentation>
-                  
+                  the nature id of the langugage this contribution is for.
                </documentation>
+               <appInfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.dltk.core.language/language/@nature"/>
+               </appInfo>
             </annotation>
          </attribute>
          <attribute name="priority" type="string" use="default" value="0">
             <annotation>
                <documentation>
-                  
+                  the priority of this completion engine. Completion engines having higher pritority number are called ealier.
                </documentation>
             </annotation>
          </attribute>
          <attribute name="class" type="string" use="required">
             <annotation>
                <documentation>
-                  
+                  the name of the class that implements the contributed completion engine. The class must be public and implement
+&lt;code&gt;org.eclipse.dltk.codeassist.ICompletionEngine&lt;/code&gt;
+and must have a public 0-argument constructor.
                </documentation>
                <appInfo>
                   <meta.attribute kind="java" basedOn="org.eclipse.dltk.codeassist.ICompletionEngine"/>
@@ -112,13 +125,5 @@
       </documentation>
    </annotation>
 
-   <annotation>
-      <appInfo>
-         <meta.section type="copyright"/>
-      </appInfo>
-      <documentation>
-         
-      </documentation>
-   </annotation>
 
 </schema>
