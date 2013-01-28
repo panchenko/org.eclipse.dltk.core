@@ -154,6 +154,14 @@ public abstract class AbstractProjectSetup extends ExternalResource {
 	}
 
 	/**
+	 * Returns the source module with the specified project-related path. The
+	 * module may or may not be present.
+	 */
+	public ISourceModule getSourceModule(String path) {
+		return DLTKCore.createSourceModuleFrom(getFile(path));
+	}
+
+	/**
 	 * Returns the specified source module in this project and the given root
 	 * and folder or <code>null</code> if it does not exist.
 	 */

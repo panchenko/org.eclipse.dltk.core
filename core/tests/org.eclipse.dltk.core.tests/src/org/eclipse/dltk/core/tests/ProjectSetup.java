@@ -12,12 +12,19 @@
 package org.eclipse.dltk.core.tests;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -25,6 +32,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.dltk.core.tests.model.AbstractModelTests;
 import org.eclipse.dltk.internal.core.ModelManager;
+import org.eclipse.dltk.utils.ResourceUtil;
 import org.eclipse.dltk.utils.TextUtils;
 import org.eclipse.osgi.util.NLS;
 import org.junit.Assert;
@@ -47,8 +55,67 @@ import org.junit.rules.TestRule;
  */
 public class ProjectSetup extends AbstractProjectSetup {
 
-	public static enum Option {
-		BUILD, INDEXER_DISABLED, WAIT_INDEXES_READY, VERBOSE, CLOSED
+	public static class Option {
+		Option() {
+		}
+
+		/**
+		 * Performs the full build of the project.
+		 */
+		public static final Option BUILD = new NamedOption("BUILD");
+
+		/**
+		 * Disables the indexer before and enables it back after.
+		 */
+		public static final Option INDEXER_DISABLED = new NamedOption(
+				"INDEXER_DISABLED");
+
+		/**
+		 * Waits for the indexer to complete after the project creation.
+		 */
+		public static final Option WAIT_INDEXES_READY = new NamedOption(
+				"WAIT_INDEXES_READY");
+
+		/**
+		 * Enables some logging, makes sense only while debugging
+		 */
+		public static final Option VERBOSE = new NamedOption("VERBOSE");
+
+		/**
+		 * Specifies if project should be left closed after creation.
+		 */
+		public static final Option CLOSED = new NamedOption("CLOSED");
+
+		/**
+		 * Specifies the exclusion path, those files will be excluded during
+		 * initial project creation, but can be created individually later.
+		 * 
+		 * @see #createFile(String, Option)
+		 */
+		public static Option exclude(String path) {
+			return new ExcludeOption(path);
+		}
+	}
+
+	private static class NamedOption extends Option {
+		private final String name;
+
+		public NamedOption(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
+	}
+
+	private static class ExcludeOption extends Option {
+		final String path;
+
+		public ExcludeOption(String path) {
+			this.path = path;
+		}
 	}
 
 	/**
@@ -81,14 +148,16 @@ public class ProjectSetup extends AbstractProjectSetup {
 	public ProjectSetup(IWorkspaceSetup workspaceSetup, String projectName) {
 		this.workspaceSetup = workspaceSetup;
 		this.projectName = projectName;
-		this.options = EnumSet.noneOf(Option.class);
+		this.options = Collections.emptySet();
 	}
 
 	public ProjectSetup(IWorkspaceSetup workspaceSetup, String projectName,
 			Option option, Option... restOptions) {
 		this.workspaceSetup = workspaceSetup;
 		this.projectName = projectName;
-		this.options = EnumSet.of(option, restOptions);
+		this.options = new HashSet<Option>();
+		this.options.add(option);
+		Collections.addAll(this.options, restOptions);
 		if (hasOption(Option.INDEXER_DISABLED)
 				&& hasOption(Option.WAIT_INDEXES_READY)) {
 			throw new IllegalStateException("Conflicting options: "
@@ -134,9 +203,21 @@ public class ProjectSetup extends AbstractProjectSetup {
 			throw new IllegalStateException(NLS.bind(
 					"Source directory \"{0}\" doesn't exist", source));
 		}
+		final Set<File> excludes = new HashSet<File>();
+		for (Option option : options) {
+			if (option instanceof ExcludeOption) {
+				final File exclude = new File(source,
+						((ExcludeOption) option).path);
+				if (!exclude.exists()) {
+					throw new IllegalStateException(NLS.bind(
+							"Excluded file \"{0}\" doesn't exist", exclude));
+				}
+				excludes.add(exclude);
+			}
+		}
 		final File target = getWorkspaceRoot().getLocation()
 				.append(workspaceProjectName).toFile();
-		FileUtil.copyDirectory(source, target);
+		FileUtil.copyDirectory(source, target, excludes);
 		final IProject project = getWorkspaceRoot().getProject(
 				workspaceProjectName);
 		ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -213,6 +294,45 @@ public class ProjectSetup extends AbstractProjectSetup {
 		Assert.assertNotNull("ProjectSetup " + getProjectName()
 				+ " not initialized", project);
 		return project;
+	}
+
+	/**
+	 * Creates the specified file from the source project. Typical use case is
+	 * creation of the files which were excluded initially.
+	 * 
+	 * @param filename
+	 *            project related filename
+	 * @param option
+	 *            {@link Option#BUILD} or <code>null</code>
+	 * @throws CoreException
+	 */
+	public IFile createFile(String filename, Option option)
+			throws CoreException {
+		final File sourceFile = new File(getSourceDirectory(), filename);
+		if (!sourceFile.isFile()) {
+			throw new IllegalArgumentException(NLS.bind(
+					"Source file {0} doesn't exist", sourceFile));
+		}
+		final IFile file = getFile(filename);
+		final FileInputStream input;
+		try {
+			input = new FileInputStream(sourceFile);
+		} catch (FileNotFoundException e) {
+			throw new IllegalArgumentException(e);
+		}
+		if (file.exists()) {
+			file.setContents(input, IResource.NONE, null);
+		} else {
+			final IContainer parent = file.getParent();
+			if (parent instanceof IFolder) {
+				ResourceUtil.createFolder((IFolder) parent, null);
+			}
+			file.create(input, IResource.NONE, null);
+		}
+		if (option == ProjectSetup.Option.BUILD) {
+			build();
+		}
+		return file;
 	}
 
 	/**

@@ -15,11 +15,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Set;
 
 public class FileUtil {
 
 	public static void copyDirectory(File source, File target)
 			throws IOException {
+		copyDirectory(source, target, Collections.<File> emptySet());
+	}
+
+	public static void copyDirectory(File source, File target,
+			Set<File> excludes) throws IOException {
 		if (!target.exists()) {
 			target.mkdirs();
 		}
@@ -35,7 +42,7 @@ public class FileUtil {
 				continue;
 			final File targetChild = new File(target, name);
 			if (sourceChild.isDirectory()) {
-				copyDirectory(sourceChild, targetChild);
+				copyDirectory(sourceChild, targetChild, excludes);
 			} else {
 				if (".emptydir".equals(name)) {
 					continue;
