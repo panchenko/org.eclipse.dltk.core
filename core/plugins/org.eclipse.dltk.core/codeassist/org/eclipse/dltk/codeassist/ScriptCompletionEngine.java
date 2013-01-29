@@ -31,6 +31,10 @@ import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.internal.codeassist.impl.Engine;
 import org.eclipse.dltk.internal.compiler.lookup.LookupEnvironment;
 
+/**
+ * Abstact base class of the {@link ICompletionEngine} implementations. Provides
+ * some functions which might be useful by the implementors.
+ */
 public abstract class ScriptCompletionEngine extends Engine implements
 		ICompletionEngine {
 	protected static final boolean DEBUG = DLTKCore.DEBUG_COMPLETION;

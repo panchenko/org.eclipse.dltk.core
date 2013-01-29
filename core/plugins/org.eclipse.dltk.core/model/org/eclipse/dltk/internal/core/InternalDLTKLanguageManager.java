@@ -29,7 +29,7 @@ public class InternalDLTKLanguageManager {
 			+ ".sourceParsers"; //$NON-NLS-1$
 	public final static String PROBLEM_FACTORY_EXTPOINT = DLTKCore.PLUGIN_ID
 			+ ".problemFactory"; //$NON-NLS-1$
-	private final static String COMPLETION_ENGINE_EXTPOINT = DLTKCore.PLUGIN_ID
+	public final static String COMPLETION_ENGINE_EXTPOINT = DLTKCore.PLUGIN_ID
 			+ ".completionEngine"; //$NON-NLS-1$
 	private final static String SELECTION_ENGINE_EXTPOINT = DLTKCore.PLUGIN_ID
 			+ ".selectionEngine"; //$NON-NLS-1$
