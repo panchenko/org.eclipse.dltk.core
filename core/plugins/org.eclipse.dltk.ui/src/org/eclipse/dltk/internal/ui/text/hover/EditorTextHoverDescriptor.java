@@ -181,6 +181,7 @@ public class EditorTextHoverDescriptor {
 				.booleanValue();
 	}
 
+	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || !obj.getClass().equals(this.getClass())
 				|| getId() == null)
@@ -188,13 +189,15 @@ public class EditorTextHoverDescriptor {
 		return getId().equals(((EditorTextHoverDescriptor) obj).getId());
 	}
 
+	@Override
 	public int hashCode() {
 		return getId().hashCode();
 	}
 
 	private static EditorTextHoverDescriptor[] createDescriptors(
 			IConfigurationElement[] elements, String natureId) {
-		List result = new ArrayList(elements.length);
+		List<EditorTextHoverDescriptor> result = new ArrayList<EditorTextHoverDescriptor>(
+				elements.length);
 		for (int i = 0; i < elements.length; i++) {
 			IConfigurationElement element = elements[i];
 			if (HOVER_TAG.equals(element.getName())) {
@@ -207,8 +210,7 @@ public class EditorTextHoverDescriptor {
 				}
 			}
 		}
-		return (EditorTextHoverDescriptor[]) result
-				.toArray(new EditorTextHoverDescriptor[result.size()]);
+		return result.toArray(new EditorTextHoverDescriptor[result.size()]);
 	}
 
 	private static void initializeFromPreferences(
@@ -217,7 +219,8 @@ public class EditorTextHoverDescriptor {
 				.getString(PreferenceConstants.EDITOR_TEXT_HOVER_MODIFIERS);
 		StringTokenizer tokenizer = new StringTokenizer(
 				compiledTextHoverModifiers, VALUE_SEPARATOR);
-		HashMap idToModifier = new HashMap(tokenizer.countTokens() / 2);
+		HashMap<String, String> idToModifier = new HashMap<String, String>(
+				tokenizer.countTokens() / 2);
 		while (tokenizer.hasMoreTokens()) {
 			String id = tokenizer.nextToken();
 			if (tokenizer.hasMoreTokens())
@@ -227,15 +230,15 @@ public class EditorTextHoverDescriptor {
 				.getString(PreferenceConstants.EDITOR_TEXT_HOVER_MODIFIER_MASKS);
 		tokenizer = new StringTokenizer(compiledTextHoverModifierMasks,
 				VALUE_SEPARATOR);
-		HashMap idToModifierMask = new HashMap(tokenizer.countTokens() / 2);
+		HashMap<String, String> idToModifierMask = new HashMap<String, String>(
+				tokenizer.countTokens() / 2);
 		while (tokenizer.hasMoreTokens()) {
 			String id = tokenizer.nextToken();
 			if (tokenizer.hasMoreTokens())
 				idToModifierMask.put(id, tokenizer.nextToken());
 		}
 		for (int i = 0; i < hovers.length; i++) {
-			String modifierString = (String) idToModifier
-					.get(hovers[i].getId());
+			String modifierString = idToModifier.get(hovers[i].getId());
 			boolean enabled = true;
 			if (modifierString == null)
 				modifierString = DISABLED_TAG;
@@ -251,9 +254,8 @@ public class EditorTextHoverDescriptor {
 			if (hovers[i].fStateMask == -1) {
 				// Fallback: use stored modifier masks
 				try {
-					hovers[i].fStateMask = Integer
-							.parseInt((String) idToModifierMask.get(hovers[i]
-									.getId()));
+					hovers[i].fStateMask = Integer.parseInt(idToModifierMask
+							.get(hovers[i].getId()));
 				} catch (NumberFormatException ex) {
 					hovers[i].fStateMask = -1;
 				}

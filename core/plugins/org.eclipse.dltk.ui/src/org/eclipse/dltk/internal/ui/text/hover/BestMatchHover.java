@@ -10,7 +10,6 @@
 package org.eclipse.dltk.internal.ui.text.hover;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.dltk.internal.ui.editor.ScriptEditor;
@@ -110,10 +109,7 @@ public class BestMatchHover extends AbstractScriptEditorTextHover implements
 		if (fInstantiatedTextHovers == null)
 			return null;
 
-		for (Iterator<ITextHover> iterator = fInstantiatedTextHovers.iterator(); iterator
-				.hasNext();) {
-			ITextHover hover = iterator.next();
-
+		for (ITextHover hover : fInstantiatedTextHovers) {
 			String s = hover.getHoverInfo(textViewer, hoverRegion);
 			if (s != null && s.trim().length() > 0) {
 				fBestHover = hover;

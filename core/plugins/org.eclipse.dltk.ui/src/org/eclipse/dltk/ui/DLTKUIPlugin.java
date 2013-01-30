@@ -553,7 +553,7 @@ public class DLTKUIPlugin extends AbstractUIPlugin {
 		return fContentAssistHistory;
 	}
 
-	private final Map editorTextHoverDescriptorsByNature = new HashMap();
+	private final Map<String, EditorTextHoverDescriptor[]> editorTextHoverDescriptorsByNature = new HashMap<String, EditorTextHoverDescriptor[]>();
 
 	/**
 	 * Resets editor text hovers contributed to the workbench.
@@ -610,8 +610,7 @@ public class DLTKUIPlugin extends AbstractUIPlugin {
 			IPreferenceStore store, String natureId) {
 		EditorTextHoverDescriptor[] descriptors;
 		synchronized (editorTextHoverDescriptorsByNature) {
-			descriptors = (EditorTextHoverDescriptor[]) editorTextHoverDescriptorsByNature
-					.get(natureId);
+			descriptors = editorTextHoverDescriptorsByNature.get(natureId);
 		}
 		if (descriptors == null) {
 			descriptors = initializeEditorTextHoverDescriprtors(store, natureId);

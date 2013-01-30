@@ -136,6 +136,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 				commentColor, tagColor, taskPrefs);
 	}
 
+	@Override
 	public String getConfiguredDocumentPartitioning(ISourceViewer sourceViewer) {
 		if (fDocumentPartitioning != null)
 			return fDocumentPartitioning;
@@ -157,6 +158,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 		return this.fTextEditor;
 	}
 
+	@Override
 	public IReconciler getReconciler(ISourceViewer sourceViewer) {
 		final ITextEditor editor = getEditor();
 		if (editor != null && editor.isEditable()) {
@@ -184,10 +186,9 @@ public abstract class ScriptSourceViewerConfiguration extends
 	}
 
 	/*
-	 * @see
-	 * org.eclipse.jface.text.source.SourceViewerConfiguration#getDefaultPrefixes
-	 * (org.eclipse.jface.text.source.ISourceViewer, java.lang.String)
+	 * @see SourceViewerConfiguration#getDefaultPrefixes(ISourceViewer,String)
 	 */
+	@Override
 	public String[] getDefaultPrefixes(ISourceViewer sourceViewer,
 			String contentType) {
 		return new String[] { getCommentPrefix(), "" }; //$NON-NLS-1$
@@ -287,6 +288,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 		return settings;
 	}
 
+	@Override
 	public IHyperlinkDetector[] getHyperlinkDetectors(ISourceViewer sourceViewer) {
 		if (!fPreferenceStore
 				.getBoolean(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_HYPERLINKS_ENABLED))
@@ -376,6 +378,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 	 * SourceViewerConfiguration#getConfiguredTextHoverStateMasks(ISourceViewer,
 	 * String)
 	 */
+	@Override
 	public int[] getConfiguredTextHoverStateMasks(ISourceViewer sourceViewer,
 			String contentType) {
 		final String natureId = getNatureId();
@@ -411,6 +414,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 	/*
 	 * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String, int)
 	 */
+	@Override
 	public ITextHover getTextHover(ISourceViewer sourceViewer,
 			String contentType, int stateMask) {
 		final String natureId = getNatureId();
@@ -439,6 +443,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 		return ((ScriptEditor) editor).getLanguageToolkit().getNatureId();
 	}
 
+	@Override
 	public ITextHover getTextHover(ISourceViewer sourceViewer,
 			String contentType) {
 		return getTextHover(sourceViewer, contentType,
@@ -468,6 +473,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 		};
 	}
 
+	@Override
 	public IInformationPresenter getInformationPresenter(
 			ISourceViewer sourceViewer) {
 		InformationPresenter presenter = new InformationPresenter(
@@ -483,6 +489,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 		return presenter;
 	}
 
+	@Override
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 		if (getEditor() != null) {
 			ContentAssistant assistant = new ContentAssistant();
@@ -522,6 +529,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 				event);
 	}
 
+	@Override
 	public IContentFormatter getContentFormatter(ISourceViewer sourceViewer) {
 		final String natureId = getNatureId();
 		if (ScriptFormatterManager.hasFormatterFor(natureId)) {
@@ -537,6 +545,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 	/*
 	 * @see SourceViewerConfiguration#getIndentPrefixes(ISourceViewer, String)
 	 */
+	@Override
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer,
 			String contentType) {
 		if (fPreferenceStore == null) {
@@ -566,6 +575,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 		return TabStyle.TAB;
 	}
 
+	@Override
 	public int getTabWidth(ISourceViewer sourceViewer) {
 		if (fPreferenceStore == null)
 			return super.getTabWidth(sourceViewer);
@@ -605,6 +615,7 @@ public abstract class ScriptSourceViewerConfiguration extends
 	 * 
 	 * @since 3.0
 	 */
+	@Override
 	public IInformationControlCreator getInformationControlCreator(
 			ISourceViewer sourceViewer) {
 		return new IInformationControlCreator() {
