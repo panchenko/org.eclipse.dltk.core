@@ -17,12 +17,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.dltk.codeassist.ICompletionEngine;
 import org.eclipse.dltk.codeassist.ISelectionEngine;
 import org.eclipse.dltk.codeassist.ISelectionRequestor;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.core.CompletionProposal;
 import org.eclipse.dltk.core.CompletionRequestor;
+import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ISourceRange;
@@ -118,6 +120,10 @@ public class CodeAssistUtil {
 
 	private CodeAssistUtil(Module<?> module) {
 		this.module = module;
+	}
+
+	public static CodeAssistUtil on(IFile file) {
+		return on(DLTKCore.createSourceModuleFrom(file));
 	}
 
 	public static CodeAssistUtil on(ISourceModule module) {
