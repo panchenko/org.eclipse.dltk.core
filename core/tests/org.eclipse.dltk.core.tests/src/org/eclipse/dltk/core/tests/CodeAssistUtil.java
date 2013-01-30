@@ -22,6 +22,7 @@ import org.eclipse.dltk.codeassist.ISelectionEngine;
 import org.eclipse.dltk.codeassist.ISelectionRequestor;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.core.CompletionProposal;
+import org.eclipse.dltk.core.CompletionRequestor;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ISourceRange;
@@ -45,6 +46,10 @@ public class CodeAssistUtil {
 
 		abstract IModelElement[] codeSelect(int offset, int length)
 				throws ModelException;
+
+		abstract void codeComplete(int offset, CompletionRequestor requestor)
+				throws ModelException;
+
 	}
 
 	private static class SourceModule extends Module<ISourceModule> {
@@ -72,6 +77,12 @@ public class CodeAssistUtil {
 				throws ModelException {
 			return module.codeSelect(offset, length);
 		}
+
+		@Override
+		void codeComplete(int offset, CompletionRequestor requestor)
+				throws ModelException {
+			module.codeComplete(offset, requestor);
+		}
 	}
 
 	private static class Source extends Module<IModuleSource> {
@@ -91,6 +102,12 @@ public class CodeAssistUtil {
 
 		@Override
 		IModelElement[] codeSelect(int offset, int length) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		void codeComplete(int offset, CompletionRequestor requestor)
+				throws ModelException {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -231,6 +248,15 @@ public class CodeAssistUtil {
 		final List<CompletionProposal> proposals = new ArrayList<CompletionProposal>();
 		engine.setRequestor(new TestCompletionRequestor(proposals));
 		engine.complete(getModuleSource(), offset(), 0);
+		return new CodeCompletionResult(proposals);
+	}
+
+	/**
+	 * Performs code completion in this source module.
+	 */
+	public CodeCompletionResult codeComplete() throws ModelException {
+		final List<CompletionProposal> proposals = new ArrayList<CompletionProposal>();
+		module.codeComplete(offset(), new TestCompletionRequestor(proposals));
 		return new CodeCompletionResult(proposals);
 	}
 

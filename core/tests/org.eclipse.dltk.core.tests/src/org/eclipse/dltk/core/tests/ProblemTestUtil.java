@@ -71,11 +71,12 @@ public class ProblemTestUtil extends Assert {
 	}
 
 	/**
-	 * Asserts that specified file doesn't have any associated problem marker.
+	 * Asserts that specified resource doesn't have any problem markers.
 	 */
-	public static void assertNoProblems(IFile file) throws CoreException {
-		final IMarker[] problems = findProblems(file);
-		assertEquals(file.getName() + ":" + toString(problems), 0,
+	public static void assertNoProblems(IResource resource)
+			throws CoreException {
+		final IMarker[] problems = findProblems(resource);
+		assertEquals(resource.getName() + ":" + toString(problems), 0,
 				problems.length);
 	}
 
