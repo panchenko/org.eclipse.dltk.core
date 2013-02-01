@@ -580,6 +580,9 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 				}
 				final IWorkspaceRoot root = ResourcesPlugin.getWorkspace()
 						.getRoot();
+				buildState
+						.recordStructuralChanges(((IncrementalProjectChange) buildChange)
+								.getAddedPaths());
 				for (;;) {
 					queue.addAll(this.lastState.dependenciesOf(changes,
 							buildState.getStructuralChanges(), true));

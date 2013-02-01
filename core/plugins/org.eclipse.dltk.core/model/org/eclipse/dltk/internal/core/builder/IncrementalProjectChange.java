@@ -324,6 +324,22 @@ public class IncrementalProjectChange extends AbstractBuildChange implements
 		return TextUtils.join(lines, "\n");
 	}
 
+	protected Set<IPath> getAddedPaths() throws CoreException {
+		loadData();
+		final Set<IPath> paths = new HashSet<IPath>();
+		if (projectAdditions != null) {
+			for (IFile file : projectAdditions.getAll()) {
+				paths.add(file.getFullPath());
+			}
+		}
+		if (projectRenames != null) {
+			for (IRenameChange rename : projectRenames.getRenames()) {
+				paths.add(rename.getTarget().getFullPath());
+			}
+		}
+		return paths;
+	}
+
 	protected Set<IPath> getChangedPaths() throws CoreException {
 		loadData();
 		final Set<IPath> paths = new HashSet<IPath>();

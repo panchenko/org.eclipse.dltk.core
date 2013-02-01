@@ -11,8 +11,20 @@
  *******************************************************************************/
 package org.eclipse.dltk.compiler.problem;
 
+import org.eclipse.dltk.annotations.Nullable;
+
+/**
+ * Optional interface to be implemented {@link IProblemIdentifier problem
+ * identifiers}.
+ */
 public interface IProblemIdentifierExtension2 {
 
+	/**
+	 * Returns the "main" problem identifier which should be used instead of
+	 * this one when reading the configured problem severity in
+	 * {@link DefaultProblemSeverityTranslator}.
+	 */
+	@Nullable
 	IProblemIdentifier getPrimeIdentifier();
 
 }

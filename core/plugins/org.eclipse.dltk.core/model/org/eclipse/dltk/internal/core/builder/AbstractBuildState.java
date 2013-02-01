@@ -11,6 +11,7 @@
  *******************************************************************************/
 package org.eclipse.dltk.internal.core.builder;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +33,12 @@ abstract class AbstractBuildState implements IBuildState {
 	public void recordStructuralChange(IPath path) {
 		Assert.isLegal(projectName.equals(path.segment(0)));
 		structuralChanges.add(path);
+	}
+
+	public void recordStructuralChanges(Collection<IPath> paths) {
+		for (IPath path : paths) {
+			recordStructuralChange(path);
+		}
 	}
 
 	public Set<IPath> getStructuralChanges() {

@@ -19,8 +19,11 @@ public class DefaultProblemFactory implements IProblemFactory {
 
 	public String getMarkerType(IProblem problem) {
 		if (problem.getID() instanceof IProblemIdentifierExtension) {
-			return ((IProblemIdentifierExtension) problem.getID())
-					.getMarkerType();
+			final String markerType = ((IProblemIdentifierExtension) problem
+					.getID()).getMarkerType();
+			if (markerType != null) {
+				return markerType;
+			}
 		}
 		return problem.isTask() ? getTaskMarkerType() : getProblemMarkerType();
 	}

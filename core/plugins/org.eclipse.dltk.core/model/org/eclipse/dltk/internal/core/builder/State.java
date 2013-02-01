@@ -319,6 +319,13 @@ public class State {
 		importProblems.removeAll(paths);
 	}
 
+	/**
+	 * Answers the files which should be rebuilt for the specified changes.
+	 * 
+	 * @param paths
+	 * @param structuralChanges
+	 * @param includeImportProblems
+	 */
 	protected Set<IPath> dependenciesOf(Collection<IPath> paths,
 			Set<IPath> structuralChanges, boolean includeImportProblems) {
 		final Set<IPath> result = new HashSet<IPath>();

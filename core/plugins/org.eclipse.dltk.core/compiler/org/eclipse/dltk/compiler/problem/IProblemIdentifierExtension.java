@@ -11,8 +11,20 @@
  *******************************************************************************/
 package org.eclipse.dltk.compiler.problem;
 
+import org.eclipse.dltk.annotations.Nullable;
+
+/**
+ * Optional interface to be implemented by {@link IProblemIdentifier problem
+ * identifiers}.
+ */
 public interface IProblemIdentifierExtension {
 
+	/**
+	 * Returns the marker type which should be used for this problem identifier.
+	 * {@link DefaultProblemFactory} check if this interface is implemented and
+	 * delegates to this function.
+	 */
+	@Nullable
 	String getMarkerType();
 
 }
