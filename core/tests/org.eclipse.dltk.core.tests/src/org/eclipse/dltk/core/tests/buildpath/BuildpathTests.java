@@ -99,6 +99,7 @@ public class BuildpathTests extends ModifyingResourceTests {
 		return new Suite(BuildpathTests.class);
 	}
 
+	@Override
 	public void setUpSuite() throws Exception {
 		super.setUpSuite();
 		setUpScriptProject("ModelMembers");
@@ -742,7 +743,7 @@ public class BuildpathTests extends ModifyingResourceTests {
 			newCP[originalCP.length] = DLTKCore.newSourceEntry(new Path(
 					"/P/src"), new IPath[] { new Path("**/src") });
 
-			Map options = new Hashtable(5);
+			Map<String, String> options = new Hashtable<String, String>(5);
 			options.put(DLTKCore.CORE_ENABLE_BUILDPATH_EXCLUSION_PATTERNS,
 					DLTKCore.DISABLED);
 			proj.setOptions(options);
@@ -849,7 +850,7 @@ public class BuildpathTests extends ModifyingResourceTests {
 					"/P/src"), new IPath[] { new Path("**/src") }, new Path[0],
 					null);
 
-			Map options = new Hashtable(5);
+			Map<String, String> options = new Hashtable<String, String>(5);
 			options.put(DLTKCore.CORE_ENABLE_BUILDPATH_EXCLUSION_PATTERNS,
 					DLTKCore.DISABLED);
 			proj.setOptions(options);

@@ -19,17 +19,19 @@ import org.eclipse.dltk.core.environment.EnvironmentManager;
 import org.eclipse.dltk.core.environment.EnvironmentPathUtils;
 
 public class TestieContainerInitializer extends BuildpathContainerInitializer {
-	public void initialize(IPath containerPath, IScriptProject project) throws CoreException {
+	@Override
+	public void initialize(IPath containerPath, IScriptProject project)
+			throws CoreException {
 		int size = containerPath.segmentCount();
-		IPath path = EnvironmentPathUtils.getFullPath(EnvironmentManager.getEnvironment(project),containerPath.removeFirstSegments(1));
+		IPath path = EnvironmentPathUtils.getFullPath(
+				EnvironmentManager.getEnvironment(project),
+				containerPath.removeFirstSegments(1));
 		path = path.makeAbsolute();
 		if (size > 0) {
 			TestieContainer container = new TestieContainer(path);
-			DLTKCore.setBuildpathContainer(containerPath, new IScriptProject[] {
-				project
-			}, new IBuildpathContainer[] {
-				container
-			}, null);
+			DLTKCore.setBuildpathContainer(containerPath,
+					new IScriptProject[] { project },
+					new IBuildpathContainer[] { container }, null);
 		}
 	}
 }
