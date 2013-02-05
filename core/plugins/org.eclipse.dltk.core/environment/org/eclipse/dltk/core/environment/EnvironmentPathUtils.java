@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.dltk.core.environment;
 
+import java.io.File;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dltk.core.IModelElement;
+import org.eclipse.dltk.core.internal.environment.LocalEnvironment;
 import org.eclipse.dltk.internal.core.ExternalSourceModule;
 import org.eclipse.osgi.util.NLS;
 
@@ -54,6 +56,11 @@ public class EnvironmentPathUtils {
 			device = Character.toString(IPath.DEVICE_SEPARATOR);
 
 		return path.setDevice(envId + SEPARATOR + device);
+	}
+
+	public static IPath getFullPath(File folder) {
+		return getFullPath(LocalEnvironment.getInstance(),
+				new Path(folder.getAbsolutePath()));
 	}
 
 	public static boolean isFull(IPath path) {
@@ -221,4 +228,5 @@ public class EnvironmentPathUtils {
 			return null;
 		}
 	}
+
 }

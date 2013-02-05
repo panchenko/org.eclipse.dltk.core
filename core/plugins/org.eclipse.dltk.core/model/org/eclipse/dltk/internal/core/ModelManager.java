@@ -244,6 +244,31 @@ public class ModelManager implements ISaveParticipant {
 			return buildpathChange;
 		}
 
+		public synchronized BuildpathChange setRawBuildpath(
+				IBuildpathEntry[] newRawBuildpath,
+				IModelStatus newRawBuildpathStatus) {
+			// this.rawTimeStamp++;
+			return setBuildpath(newRawBuildpath, newRawBuildpathStatus,
+					null/* resolved classpath */, null/* root to raw map */,
+					null/* unresolved status */, true/* add classpath change */);
+		}
+
+		private BuildpathChange setBuildpath(IBuildpathEntry[] newRawBuildpath,
+				IModelStatus newRawBuildpathStatus,
+				IBuildpathEntry[] newResolvedBuildpath,
+				Map newRootPathToRawEntries,
+				IModelStatus newUnresolvedEntryStatus,
+				boolean addClasspathChange) {
+			BuildpathChange classpathChange = addClasspathChange ? addBuildpathChange()
+					: null;
+			this.rawBuildpath = newRawBuildpath;
+			this.rawBuildpathStatus = newRawBuildpathStatus;
+			this.resolvedBuildpath = newResolvedBuildpath;
+			this.resolvedPathToRawEntries = newRootPathToRawEntries;
+			this.unresolvedEntryStatus = newUnresolvedEntryStatus;
+			return classpathChange;
+		}
+
 		// updating raw buildpath need to flush obsoleted cached information
 		// about resolved entries
 		public synchronized void updateBuildpathInformation(
@@ -443,6 +468,10 @@ public class ModelManager implements ISaveParticipant {
 	 */
 	public final static ModelManager getModelManager() {
 		return MANAGER;
+	}
+
+	public static DeltaProcessingState getDeltaState() {
+		return MANAGER.deltaState;
 	}
 
 	/**

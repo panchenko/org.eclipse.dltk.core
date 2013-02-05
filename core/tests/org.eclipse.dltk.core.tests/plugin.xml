@@ -21,6 +21,9 @@
       <buildpathContainerInitializer
             class="org.eclipse.dltk.core.tests.buildpath.TestieContainerInitializer"
             id="Testie"/>
+      <buildpathContainerInitializer
+            class="org.eclipse.dltk.core.tests.buildpath.TestContainer2Initializer"
+            id="org.eclipse.dltk.core.tests.buildpath.TestContainer2"/>
    </extension>
 
 

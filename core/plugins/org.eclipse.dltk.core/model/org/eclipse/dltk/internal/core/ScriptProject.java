@@ -1955,17 +1955,9 @@ public class ScriptProject extends Openable implements IScriptProject,
 			boolean canModifyResources, IProgressMonitor monitor)
 			throws ModelException {
 
-		setRawBuildpath(
+		_setRawBuildpath(
 				entries,
 				monitor,
-				canModifyResources,
-				getResolvedBuildpath(true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-						false/*
-							 * don't returnResolutionInProgress
-							 */), true, // needValidation
 				canModifyResources); // save only if modifying resources is
 		// allowed
 	}
@@ -1976,24 +1968,12 @@ public class ScriptProject extends Openable implements IScriptProject,
 	public void setRawBuildpath(IBuildpathEntry[] entries,
 			IProgressMonitor monitor) throws ModelException {
 
-		setRawBuildpath(entries,
-				monitor,
-				true, // canChangeResource (as per API
-				// contract)
-				getResolvedBuildpath(true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-						false/*
-							 * don't returnResolutionInProgress
-							 */), true, // needValidation
-				true); // need to save
+		_setRawBuildpath(entries, monitor, true); // need to save
 	}
 
-	public void setRawBuildpath(IBuildpathEntry[] newEntries,
-			IProgressMonitor monitor, boolean canChangeResource,
-			IBuildpathEntry[] oldResolvedPath, boolean needValidation,
-			boolean needSave) throws ModelException {
+	public void _setRawBuildpath(IBuildpathEntry[] newEntries,
+			IProgressMonitor monitor, boolean canChangeResource)
+			throws ModelException {
 
 		ModelManager manager = ModelManager.getModelManager();
 		try {
@@ -2003,8 +1983,7 @@ public class ScriptProject extends Openable implements IScriptProject,
 				newRawPath = defaultBuildpath();
 			}
 			SetBuildpathOperation op = new SetBuildpathOperation(this,
-					oldResolvedPath, newRawPath, canChangeResource,
-					needValidation, needSave);
+					newRawPath, canChangeResource);
 			op.runOperation(monitor);
 
 		} catch (ModelException e) {
@@ -3121,20 +3100,9 @@ public class ScriptProject extends Openable implements IScriptProject,
 			// will force an update of the buildpath/output location based on
 			// the file information
 			// extract out the output location
-			IBuildpathEntry[] oldResolvedBuildpath = info.resolvedBuildpath;
-			setRawBuildpath(
-					fileEntries,
-					monitor,
-					!ResourcesPlugin.getWorkspace().isTreeLocked(), // canChangeResource
-					oldResolvedBuildpath != null ? oldResolvedBuildpath
-							: getResolvedBuildpath(
-									true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-									false/* don't returnResolutionInProgress */),
-					true, // needValidation
-					false); // no need to save
+			_setRawBuildpath(fileEntries, monitor, !ResourcesPlugin
+					.getWorkspace().isTreeLocked() // canChangeResource
+			);
 
 			// if reach that far, the buildpath file change got absorbed
 			wasSuccessful = true;

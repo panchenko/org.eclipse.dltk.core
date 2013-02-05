@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 
 import org.eclipse.dltk.core.tests.builder.BuildParticipantManagerTests;
 import org.eclipse.dltk.core.tests.buildpath.BuildpathTests;
+import org.eclipse.dltk.core.tests.buildpath.SetContainerEventsTest;
 import org.eclipse.dltk.core.tests.cache.CacheTests;
 import org.eclipse.dltk.core.tests.cache.SourceModuleInfoCacheTest;
 import org.eclipse.dltk.core.tests.compiler.CompilerCharOperationTests;
@@ -72,6 +73,7 @@ public class AllTests {
 		suite.addTest(TextUtilsTest.suite());
 		suite.addTest(new JUnit4TestAdapter(Bug387751Test.class));
 		suite.addTest(new JUnit4TestAdapter(SourceModuleInfoCacheTest.class));
+		suite.addTest(new JUnit4TestAdapter(SetContainerEventsTest.class));
 		// $JUnit-END$
 		return suite;
 	}

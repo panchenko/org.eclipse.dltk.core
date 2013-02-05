@@ -20,7 +20,7 @@ import org.eclipse.dltk.core.ModelException;
  */
 public abstract class ChangeBuildpathOperation extends ModelOperation {
 
-	protected boolean canChangeResources;
+	protected final boolean canChangeResources;
 
 	public ChangeBuildpathOperation(IModelElement[] elements,
 			boolean canChangeResources) {
@@ -75,7 +75,7 @@ public abstract class ChangeBuildpathOperation extends ModelOperation {
 														 */, null);
 
 		} else {
-			DeltaProcessingState state = ModelManager.getModelManager().deltaState;
+			DeltaProcessingState state = ModelManager.getDeltaState();
 			ModelElementDelta delta = new ModelElementDelta(getModel());
 			int result = change.generateDelta(delta);
 			if ((result & BuildpathChange.HAS_DELTA) != 0) {
