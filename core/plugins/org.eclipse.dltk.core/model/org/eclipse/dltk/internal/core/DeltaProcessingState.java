@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
@@ -56,7 +57,7 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	/*
 	 * The delta processor for the current thread.
 	 */
-	private ThreadLocal deltaProcessors = new ThreadLocal();
+	private ThreadLocal<DeltaProcessor> deltaProcessors = new ThreadLocal<DeltaProcessor>();
 
 	/* A table from IPath (from a buildpath entry) to RootInfo */
 	public HashMap roots = new HashMap();
@@ -99,6 +100,14 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	/* A table from path (String) to timestamp (Long) */
 	public PersistentTimeStampMap customTimeStamps;
 
+	/*
+	 * Map from IProject to BuildpathChange. Note these changes need to be kept
+	 * on the delta processing state to ensure we don't loose them (see
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=271102 Java model corrupt
+	 * after switching target platform)
+	 */
+	private HashMap<IProject, BuildpathChange> buildpathChanges = new HashMap<IProject, BuildpathChange>();
+
 	/* A table from ScriptProject to BuildpathValidation */
 	private HashMap<ScriptProject, BuildpathValidation> buildpathValidations = new HashMap<ScriptProject, BuildpathValidation>();
 
@@ -115,6 +124,12 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	private HashSet<String> scriptProjectNamesCache;
 
 	/*
+	 * A list of IModelElement used as a scope for external archives refresh
+	 * during POST_CHANGE. This is null if no refresh is needed.
+	 */
+	private HashSet<IModelElement> externalElementsToRefresh;
+
+	/*
 	 * Need to clone defensively the listener information, in case some listener
 	 * is reacting to some notification iteration by adding/changing/removing
 	 * any of the other (for example, if it deregisters itself).
@@ -128,12 +143,11 @@ public class DeltaProcessingState implements IResourceChangeListener {
 				// notifications and one listener decide to change
 				// any event mask of another listeners (yet not notified).
 				int cloneLength = this.elementChangedListenerMasks.length;
-				System
-						.arraycopy(
-								this.elementChangedListenerMasks,
-								0,
-								this.elementChangedListenerMasks = new int[cloneLength],
-								0, cloneLength);
+				System.arraycopy(
+						this.elementChangedListenerMasks,
+						0,
+						this.elementChangedListenerMasks = new int[cloneLength],
+						0, cloneLength);
 				this.elementChangedListenerMasks[i] = eventMask; // could be
 				// different
 				return;
@@ -143,12 +157,11 @@ public class DeltaProcessingState implements IResourceChangeListener {
 		// original arrays and max boundary and we only add to the end.
 		int length;
 		if ((length = this.elementChangedListeners.length) == this.elementChangedListenerCount) {
-			System
-					.arraycopy(
-							this.elementChangedListeners,
-							0,
-							this.elementChangedListeners = new IElementChangedListener[length * 2],
-							0, length);
+			System.arraycopy(
+					this.elementChangedListeners,
+					0,
+					this.elementChangedListeners = new IElementChangedListener[length * 2],
+					0, length);
 			System.arraycopy(this.elementChangedListenerMasks, 0,
 					this.elementChangedListenerMasks = new int[length * 2], 0,
 					length);
@@ -156,6 +169,17 @@ public class DeltaProcessingState implements IResourceChangeListener {
 		this.elementChangedListeners[this.elementChangedListenerCount] = listener;
 		this.elementChangedListenerMasks[this.elementChangedListenerCount] = eventMask;
 		this.elementChangedListenerCount++;
+	}
+
+	/*
+	 * Adds the given element to the list of elements used as a scope for
+	 * external jars refresh.
+	 */
+	public synchronized void addForRefresh(IModelElement externalElement) {
+		if (this.externalElementsToRefresh == null) {
+			this.externalElementsToRefresh = new HashSet();
+		}
+		this.externalElementsToRefresh.add(externalElement);
 	}
 
 	public void addPreResourceChangedListener(IResourceChangeListener listener,
@@ -170,12 +194,11 @@ public class DeltaProcessingState implements IResourceChangeListener {
 		// original arrays and max boundary and we only add to the end.
 		int length;
 		if ((length = this.preResourceChangeListeners.length) == this.preResourceChangeListenerCount) {
-			System
-					.arraycopy(
-							this.preResourceChangeListeners,
-							0,
-							this.preResourceChangeListeners = new IResourceChangeListener[length * 2],
-							0, length);
+			System.arraycopy(
+					this.preResourceChangeListeners,
+					0,
+					this.preResourceChangeListeners = new IResourceChangeListener[length * 2],
+					0, length);
 			System.arraycopy(this.preResourceChangeEventMasks, 0,
 					this.preResourceChangeEventMasks = new int[length * 2], 0,
 					length);
@@ -186,14 +209,42 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	}
 
 	public DeltaProcessor getDeltaProcessor() {
-		DeltaProcessor deltaProcessor = (DeltaProcessor) this.deltaProcessors
-				.get();
+		DeltaProcessor deltaProcessor = this.deltaProcessors.get();
 		if (deltaProcessor != null)
 			return deltaProcessor;
-		deltaProcessor = new DeltaProcessor(this, ModelManager
-				.getModelManager());
+		deltaProcessor = new DeltaProcessor(this,
+				ModelManager.getModelManager());
 		this.deltaProcessors.set(deltaProcessor);
 		return deltaProcessor;
+	}
+
+	public synchronized BuildpathChange addBuildpathChange(IProject project,
+			IBuildpathEntry[] oldRawBuildpath,
+			IBuildpathEntry[] oldResolvedBuildpath) {
+		BuildpathChange change = this.buildpathChanges.get(project);
+		if (change == null) {
+			change = new BuildpathChange((ScriptProject) ModelManager
+					.getModelManager().getModel().getScriptProject(project),
+					oldRawBuildpath, oldResolvedBuildpath);
+			this.buildpathChanges.put(project, change);
+		} else {
+			if (change.oldRawBuildpath == null)
+				change.oldRawBuildpath = oldRawBuildpath;
+			if (change.oldResolvedBuildpath == null)
+				change.oldResolvedBuildpath = oldResolvedBuildpath;
+		}
+		return change;
+	}
+
+	public synchronized BuildpathChange getBuildpathChange(IProject project) {
+		return this.buildpathChanges.get(project);
+	}
+
+	public synchronized HashMap<IProject, BuildpathChange> removeAllBuildpathChanges() {
+		final HashMap<IProject, BuildpathChange> result = this.buildpathChanges;
+		this.buildpathChanges = new HashMap<IProject, BuildpathChange>(
+				result.size());
+		return result;
 	}
 
 	public synchronized BuildpathValidation addBuildpathValidation(
@@ -280,12 +331,11 @@ public class DeltaProcessingState implements IResourceChangeListener {
 								dependents = new IScriptProject[] { project };
 							} else {
 								int dependentsLength = dependents.length;
-								System
-										.arraycopy(
-												dependents,
-												0,
-												dependents = new IScriptProject[dependentsLength + 1],
-												0, dependentsLength);
+								System.arraycopy(
+										dependents,
+										0,
+										dependents = new IScriptProject[dependentsLength + 1],
+										0, dependentsLength);
 								dependents[dependentsLength] = project;
 							}
 							newProjectDependencies.put(key, dependents);
@@ -295,12 +345,16 @@ public class DeltaProcessingState implements IResourceChangeListener {
 						// root path
 						IPath path = entry.getPath();
 						if (newRoots.get(path) == null) {
-							newRoots.put(path, new DeltaProcessor.RootInfo(
-									project, path, ((BuildpathEntry) entry)
-											.fullInclusionPatternChars(),
-									((BuildpathEntry) entry)
-											.fullExclusionPatternChars(), entry
-											.getEntryKind()));
+							newRoots.put(
+									path,
+									new DeltaProcessor.RootInfo(
+											project,
+											path,
+											((BuildpathEntry) entry)
+													.fullInclusionPatternChars(),
+											((BuildpathEntry) entry)
+													.fullExclusionPatternChars(),
+											entry.getEntryKind()));
 						} else {
 							ArrayList rootList = (ArrayList) newOtherRoots
 									.get(path);
@@ -353,6 +407,12 @@ public class DeltaProcessingState implements IResourceChangeListener {
 		this.projectReferenceChanges.values().toArray(updates);
 		this.projectReferenceChanges.clear();
 		return updates;
+	}
+
+	public synchronized Set<IModelElement> removeExternalElementsToRefresh() {
+		final Set<IModelElement> result = this.externalElementsToRefresh;
+		this.externalElementsToRefresh = null;
+		return result;
 	}
 
 	public synchronized void removeElementChangedListener(
@@ -438,9 +498,8 @@ public class DeltaProcessingState implements IResourceChangeListener {
 			if ((this.preResourceChangeEventMasks[i] & event.getType()) != 0)
 				SafeRunner.run(new ISafeRunnable() {
 					public void handleException(Throwable exception) {
-						Util
-								.log(exception,
-										"Exception occurred in listener of pre script resource change notification"); //$NON-NLS-1$
+						Util.log(exception,
+								"Exception occurred in listener of pre script resource change notification"); //$NON-NLS-1$
 					}
 
 					public void run() throws Exception {
@@ -478,8 +537,8 @@ public class DeltaProcessingState implements IResourceChangeListener {
 
 	public IScriptProject findProject(String name) {
 		if (getOldScriptProjectNames().contains(name))
-			return ModelManager.getModelManager().getModel().getScriptProject(
-					name);
+			return ModelManager.getModelManager().getModel()
+					.getScriptProject(name);
 		return null;
 	}
 
@@ -511,13 +570,13 @@ public class DeltaProcessingState implements IResourceChangeListener {
 	}
 
 	private File getTimeStampsFile() {
-		return DLTKCore.getDefault().getStateLocation().append(
-				"externalLibsTimeStamps").toFile(); //$NON-NLS-1$
+		return DLTKCore.getDefault().getStateLocation()
+				.append("externalLibsTimeStamps").toFile(); //$NON-NLS-1$
 	}
 
 	private File getCustomTimeStampsFile() {
-		return DLTKCore.getDefault().getStateLocation().append(
-				"customTimeStamps").toFile(); //$NON-NLS-1$
+		return DLTKCore.getDefault().getStateLocation()
+				.append("customTimeStamps").toFile(); //$NON-NLS-1$
 	}
 
 	public void saveExternalLibTimeStamps() throws CoreException {

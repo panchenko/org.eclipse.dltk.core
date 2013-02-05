@@ -28,6 +28,7 @@ public abstract class ChangeBuildpathOperation extends ModelOperation {
 		this.canChangeResources = canChangeResources;
 	}
 
+	@Override
 	protected boolean canModifyRoots() {
 		// changing the buildpath can modify roots
 		return true;
@@ -103,10 +104,12 @@ public abstract class ChangeBuildpathOperation extends ModelOperation {
 		}
 	}
 
+	@Override
 	protected ISchedulingRule getSchedulingRule() {
 		return null; // no lock taken while changing buildpath
 	}
 
+	@Override
 	public boolean isReadOnly() {
 		return !this.canChangeResources;
 	}

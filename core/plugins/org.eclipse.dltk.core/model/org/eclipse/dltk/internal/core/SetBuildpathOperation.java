@@ -269,7 +269,7 @@ public class SetBuildpathOperation extends ModelOperation {
 			if (this.newRawPath != DO_NOT_SET_ENTRIES) {
 				this.updateBuildpath();
 				this.project.updateProjectFragments();
-				ModelManager.getModelManager().getDeltaProcessor()
+				ModelManager.getModelManager().deltaState
 						.addForRefresh(this.project);
 			}
 

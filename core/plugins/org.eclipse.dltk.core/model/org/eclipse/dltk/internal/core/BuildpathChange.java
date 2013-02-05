@@ -124,6 +124,7 @@ public class BuildpathChange {
 		return -1;
 	}
 
+	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof BuildpathChange))
 			return false;
@@ -165,8 +166,8 @@ public class BuildpathChange {
 			if (newResolvedBuildpath == null) {
 				// another thread reset the resolved buildpath, use a temporary
 				// PerProjectInfo
-				PerProjectInfo temporaryInfo = new PerProjectInfo(this.project
-						.getProject());
+				PerProjectInfo temporaryInfo = new PerProjectInfo(
+						this.project.getProject());
 				this.project.getResolvedBuildpath();
 				newRawBuildpath = temporaryInfo.rawBuildpath;
 				newResolvedBuildpath = temporaryInfo.resolvedBuildpath;
@@ -220,13 +221,9 @@ public class BuildpathChange {
 				IModelElementDelta.F_RESOLVED_BUILDPATH_CHANGED);
 		result |= HAS_DELTA;
 
-		// TODO: Update DeltaProcessingState if required
-		// state.addForRefresh(this.project); // ensure external jars are
-		// refreshed
-		// for this project (see
-		// https://bugs
-		// .eclipse.org/bugs/show_bug
-		// .cgi?id=212769 )
+		state.addForRefresh(this.project);
+		// ensure external jars are refreshed for this project (see
+		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=212769 )
 
 		Map removedRoots = null;
 		IProjectFragment[] roots = null;
@@ -352,16 +349,19 @@ public class BuildpathChange {
 				if (entryKind == IBuildpathEntry.BPE_LIBRARY) {
 					result |= HAS_LIBRARY_CHANGE;
 				}
-				addBuildpathDeltas(delta, this.project
-						.computeProjectFragments(newResolvedBuildpath[i]),
+				addBuildpathDeltas(
+						delta,
+						this.project
+								.computeProjectFragments(newResolvedBuildpath[i]),
 						IModelElementDelta.F_ADDED_TO_BUILDPATH);
 			} // buildpath reordering has already been generated in previous
-			// loop
+				// loop
 		}
 
 		return result;
 	}
 
+	@Override
 	public int hashCode() {
 		return this.project.hashCode();
 	}
@@ -448,21 +448,21 @@ public class BuildpathChange {
 						}
 					}
 					if (pathHasChanged) {
-						IBuildpathEntry entry = newResolvedBuildpath[i];
-						char[][] inclusionPatterns = ((BuildpathEntry) entry)
-								.fullInclusionPatternChars();
-						char[][] exclusionPatterns = ((BuildpathEntry) entry)
-								.fullExclusionPatternChars();
+						// IBuildpathEntry entry = newResolvedBuildpath[i];
+						// char[][] inclusionPatterns = ((BuildpathEntry) entry)
+						// .fullInclusionPatternChars();
+						// char[][] exclusionPatterns = ((BuildpathEntry) entry)
+						// .fullExclusionPatternChars();
 						ProjectIndexerManager.indexLibrary(project, newPath);
 					}
 					break;
 				case IBuildpathEntry.BPE_SOURCE:
 					IBuildpathEntry entry = newResolvedBuildpath[i];
 					IPath path = entry.getPath();
-					char[][] inclusionPatterns = ((BuildpathEntry) entry)
-							.fullInclusionPatternChars();
-					char[][] exclusionPatterns = ((BuildpathEntry) entry)
-							.fullExclusionPatternChars();
+					// char[][] inclusionPatterns = ((BuildpathEntry) entry)
+					// .fullInclusionPatternChars();
+					// char[][] exclusionPatterns = ((BuildpathEntry) entry)
+					// .fullExclusionPatternChars();
 					ProjectIndexerManager.indexProjectFragment(project, path);
 					break;
 				}
@@ -470,6 +470,7 @@ public class BuildpathChange {
 		}
 	}
 
+	@Override
 	public String toString() {
 		return "BuildpathChange: " + this.project.getElementName(); //$NON-NLS-1$
 	}

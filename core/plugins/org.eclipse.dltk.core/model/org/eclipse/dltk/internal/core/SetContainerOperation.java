@@ -102,8 +102,23 @@ public class SetContainerOperation extends ChangeBuildpathOperation {
 				if (oldContainer == ModelManager.CONTAINER_INITIALIZATION_IN_PROGRESS) {
 					oldContainer = null;
 				}
-				if (oldContainer != null
-						&& oldContainer.equals(respectiveContainers[i])) {
+				if ((oldContainer != null && oldContainer
+						.equals(respectiveContainers[i]))
+						|| (oldContainer == this.respectiveContainers[i]) /*
+																		 * handle
+																		 * case
+																		 * where
+																		 * old
+																		 * and
+																		 * new
+																		 * containers
+																		 * are
+																		 * null
+																		 * (see
+																		 * bug
+																		 * 149043
+																		 */
+				) {
 					modifiedProjects[i] = null; // filter out this project -
 					// container did not change
 					continue;
@@ -139,18 +154,27 @@ public class SetContainerOperation extends ChangeBuildpathOperation {
 						verboseUpdateProject(affectedProject);
 					}
 
-					// force a refresh of the affected project (will compute
-					// deltas)
-					affectedProject.setRawBuildpath(
-							affectedProject.getRawBuildpath(), progressMonitor,
-							canChangeResources, oldResolvedPaths[i], false, // updating
-							// -
-							// no
-							// need
-							// for
-							// early
-							// validation
-							false); // updating - no need to save
+					// force resolved buildpath to be recomputed
+					BuildpathChange buildpathChange = affectedProject
+							.getPerProjectInfo().resetResolvedBuildpath();
+
+					// if needed, generate delta, update project ref, create
+					// markers, ...
+					buildpathChanged(buildpathChange);
+
+					if (this.canChangeResources) {
+						// touch project to force a build if needed
+						try {
+							affectedProject.getProject().touch(
+									this.progressMonitor);
+						} catch (CoreException e) {
+							// see
+							// https://bugs.eclipse.org/bugs/show_bug.cgi?id=148970
+							if (!ExternalScriptProject.EXTERNAL_PROJECT_NAME
+									.equals(affectedProject.getElementName()))
+								throw e;
+						}
+					}
 				}
 			} catch (CoreException e) {
 				if (ModelManager.BP_RESOLVE_VERBOSE) {

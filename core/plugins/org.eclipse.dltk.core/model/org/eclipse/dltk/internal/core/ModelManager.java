@@ -228,9 +228,20 @@ public class ModelManager implements ISaveParticipant {
 			}
 		}
 
-		public synchronized void resetResolvedBuildpath() {
+		public synchronized BuildpathChange resetResolvedBuildpath() {
+			final BuildpathChange change = addBuildpathChange();
 			// null out resolved information
 			resolvedBuildpath = null;
+			return change;
+		}
+
+		protected BuildpathChange addBuildpathChange() {
+			// remember old info
+			ModelManager manager = ModelManager.getModelManager();
+			BuildpathChange buildpathChange = manager.deltaState
+					.addBuildpathChange(this.project, this.rawBuildpath,
+							this.resolvedBuildpath);
+			return buildpathChange;
 		}
 
 		// updating raw buildpath need to flush obsoleted cached information
@@ -742,7 +753,7 @@ public class ModelManager implements ISaveParticipant {
 						 * given we have a resource child of the root, it cannot
 						 * be a ZIP fragment
 						 */
-						IProjectFragment root = (IProjectFragment) ((ScriptProject) project)
+						IProjectFragment root = ((ScriptProject) project)
 								.getFolderProjectFragment(rootPath);
 						if (root == null)
 							return null;
