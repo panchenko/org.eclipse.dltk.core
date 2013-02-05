@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.dltk.ast.declarations.Argument;
 import org.eclipse.dltk.ast.declarations.MethodDeclaration;
 import org.eclipse.dltk.compiler.CharOperation;
+import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.compiler.problem.CategorizedProblem;
 import org.eclipse.dltk.core.CompletionProposal;
 import org.eclipse.dltk.core.CompletionRequestor;
@@ -40,17 +41,53 @@ public abstract class ScriptCompletionEngine extends Engine implements
 	protected static final boolean DEBUG = DLTKCore.DEBUG_COMPLETION;
 	protected static final boolean VERBOSE = DEBUG;
 
+	/**
+	 * Current project. Implementations should retrieve the context from
+	 * {@link IModuleSource#getModelElement()} passed to
+	 * {@link #complete(IModuleSource, int, int)} method.
+	 */
+	@Deprecated
 	protected IScriptProject scriptProject;
 
 	// Accepts completion proposals
 	protected CompletionRequestor requestor;
 
+	/**
+	 * Start of the proposal replace range. Initialized by
+	 * {@link #setSourceRange(int, int)} and used in
+	 * {@link #accept(CompletionProposal)}
+	 * 
+	 * <p>
+	 * NOTE: Visibility of this member is going to be changed, your should not
+	 * access it directly.
+	 */
+	@Deprecated
 	protected int startPosition;
-	protected int actualCompletionPosition;
-	protected int endPosition;
-	protected int offset;
 
-	// protected String fileName = null;
+	/**
+	 * End of the proposal replace range. Initialized by
+	 * {@link #setSourceRange(int, int)} and used in
+	 * {@link #accept(CompletionProposal)}.
+	 * 
+	 * <p>
+	 * NOTE: Visibility of this member is going to be changed, your should not
+	 * access it directly.
+	 */
+	@Deprecated
+	protected int endPosition;
+
+	/**
+	 * The completion position, used in various {@code find*} methods to create
+	 * proposals.
+	 */
+	protected int actualCompletionPosition;
+
+	/**
+	 * Some offset which is subtracted from {@link #startPosition},
+	 * {@link #endPosition} and {@link #accept(CompletionProposal)} upon their
+	 * usage.
+	 */
+	protected int offset;
 
 	protected boolean noProposal = true;
 
@@ -82,7 +119,7 @@ public abstract class ScriptCompletionEngine extends Engine implements
 
 	// print
 	protected void printDebug(CategorizedProblem error) {
-		if (ScriptCompletionEngine.DEBUG) {
+		if (DEBUG) {
 			System.out.print("COMPLETION - completionFailure("); //$NON-NLS-1$
 			System.out.print(error);
 			System.out.println(")"); //$NON-NLS-1$
@@ -158,7 +195,7 @@ public abstract class ScriptCompletionEngine extends Engine implements
 	}
 
 	// Source range
-	protected void setSourceRange(int start, int end) {
+	public void setSourceRange(int start, int end) {
 		this.setSourceRange(start, end, true);
 	}
 
@@ -259,13 +296,11 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
+					this.noProposal = false;
 
-					if (!ScriptCompletionEngine.this.requestor.isIgnored(kind)) {
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										kind,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+					if (!this.requestor.isIgnored(kind)) {
+						CompletionProposal proposal = this.createProposal(kind,
+								this.actualCompletionPosition);
 						// proposal.setSignature(getSignature(typeBinding));
 						// proposal.setPackageName(q);
 						// proposal.setTypeName(displayName);
@@ -305,13 +340,12 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
-					if (!ScriptCompletionEngine.this.requestor
+					this.noProposal = false;
+					if (!this.requestor
 							.isIgnored(CompletionProposal.METHOD_REF)) {
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										CompletionProposal.METHOD_REF,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+						CompletionProposal proposal = this.createProposal(
+								CompletionProposal.METHOD_REF,
+								this.actualCompletionPosition);
 						// proposal.setSignature(getSignature(typeBinding));
 						// proposal.setPackageName(q);
 						// proposal.setTypeName(displayName);
@@ -361,13 +395,12 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
-					if (!ScriptCompletionEngine.this.requestor
+					this.noProposal = false;
+					if (!this.requestor
 							.isIgnored(CompletionProposal.METHOD_REF)) {
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										CompletionProposal.METHOD_REF,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+						CompletionProposal proposal = this.createProposal(
+								CompletionProposal.METHOD_REF,
+								this.actualCompletionPosition);
 						// proposal.setSignature(getSignature(typeBinding));
 						// proposal.setPackageName(q);
 						// proposal.setTypeName(displayName);
@@ -427,12 +460,10 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
-					if (!ScriptCompletionEngine.this.requestor.isIgnored(kind)) {
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										kind,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+					this.noProposal = false;
+					if (!this.requestor.isIgnored(kind)) {
+						CompletionProposal proposal = this.createProposal(kind,
+								this.actualCompletionPosition);
 						// proposal.setSignature(getSignature(typeBinding));
 						// proposal.setPackageName(q);
 						// proposal.setTypeName(displayName);
@@ -494,12 +525,10 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
-					if (!ScriptCompletionEngine.this.requestor.isIgnored(kind)) {
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										kind,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+					this.noProposal = false;
+					if (!this.requestor.isIgnored(kind)) {
+						CompletionProposal proposal = this.createProposal(kind,
+								this.actualCompletionPosition);
 						// proposal.setSignature(getSignature(typeBinding));
 						// proposal.setPackageName(q);
 						// proposal.setTypeName(displayName);
@@ -539,12 +568,10 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
-					if (!ScriptCompletionEngine.this.requestor.isIgnored(kind)) {
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										kind,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+					this.noProposal = false;
+					if (!this.requestor.isIgnored(kind)) {
+						CompletionProposal proposal = this.createProposal(kind,
+								this.actualCompletionPosition);
 						proposal.setModelElement(field);
 						proposal.setName(name);
 						proposal.setCompletion(qname);
@@ -579,14 +606,12 @@ public abstract class ScriptCompletionEngine extends Engine implements
 					relevance += computeRelevanceForRestrictions(IAccessRule.K_ACCESSIBLE); // no
 
 					// accept result
-					ScriptCompletionEngine.this.noProposal = false;
-					if (!ScriptCompletionEngine.this.requestor
-							.isIgnored(CompletionProposal.TYPE_REF)) {
+					this.noProposal = false;
+					if (!this.requestor.isIgnored(CompletionProposal.TYPE_REF)) {
 
-						CompletionProposal proposal = ScriptCompletionEngine.this
-								.createProposal(
-										CompletionProposal.TYPE_REF,
-										ScriptCompletionEngine.this.actualCompletionPosition);
+						CompletionProposal proposal = this.createProposal(
+								CompletionProposal.TYPE_REF,
+								this.actualCompletionPosition);
 						// proposal.setSignature(getSignature(typeBinding));
 						// proposal.setPackageName(q);
 						// proposal.setTypeName(displayName);
@@ -603,15 +628,15 @@ public abstract class ScriptCompletionEngine extends Engine implements
 	}
 
 	// Relevance
-	protected int computeBaseRelevance() {
+	public int computeBaseRelevance() {
 		return RelevanceConstants.R_DEFAULT;
 	}
 
-	protected int computeRelevanceForInterestingProposal() {
+	public int computeRelevanceForInterestingProposal() {
 		return RelevanceConstants.R_INTERESTING;
 	}
 
-	protected int computeRelevanceForCaseMatching(char[] token,
+	public int computeRelevanceForCaseMatching(char[] token,
 			String proposalNameStr) {
 		char[] proposalName = proposalNameStr.toCharArray();
 		if (this.options.camelCaseMatch) {
@@ -638,7 +663,7 @@ public abstract class ScriptCompletionEngine extends Engine implements
 		return 0;
 	}
 
-	protected int computeRelevanceForRestrictions(int accessRuleKind) {
+	public int computeRelevanceForRestrictions(int accessRuleKind) {
 		if (accessRuleKind == IAccessRule.K_ACCESSIBLE) {
 			return RelevanceConstants.R_NON_RESTRICTED;
 		}
@@ -653,7 +678,7 @@ public abstract class ScriptCompletionEngine extends Engine implements
 	public void setOptions(Map options) {
 	}
 
-	protected void accept(CompletionProposal proposal) {
+	public void accept(CompletionProposal proposal) {
 		proposal.setReplaceRange(this.startPosition - this.offset,
 				this.endPosition - this.offset);
 		this.requestor.accept(proposal);
