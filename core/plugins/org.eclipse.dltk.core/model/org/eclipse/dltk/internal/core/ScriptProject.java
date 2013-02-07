@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,10 +47,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.content.IContentDescription;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.DLTKLanguageManager;
+import org.eclipse.dltk.core.IBuildpathAttribute;
 import org.eclipse.dltk.core.IBuildpathContainer;
 import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
@@ -71,6 +74,7 @@ import org.eclipse.dltk.core.IType;
 import org.eclipse.dltk.core.ITypeHierarchy;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.core.WorkingCopyOwner;
+import org.eclipse.dltk.internal.core.ModelManager.PerProjectInfo;
 import org.eclipse.dltk.internal.core.util.MementoTokenizer;
 import org.eclipse.dltk.internal.core.util.Messages;
 import org.eclipse.dltk.internal.core.util.Util;
@@ -102,6 +106,18 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 * Value of project's resolved buildpath while it is being resolved
 	 */
 	private static final IBuildpathEntry[] RESOLUTION_IN_PROGRESS = new IBuildpathEntry[0];
+
+	/*
+	 * For testing purpose only
+	 */
+	private static ArrayList<?> BP_RESOLUTION_BP_LISTENERS;
+
+	/*
+	 * For testing purpose only
+	 */
+	private static void breakpoint(int bp, ScriptProject project) {
+	}
+
 	/**
 	 * The platform project this <code>IDylanProject</code> is based on
 	 */
@@ -204,7 +220,8 @@ public class ScriptProject extends Openable implements IScriptProject,
 		if (!path.isAbsolute() && !isSpecial) {
 			path = getPath().append(path);
 		}
-		int segmentCount = path.segmentCount();
+		final int segmentCount = path.segmentCount();
+		// TODO (alex) getProjectFragment(IPath) doesn't work for external paths
 		switch (segmentCount) {
 		case 0:
 			return null;
@@ -270,247 +287,30 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 * entries and cache it.
 	 */
 	public IBuildpathEntry[] getResolvedBuildpath() throws ModelException {
-		return getResolvedBuildpath(true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-				false/*
-					 * don't returnResolutionInProgress
-					 */); // force
-		// the
-		// reverse
-		// rawEntry
-		// cache
-		// to
-		// be
-		// populated
-	}
-
-	/*
-	 * Internal variant which can create marker on project for invalid entries
-	 * and caches the resolved buildpath on perProjectInfo. If requested, return
-	 * a special buildpath (RESOLUTION_IN_PROGRESS) if the buildpath is being
-	 * resolved.
-	 */
-	public IBuildpathEntry[] getResolvedBuildpath(
-			boolean ignoreUnresolvedEntry, boolean generateMarkerOnError,
-			boolean returnResolutionInProgress) throws ModelException {
-
-		ModelManager manager = ModelManager.getModelManager();
-		ModelManager.PerProjectInfo perProjectInfo = null;
-		if (ignoreUnresolvedEntry && !generateMarkerOnError) {
-			perProjectInfo = getPerProjectInfo();
-			if (perProjectInfo != null) {
-				// resolved path is cached on its info
-				IBuildpathEntry[] infoPath = perProjectInfo.resolvedBuildpath;
-				if (infoPath != null) {
-					return infoPath;
-				} else if (returnResolutionInProgress
-						&& manager.isBuildpathBeingResolved(this)) {
-					if (ModelManager.BP_RESOLVE_VERBOSE) {
-						Util.verbose("CPResolution: reentering raw buildpath resolution, will use empty buildpath instead" + //$NON-NLS-1$
-								"	project: " + getElementName() + '\n' + //$NON-NLS-1$
-								"	invocation stack trace:"); //$NON-NLS-1$
-						new Exception("<Fake exception>").printStackTrace(System.out); //$NON-NLS-1$
-					}
-					return RESOLUTION_IN_PROGRESS;
-				}
+		PerProjectInfo perProjectInfo = getPerProjectInfo();
+		IBuildpathEntry[] resolvedClasspath = perProjectInfo
+				.getResolvedBuildpath();
+		if (resolvedClasspath == null) {
+			resolveBuildpath(perProjectInfo, false/*
+												 * don't use previous session
+												 * values
+												 */, true/* add classpath change */);
+			resolvedClasspath = perProjectInfo.getResolvedBuildpath();
+			if (resolvedClasspath == null) {
+				// another thread reset the resolved classpath, use a temporary
+				// PerProjectInfo
+				PerProjectInfo temporaryInfo = newTemporaryInfo();
+				resolveBuildpath(temporaryInfo, false/*
+													 * don't use previous
+													 * session values
+													 */, true/*
+															 * add classpath
+															 * change
+															 */);
+				resolvedClasspath = temporaryInfo.getResolvedBuildpath();
 			}
 		}
-		Map<IPath, IBuildpathEntry> rawReverseMap = perProjectInfo == null ? null
-				: new HashMap<IPath, IBuildpathEntry>(5);
-		IBuildpathEntry[] resolvedPath = null;
-		boolean nullOldResolvedCP = perProjectInfo != null
-				&& perProjectInfo.resolvedBuildpath == null;
-		try {
-			// protect against misbehaving clients (see
-			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=61040)
-			if (nullOldResolvedCP)
-				manager.setBuildpathBeingResolved(this, true);
-			resolvedPath = getResolvedBuildpath(
-					getRawBuildpath(generateMarkerOnError,
-							!generateMarkerOnError), ignoreUnresolvedEntry,
-					generateMarkerOnError, rawReverseMap);
-		} finally {
-			if (nullOldResolvedCP)
-				perProjectInfo.resolvedBuildpath = null;
-		}
-
-		if (perProjectInfo != null) {
-			if (perProjectInfo.rawBuildpath == null // .buildpath file could not
-					// be read
-					&& generateMarkerOnError
-					&& DLTKLanguageManager.hasScriptNature(this.project)) {
-				// flush .buildpath format markers (bug 39877), but only when
-				// file cannot be read (bug 42366)
-				this.flushBuildpathProblemMarkers(false, true);
-				this.createBuildpathProblemMarker(new ModelStatus(
-						IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-						Messages.bind(
-								Messages.buildpath_cannotReadBuildpathFile,
-								this.getElementName())));
-			}
-
-			perProjectInfo.resolvedBuildpath = resolvedPath;
-			perProjectInfo.resolvedPathToRawEntries = rawReverseMap;
-			manager.setBuildpathBeingResolved(this, false);
-		}
-		return resolvedPath;
-	}
-
-	/**
-	 * Internal variant which can process any arbitrary buildpath
-	 * 
-	 * @param buildpathEntries
-	 *            IBuildpathEntry[]
-	 * @param projectOutputLocation
-	 *            IPath
-	 * @param ignoreUnresolvedEntry
-	 *            boolean
-	 * @param generateMarkerOnError
-	 *            boolean
-	 * @param rawReverseMap
-	 *            Map
-	 * @return IBuildpathEntry[]
-	 * @throws ModelException
-	 */
-	public IBuildpathEntry[] getResolvedBuildpath(
-			IBuildpathEntry[] buildpathEntries,
-			boolean ignoreUnresolvedEntry, // if
-			// unresolved
-			// entries
-			// are
-			// met,
-			// should
-			// it
-			// trigger
-			// initializations
-			boolean generateMarkerOnError,
-			Map<IPath, IBuildpathEntry> rawReverseMap) // can be null
-			// if not
-			// interested in
-			// reverse
-			// mapping
-			throws ModelException {
-
-		IModelStatus status;
-		if (generateMarkerOnError) {
-			flushBuildpathProblemMarkers(false, false);
-		}
-
-		int length = buildpathEntries.length;
-		List<IBuildpathEntry> resolvedEntries = new ArrayList<IBuildpathEntry>();
-
-		for (int i = 0; i < length; i++) {
-
-			IBuildpathEntry rawEntry = buildpathEntries[i];
-			IPath resolvedPath;
-			status = null;
-
-			/* validation if needed */
-			if (generateMarkerOnError || !ignoreUnresolvedEntry) {
-				status = BuildpathEntry.validateBuildpathEntry(this, rawEntry,
-						false /*
-							 * do not recurse in containers, done later to
-							 * accumulate
-							 */);
-				if (generateMarkerOnError && !status.isOK()) {
-					if (status.getCode() == IModelStatusConstants.INVALID_PATH
-							&& ((BuildpathEntry) rawEntry).isOptional())
-						continue; // ignore this entry
-					createBuildpathProblemMarker(status);
-				}
-			}
-
-			switch (rawEntry.getEntryKind()) {
-
-			case IBuildpathEntry.BPE_VARIABLE:
-
-				IBuildpathEntry resolvedEntry = null;
-				try {
-					resolvedEntry = DLTKCore
-							.getResolvedBuildpathEntry(rawEntry);
-				} catch (AssertionFailedException e) {
-					// Catch the assertion failure and throw java model
-					// exception instead
-					// see bug
-					// https://bugs.eclipse.org/bugs/show_bug.cgi?id=55992
-					// if ignoredUnresolvedEntry is false, status is set by by
-					// ClasspathEntry.validateClasspathEntry
-					// called above as validation was needed
-					if (!ignoreUnresolvedEntry)
-						throw new ModelException(status);
-				}
-				if (resolvedEntry == null) {
-					if (!ignoreUnresolvedEntry)
-						throw new ModelException(status);
-				} else {
-					if (rawReverseMap != null) {
-						if (rawReverseMap.get(resolvedPath = resolvedEntry
-								.getPath()) == null)
-							rawReverseMap.put(resolvedPath, rawEntry);
-					}
-					resolvedEntries.add(resolvedEntry);
-				}
-				break;
-
-			case IBuildpathEntry.BPE_CONTAINER:
-
-				IBuildpathContainer container = DLTKCore.getBuildpathContainer(
-						rawEntry.getPath(), this);
-				if (container == null) {
-					if (!ignoreUnresolvedEntry)
-						throw new ModelException(status);
-					break;
-				}
-
-				IBuildpathEntry[] containerEntries = container
-						.getBuildpathEntries();
-				if (containerEntries == null)
-					break;
-
-				// container was bound
-				for (int j = 0, containerLength = containerEntries.length; j < containerLength; j++) {
-					BuildpathEntry cEntry = (BuildpathEntry) containerEntries[j];
-					if (generateMarkerOnError) {
-						IModelStatus containerStatus = BuildpathEntry
-								.validateBuildpathEntry(this, cEntry, true /* recurse */);
-						if (!containerStatus.isOK())
-							createBuildpathProblemMarker(containerStatus);
-					}
-					// if container is exported or restricted, then its nested
-					// entries must in turn be exported (21749) and/or propagate
-					// restrictions
-					cEntry = cEntry.combineWith((BuildpathEntry) rawEntry);
-					if (rawReverseMap != null) {
-						if (rawReverseMap.get(resolvedPath = cEntry.getPath()) == null)
-							rawReverseMap.put(resolvedPath, rawEntry);
-					}
-					resolvedEntries.add(cEntry);
-				}
-				break;
-
-			default:
-
-				if (rawReverseMap != null) {
-					if (rawReverseMap.get(resolvedPath = rawEntry.getPath()) == null)
-						rawReverseMap.put(resolvedPath, rawEntry);
-				}
-				resolvedEntries.add(rawEntry);
-
-			}
-		}
-		IBuildpathEntry[] resolvedPath = new IBuildpathEntry[resolvedEntries
-				.size()];
-
-		resolvedEntries.toArray(resolvedPath);
-
-		if (generateMarkerOnError) {
-			status = BuildpathEntry.validateBuildpath(this, resolvedPath);
-			if (!status.isOK())
-				createBuildpathProblemMarker(status);
-		}
-		return resolvedPath;
+		return resolvedClasspath;
 	}
 
 	/*
@@ -521,19 +321,76 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 */
 	public IBuildpathEntry[] getResolvedBuildpath(boolean ignoreUnresolvedEntry)
 			throws ModelException {
-		return getResolvedBuildpath(ignoreUnresolvedEntry, false, // don't
-				// generateMarkerOnError
-				true // returnResolutionInProgress
-		);
+		if (ModelManager.getModelManager().isBuildpathBeingResolved(this)) {
+			if (ModelManager.BP_RESOLVE_VERBOSE_ADVANCED)
+				verbose_reentering_classpath_resolution();
+			return RESOLUTION_IN_PROGRESS;
+		}
+		PerProjectInfo perProjectInfo = getPerProjectInfo();
+
+		// use synchronized block to ensure consistency
+		IBuildpathEntry[] resolvedClasspath;
+		IModelStatus unresolvedEntryStatus;
+		synchronized (perProjectInfo) {
+			resolvedClasspath = perProjectInfo.getResolvedBuildpath();
+			unresolvedEntryStatus = perProjectInfo.unresolvedEntryStatus;
+		}
+
+		if (resolvedClasspath == null
+				|| (unresolvedEntryStatus != null && !unresolvedEntryStatus
+						.isOK())) { // force resolution to ensure initializers
+									// are run again
+			resolveBuildpath(perProjectInfo, false/*
+												 * don't use previous session
+												 * values
+												 */, true/* add classpath change */);
+			synchronized (perProjectInfo) {
+				resolvedClasspath = perProjectInfo.getResolvedBuildpath();
+				unresolvedEntryStatus = perProjectInfo.unresolvedEntryStatus;
+			}
+			if (resolvedClasspath == null) {
+				// another thread reset the resolved classpath, use a temporary
+				// PerProjectInfo
+				PerProjectInfo temporaryInfo = newTemporaryInfo();
+				resolveBuildpath(temporaryInfo, false/*
+													 * don't use previous
+													 * session values
+													 */, true/*
+															 * add classpath
+															 * change
+															 */);
+				resolvedClasspath = temporaryInfo.getResolvedBuildpath();
+				unresolvedEntryStatus = temporaryInfo.unresolvedEntryStatus;
+			}
+		}
+		if (!ignoreUnresolvedEntry && unresolvedEntryStatus != null
+				&& !unresolvedEntryStatus.isOK())
+			throw new ModelException(unresolvedEntryStatus);
+		return resolvedClasspath;
 	}
 
-	public IBuildpathEntry[] getResolvedBuildpath(
-			boolean ignoreUnresolvedEntry, boolean generateMarkerOnError)
-			throws ModelException {
+	private void verbose_reentering_classpath_resolution() {
+		Util.verbose("CPResolution: reentering raw classpath resolution, will use empty classpath instead" + //$NON-NLS-1$
+				"	project: " + getElementName() + '\n' + //$NON-NLS-1$
+				"	invocation stack trace:"); //$NON-NLS-1$
+		new Exception("<Fake exception>").printStackTrace(System.out); //$NON-NLS-1$
+	}
 
-		return getResolvedBuildpath(ignoreUnresolvedEntry,
-				generateMarkerOnError, true // returnResolutionInProgress
-		);
+	/**
+	 * This is a helper method returning the expanded buildpath for the project,
+	 * as a list of buildpath entries, where all buildpath variable entries have
+	 * been resolved and substituted with their final target entries. All
+	 * project exports have been appended to project entries.
+	 * 
+	 * @return IBuildpathEntry[]
+	 * @throws ModelException
+	 */
+	public IBuildpathEntry[] getExpandedBuildpath() throws ModelException {
+		List<IBuildpathEntry> accumulatedEntries = new ArrayList<IBuildpathEntry>();
+		computeExpandedBuildpath(null, new HashSet<String>(5),
+				accumulatedEntries);
+		return accumulatedEntries
+				.toArray(new IBuildpathEntry[accumulatedEntries.size()]);
 	}
 
 	/**
@@ -547,44 +404,10 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 * @return IBuildpathEntry[]
 	 * @throws ModelException
 	 */
+	@Deprecated
 	public IBuildpathEntry[] getExpandedBuildpath(
 			boolean ignoreUnresolvedVariable) throws ModelException {
-
-		return getExpandedBuildpath(ignoreUnresolvedVariable, false/*
-																	 * don't
-																	 * create
-																	 * markers
-																	 */, null);
-	}
-
-	/**
-	 * Internal variant which can create marker on project for invalid entries,
-	 * it will also perform buildpath expansion in presence of project
-	 * prerequisites exporting their entries.
-	 * 
-	 * @param ignoreUnresolvedVariable
-	 *            boolean
-	 * @param generateMarkerOnError
-	 *            boolean
-	 * @param preferredBuildpaths
-	 *            Map
-	 * @param preferredOutputs
-	 *            Map
-	 * @return IBuildpathEntry[]
-	 * @throws ModelException
-	 */
-	public IBuildpathEntry[] getExpandedBuildpath(
-			boolean ignoreUnresolvedVariable, boolean generateMarkerOnError,
-			Map<ScriptProject, IBuildpathEntry[]> preferredBuildpaths)
-			throws ModelException {
-
-		List<IBuildpathEntry> accumulatedEntries = new ArrayList<IBuildpathEntry>();
-		computeExpandedBuildpath(null, ignoreUnresolvedVariable,
-				generateMarkerOnError, new HashSet<String>(5),
-				accumulatedEntries, preferredBuildpaths);
-
-		return accumulatedEntries
-				.toArray(new IBuildpathEntry[accumulatedEntries.size()]);
+		return getExpandedBuildpath();
 	}
 
 	/**
@@ -593,9 +416,7 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 * entries to avoid possible side-effects ever after.
 	 */
 	private void computeExpandedBuildpath(BuildpathEntry referringEntry,
-			boolean ignoreUnresolvedVariable, boolean generateMarkerOnError,
-			HashSet<String> rootIDs, List<IBuildpathEntry> accumulatedEntries,
-			Map<ScriptProject, IBuildpathEntry[]> preferredBuildpaths)
+			HashSet<String> rootIDs, List<IBuildpathEntry> accumulatedEntries)
 			throws ModelException {
 
 		String projectRootId = this.rootID();
@@ -604,21 +425,12 @@ public class ScriptProject extends Openable implements IScriptProject,
 		}
 		rootIDs.add(projectRootId);
 
-		IBuildpathEntry[] preferredBuildpath = preferredBuildpaths != null ? (IBuildpathEntry[]) preferredBuildpaths
-				.get(this) : null;
-		IBuildpathEntry[] immediateBuildpath = preferredBuildpath != null ? getResolvedBuildpath(
-				preferredBuildpath, ignoreUnresolvedVariable,
-				generateMarkerOnError, null /* no reverse map */)
-				: getResolvedBuildpath(ignoreUnresolvedVariable,
-						generateMarkerOnError, false/*
-													 * don't
-													 * returnResolutionInProgress
-													 */);
+		IBuildpathEntry[] resolvedBuildpath = getResolvedBuildpath();
 
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		boolean isInitialProject = referringEntry == null;
-		for (int i = 0, length = immediateBuildpath.length; i < length; i++) {
-			BuildpathEntry entry = (BuildpathEntry) immediateBuildpath[i];
+		for (int i = 0, length = resolvedBuildpath.length; i < length; i++) {
+			BuildpathEntry entry = (BuildpathEntry) resolvedBuildpath[i];
 			if (isInitialProject || entry.isExported()) {
 				String rootID = entry.rootID();
 				if (rootIDs.contains(rootID)) {
@@ -646,11 +458,7 @@ public class ScriptProject extends Openable implements IScriptProject,
 							ScriptProject scriptProject = (ScriptProject) DLTKCore
 									.create(projRsc);
 							scriptProject.computeExpandedBuildpath(
-									combinedEntry, ignoreUnresolvedVariable,
-									false /*
-										 * no marker when recursing in prereq
-										 */, rootIDs, accumulatedEntries,
-									preferredBuildpaths);
+									combinedEntry, rootIDs, accumulatedEntries);
 						}
 					}
 				} else {
@@ -885,13 +693,8 @@ public class ScriptProject extends Openable implements IScriptProject,
 						// root = new ArchiveProjectFragment(entryPath, this);
 						root = getProjectFragment0(entryPath);
 					} else {
-						if (resolvedEntry.isContainerEntry()) {
-							root = new ExternalProjectFragment(entryPath, this,
-									true, true);
-						} else {
-							root = new ExternalProjectFragment(entryPath, this,
-									true, true);
-						}
+						root = new ExternalProjectFragment(entryPath, this,
+								true, true);
 					}
 				}
 			} else {
@@ -960,11 +763,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 	public String[] projectPrerequisites(IBuildpathEntry[] entries)
 			throws ModelException {
 		ArrayList<String> prerequisites = new ArrayList<String>();
-		// need resolution
-		entries = getResolvedBuildpath(entries, true, false, null/*
-																 * no reverse
-																 * map
-																 */);
 		for (int i = 0, length = entries.length; i < length; i++) {
 			IBuildpathEntry entry = entries[i];
 			if (entry.getEntryKind() == IBuildpathEntry.BPE_PROJECT) {
@@ -987,6 +785,57 @@ public class ScriptProject extends Openable implements IScriptProject,
 	protected IBuildpathEntry[] defaultBuildpath() {
 		return new IBuildpathEntry[] { DLTKCore.newSourceEntry(this.project
 				.getFullPath()) };
+	}
+
+	/*
+	 * Resolve the given perProjectInfo's raw buildpath and store the resolved
+	 * buildpath in the perProjectInfo.
+	 */
+	public void resolveBuildpath(PerProjectInfo perProjectInfo,
+			boolean usePreviousSession, boolean addBuildpathChange)
+			throws ModelException {
+		if (BP_RESOLUTION_BP_LISTENERS != null)
+			breakpoint(1, this);
+		ModelManager manager = ModelManager.getModelManager();
+		boolean isBuildpathBeingResolved = manager
+				.isBuildpathBeingResolved(this);
+		try {
+			if (!isBuildpathBeingResolved) {
+				manager.setBuildpathBeingResolved(this, true);
+			}
+
+			// get raw info inside a synchronized block to ensure that it is
+			// consistent
+			IBuildpathEntry[] classpath;
+			int timeStamp;
+			synchronized (perProjectInfo) {
+				classpath = perProjectInfo.rawBuildpath;
+				if (classpath == null)
+					classpath = perProjectInfo.readAndCacheBuildpath(this);
+				timeStamp = perProjectInfo.rawTimeStamp;
+			}
+
+			ResolvedBuildpath result = resolveBuildpath(classpath,
+					usePreviousSession, true/*
+											 * resolve chained libraries
+											 */);
+
+			if (BP_RESOLUTION_BP_LISTENERS != null)
+				breakpoint(2, this);
+
+			// store resolved info along with the raw info to ensure consistency
+			perProjectInfo.setResolvedBuildpath(result.resolvedClasspath,
+					result.rawReverseMap, result.rootPathToResolvedEntries,
+					usePreviousSession ? PerProjectInfo.NEED_RESOLUTION
+							: result.unresolvedEntryStatus, timeStamp,
+					addBuildpathChange);
+		} finally {
+			if (!isBuildpathBeingResolved) {
+				manager.setBuildpathBeingResolved(this, false);
+			}
+			if (BP_RESOLUTION_BP_LISTENERS != null)
+				breakpoint(3, this);
+		}
 	}
 
 	/**
@@ -1056,12 +905,308 @@ public class ScriptProject extends Openable implements IScriptProject,
 		}
 	}
 
-	public void resetResolvedBuildpath() {
+	public BuildpathChange resetResolvedBuildpath() {
 		try {
-			getPerProjectInfo().resetResolvedBuildpath();
+			return getPerProjectInfo().resetResolvedBuildpath();
 		} catch (ModelException e) {
 			// project doesn't exist
+			return null;
 		}
+	}
+
+	/*
+	 * Resolve the given raw classpath.
+	 */
+	public IBuildpathEntry[] resolveBuildpath(IBuildpathEntry[] rawClasspath)
+			throws ModelException {
+		return resolveBuildpath(rawClasspath, false/*
+													 * don't use previous
+													 * session
+													 */, true/*
+															 * resolve chained
+															 * libraries
+															 */).resolvedClasspath;
+	}
+
+	static class ResolvedBuildpath {
+		IBuildpathEntry[] resolvedClasspath;
+		IModelStatus unresolvedEntryStatus = ModelStatus.VERIFIED_OK;
+		HashMap<IPath, IBuildpathEntry> rawReverseMap = new HashMap<IPath, IBuildpathEntry>();
+		Map<IPath, IBuildpathEntry> rootPathToResolvedEntries = new HashMap<IPath, IBuildpathEntry>();
+	}
+
+	public ResolvedBuildpath resolveBuildpath(IBuildpathEntry[] rawClasspath,
+			boolean usePreviousSession, boolean resolveChainedLibraries)
+			throws ModelException {
+		ModelManager manager = ModelManager.getModelManager();
+		ExternalFoldersManager externalFoldersManager = ModelManager
+				.getExternalManager();
+		ResolvedBuildpath result = new ResolvedBuildpath();
+		Map knownDrives = new HashMap();
+
+		Map referencedEntriesMap = new HashMap();
+		List<IPath> rawLibrariesPath = new ArrayList<IPath>();
+		LinkedHashSet resolvedEntries = new LinkedHashSet();
+
+		if (resolveChainedLibraries) {
+			for (int index = 0; index < rawClasspath.length; index++) {
+				IBuildpathEntry currentEntry = rawClasspath[index];
+				if (currentEntry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY) {
+					rawLibrariesPath
+							.add(BuildpathEntry.resolveDotDot(getProject()
+									.getLocation(), currentEntry.getPath()));
+				}
+			}
+		}
+
+		int length = rawClasspath.length;
+		for (int i = 0; i < length; i++) {
+
+			IBuildpathEntry rawEntry = rawClasspath[i];
+			IBuildpathEntry resolvedEntry = rawEntry;
+
+			switch (rawEntry.getEntryKind()) {
+
+			case IBuildpathEntry.BPE_VARIABLE:
+				try {
+					resolvedEntry = DLTKCore
+							.getResolvedBuildpathEntry(rawEntry /* usePreviousSession */);
+				} catch (/* ClasspathEntry. */AssertionFailedException e) {
+					// Catch the assertion failure and set status instead
+					// see bug
+					// https://bugs.eclipse.org/bugs/show_bug.cgi?id=55992
+					result.unresolvedEntryStatus = new ModelStatus(
+							IModelStatusConstants.INVALID_PATH, e.getMessage());
+					break;
+				}
+				if (resolvedEntry == null) {
+					result.unresolvedEntryStatus = new ModelStatus(
+							IModelStatusConstants.BP_VARIABLE_PATH_UNBOUND,
+							this, rawEntry.getPath());
+				} else {
+					// If the entry is already present in the rawReversetMap, it
+					// means the entry and the chained libraries
+					// have already been processed. So, skip it.
+					if (resolveChainedLibraries
+							&& resolvedEntry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY
+							&& result.rawReverseMap
+									.get(resolvedEntry.getPath()) == null) {
+						// resolve Class-Path: in manifest
+						BuildpathEntry[] extraEntries = ((BuildpathEntry) resolvedEntry)
+								.resolvedChainedLibraries();
+						for (int j = 0, length2 = extraEntries.length; j < length2; j++) {
+							if (!rawLibrariesPath.contains(extraEntries[j]
+									.getPath())) {
+								// https://bugs.eclipse.org/bugs/show_bug.cgi?id=305037
+								// referenced entries for variable entries could
+								// also be persisted with extra attributes, so
+								// addAsChainedEntry = true
+								addToResult(rawEntry, extraEntries[j], result,
+										resolvedEntries,
+										externalFoldersManager,
+										referencedEntriesMap, true, knownDrives);
+							}
+						}
+					}
+					addToResult(rawEntry, resolvedEntry, result,
+							resolvedEntries, externalFoldersManager,
+							referencedEntriesMap, false, knownDrives);
+				}
+				break;
+
+			case IBuildpathEntry.BPE_CONTAINER:
+				IBuildpathContainer container = usePreviousSession ? manager
+						.getPreviousSessionContainer(rawEntry.getPath(), this)
+						: DLTKCore.getBuildpathContainer(rawEntry.getPath(),
+								this);
+				if (container == null) {
+					result.unresolvedEntryStatus = new ModelStatus(
+							IModelStatusConstants.BP_CONTAINER_PATH_UNBOUND,
+							this, rawEntry.getPath());
+					break;
+				}
+
+				IBuildpathEntry[] containerEntries = container
+						.getBuildpathEntries();
+				if (containerEntries == null) {
+					if (ModelManager.BP_RESOLVE_VERBOSE
+					/* || ModelManager.BP_RESOLVE_VERBOSE_FAILURE */) {
+						ModelManager.getModelManager()
+								.verbose_missbehaving_container_null_entries(
+										this, rawEntry.getPath());
+					}
+					break;
+				}
+
+				// container was bound
+				for (int j = 0, containerLength = containerEntries.length; j < containerLength; j++) {
+					BuildpathEntry cEntry = (BuildpathEntry) containerEntries[j];
+					if (cEntry == null) {
+						if (ModelManager.BP_RESOLVE_VERBOSE
+						/* || ModelManager.CP_RESOLVE_VERBOSE_FAILURE */) {
+							ModelManager.getModelManager()
+									.verbose_missbehaving_container(this,
+											rawEntry.getPath(),
+											containerEntries);
+						}
+						break;
+					}
+					// if container is exported or restricted, then its nested
+					// entries must in turn be exported (21749) and/or propagate
+					// restrictions
+					cEntry = cEntry.combineWith((BuildpathEntry) rawEntry);
+
+					if (cEntry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY) {
+						// resolve ".." in library path
+						cEntry = cEntry.resolvedDotDot(getProject()
+								.getLocation());
+						// https://bugs.eclipse.org/bugs/show_bug.cgi?id=313965
+						// Do not resolve if the system attribute is set to
+						// false
+						if (resolveChainedLibraries
+								&& ModelManager.getModelManager().resolveReferencedLibrariesForContainers
+								&& result.rawReverseMap.get(cEntry.getPath()) == null) {
+							// resolve Class-Path: in manifest
+							BuildpathEntry[] extraEntries = cEntry
+									.resolvedChainedLibraries();
+							for (int k = 0, length2 = extraEntries.length; k < length2; k++) {
+								if (!rawLibrariesPath.contains(extraEntries[k]
+										.getPath())) {
+									addToResult(rawEntry, extraEntries[k],
+											result, resolvedEntries,
+											externalFoldersManager,
+											referencedEntriesMap, false,
+											knownDrives);
+								}
+							}
+						}
+					}
+					addToResult(rawEntry, cEntry, result, resolvedEntries,
+							externalFoldersManager, referencedEntriesMap,
+							false, knownDrives);
+				}
+				break;
+
+			case IBuildpathEntry.BPE_LIBRARY:
+				// resolve ".." in library path
+				resolvedEntry = ((BuildpathEntry) rawEntry)
+						.resolvedDotDot(getProject().getLocation());
+
+				if (resolveChainedLibraries
+						&& result.rawReverseMap.get(resolvedEntry.getPath()) == null) {
+					// resolve Class-Path: in manifest
+					BuildpathEntry[] extraEntries = ((BuildpathEntry) resolvedEntry)
+							.resolvedChainedLibraries();
+					for (int k = 0, length2 = extraEntries.length; k < length2; k++) {
+						if (!rawLibrariesPath.contains(extraEntries[k]
+								.getPath())) {
+							addToResult(rawEntry, extraEntries[k], result,
+									resolvedEntries, externalFoldersManager,
+									referencedEntriesMap, true, knownDrives);
+						}
+					}
+				}
+
+				addToResult(rawEntry, resolvedEntry, result, resolvedEntries,
+						externalFoldersManager, referencedEntriesMap, false,
+						knownDrives);
+				break;
+			default:
+				addToResult(rawEntry, resolvedEntry, result, resolvedEntries,
+						externalFoldersManager, referencedEntriesMap, false,
+						knownDrives);
+				break;
+			}
+		}
+		result.resolvedClasspath = new IBuildpathEntry[resolvedEntries.size()];
+		resolvedEntries.toArray(result.resolvedClasspath);
+		return result;
+	}
+
+	private void addToResult(IBuildpathEntry rawEntry,
+			IBuildpathEntry resolvedEntry, ResolvedBuildpath result,
+			LinkedHashSet resolvedEntries,
+			ExternalFoldersManager externalFoldersManager,
+			Map oldChainedEntriesMap, boolean addAsChainedEntry, Map knownDrives) {
+
+		IPath resolvedPath;
+		// If it's already been resolved, do not add to resolvedEntries
+		if (result.rawReverseMap.get(resolvedPath = resolvedEntry.getPath()) == null) {
+			result.rawReverseMap.put(resolvedPath, rawEntry);
+			result.rootPathToResolvedEntries.put(resolvedPath, resolvedEntry);
+			resolvedEntries.add(resolvedEntry);
+			if (addAsChainedEntry) {
+				IBuildpathEntry chainedEntry = null;
+				chainedEntry = (BuildpathEntry) oldChainedEntriesMap
+						.get(resolvedPath);
+				if (chainedEntry != null) {
+					// This is required to keep the attributes if any added by
+					// the user in
+					// the previous session such as source attachment path etc.
+					copyFromOldChainedEntry((BuildpathEntry) resolvedEntry,
+							(BuildpathEntry) chainedEntry);
+				}
+			}
+		}
+		if (resolvedEntry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY
+				&& ExternalFoldersManager.isExternalFolderPath(resolvedPath)) {
+			externalFoldersManager
+					.addFolder(resolvedPath, true/* scheduleForCreation */); // no-op
+																			// if
+																			// not
+																			// an
+																			// external
+																			// folder
+																			// or
+																			// if
+																			// already
+																			// registered
+		}
+		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=336046
+		// The source attachment path could be external too and in which case,
+		// must be added.
+		IPath sourcePath = resolvedEntry.getSourceAttachmentPath();
+		if (sourcePath != null && driveExists(sourcePath, knownDrives)
+				&& ExternalFoldersManager.isExternalFolderPath(sourcePath)) {
+			externalFoldersManager.addFolder(sourcePath, true);
+		}
+	}
+
+	private void copyFromOldChainedEntry(BuildpathEntry resolvedEntry,
+			BuildpathEntry chainedEntry) {
+		IPath path = chainedEntry.getSourceAttachmentPath();
+		if (path != null) {
+			resolvedEntry.sourceAttachmentPath = path;
+		}
+		path = chainedEntry.getSourceAttachmentRootPath();
+		if (path != null) {
+			resolvedEntry.sourceAttachmentRootPath = path;
+		}
+		IBuildpathAttribute[] attributes = chainedEntry.getExtraAttributes();
+		if (attributes != null) {
+			resolvedEntry.extraAttributes = attributes;
+		}
+	}
+
+	/*
+	 * File#exists() takes lot of time for an unmapped drive. Hence, cache the
+	 * info. https://bugs.eclipse.org/bugs/show_bug.cgi?id=338649
+	 */
+	private boolean driveExists(IPath sourcePath, Map knownDrives) {
+		String drive = sourcePath.getDevice();
+		if (drive == null)
+			return true;
+		Boolean good = (Boolean) knownDrives.get(drive);
+		if (good == null) {
+			if (new File(drive).exists()) {
+				knownDrives.put(drive, Boolean.TRUE);
+				return true;
+			} else {
+				knownDrives.put(drive, Boolean.FALSE);
+				return false;
+			}
+		}
+		return good.booleanValue();
 	}
 
 	/**
@@ -1120,82 +1265,17 @@ public class ScriptProject extends Openable implements IScriptProject,
 	}
 
 	public IBuildpathEntry[] getRawBuildpath() throws ModelException {
-		// Do not create marker but log problems while getting raw buildpath
-		return getRawBuildpath(false, true);
-	}
+		PerProjectInfo perProjectInfo = getPerProjectInfo();
+		IBuildpathEntry[] classpath = perProjectInfo.rawBuildpath;
+		if (classpath != null)
+			return classpath;
 
-	/*
-	 * Internal variant allowing to parameterize problem creation/logging
-	 */
-	public IBuildpathEntry[] getRawBuildpath(boolean createMarkers,
-			boolean logProblems) throws ModelException {
-		ModelManager.PerProjectInfo perProjectInfo = null;
-		IBuildpathEntry[] buildpath;
-		if (createMarkers) {
-			flushBuildpathProblemMarkers(false/* cycle */, true/* format */);
-			buildpath = readBuildpathFile(createMarkers, logProblems);
-		} else {
-			perProjectInfo = getPerProjectInfo();
-			buildpath = perProjectInfo.rawBuildpath;
-			if (buildpath != null)
-				return buildpath;
-			buildpath = readBuildpathFile(createMarkers, logProblems);
-		}
-		if (buildpath == null) {
+		classpath = perProjectInfo.readAndCacheBuildpath(this);
+
+		if (classpath == ScriptProject.INVALID_BUILDPATH)
 			return defaultBuildpath();
-		}
-		if (!createMarkers) {
-			perProjectInfo.rawBuildpath = buildpath;
-		}
-		return buildpath;
-	}
 
-	/**
-	 * Reads the .buildpath file from disk and returns the list of entries it
-	 * contains (including output location entry) Returns null if .classfile is
-	 * not present. Returns INVALID_CLASSPATH if it has a format problem.
-	 */
-	protected IBuildpathEntry[] readBuildpathFile(boolean createMarker,
-			boolean logProblems) {
-		return readBuildpathFile(createMarker, logProblems, null/*
-																 * not
-																 * interested in
-																 * unknown
-																 * elements
-																 */);
-	}
-
-	protected IBuildpathEntry[] readBuildpathFile(boolean createMarker,
-			boolean logProblems, Map unknownElements) {
-		try {
-			String xmlBuildpath = getSharedProperty(BUILDPATH_FILENAME);
-			if (xmlBuildpath == null) {
-				if (createMarker && this.project.isAccessible()) {
-					createBuildpathProblemMarker(new ModelStatus(
-							IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-							Messages.bind(
-									Messages.buildpath_cannotReadBuildpathFile,
-									this.getElementName())));
-				}
-				return null;
-			}
-			return decodeBuildpath(xmlBuildpath, createMarker, logProblems,
-					unknownElements);
-		} catch (CoreException e) {
-			// file does not exist (or not accessible)
-			if (createMarker && this.project.isAccessible()) {
-				createBuildpathProblemMarker(new ModelStatus(
-						IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-						Messages.bind(
-								Messages.buildpath_cannotReadBuildpathFile,
-								this.getElementName())));
-			}
-			if (logProblems) {
-				Util.log(e, "Exception while retrieving " + this.getPath() //$NON-NLS-1$
-						+ "/.buildpath, will revert to default buildpath"); //$NON-NLS-1$
-			}
-		}
-		return null;
+		return classpath;
 	}
 
 	/**
@@ -1290,93 +1370,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * Reads and decode an XML buildpath string
-	 */
-	protected IBuildpathEntry[] decodeBuildpath(String xmlBuildpath,
-			boolean createMarker, boolean logProblems) {
-		return decodeBuildpath(xmlBuildpath, createMarker, logProblems, null/*
-																			 * not
-																			 * interested
-																			 * in
-																			 * unknown
-																			 * elements
-																			 */);
-	}
-
-	/**
-	 * Reads and decode an XML buildpath string
-	 */
-	protected IBuildpathEntry[] decodeBuildpath(String xmlBuildpath,
-			boolean createMarker, boolean logProblems, Map unknownElements) {
-		ArrayList<IBuildpathEntry> paths = new ArrayList<IBuildpathEntry>();
-		try {
-			if (xmlBuildpath == null)
-				return null;
-			StringReader reader = new StringReader(xmlBuildpath);
-			Element cpElement;
-			try {
-				DocumentBuilder parser = DocumentBuilderFactory.newInstance()
-						.newDocumentBuilder();
-				cpElement = parser.parse(new InputSource(reader))
-						.getDocumentElement();
-			} catch (SAXException e) {
-				throw new IOException(Messages.file_badFormat);
-			} catch (ParserConfigurationException e) {
-				throw new IOException(Messages.file_badFormat);
-			} finally {
-				reader.close();
-			}
-			if (!cpElement.getNodeName().equalsIgnoreCase("buildpath")) { //$NON-NLS-1$
-				throw new IOException(Messages.file_badFormat);
-			}
-			NodeList list = cpElement.getElementsByTagName("buildpathentry"); //$NON-NLS-1$
-			int length = list.getLength();
-			for (int i = 0; i < length; ++i) {
-				Node node = list.item(i);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-					IBuildpathEntry entry = BuildpathEntry.elementDecode(
-							(Element) node, this, unknownElements);
-					if (entry != null)
-						paths.add(entry);
-				}
-			}
-		} catch (IOException e) {
-			// bad format
-			if (createMarker && this.project.isAccessible()) {
-				this.createBuildpathProblemMarker(new ModelStatus(
-						IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-						Messages.bind(
-								Messages.buildpath_xmlFormatError,
-								new String[] { this.getElementName(),
-										e.getMessage() })));
-			}
-			if (logProblems) {
-				Util.log(e, "Exception while retrieving " + this.getPath() //$NON-NLS-1$
-						+ "/.buildpath, will mark buildpath as invalid"); //$NON-NLS-1$
-			}
-			return INVALID_BUILDPATH;
-		} catch (AssertionFailedException e) {
-			// failed creating CP entries from file
-			if (createMarker && this.project.isAccessible()) {
-				this.createBuildpathProblemMarker(new ModelStatus(
-						IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-						Messages.bind(
-								Messages.buildpath_illegalEntryInBuildpathFile,
-								new String[] { this.getElementName(),
-										e.getMessage() })));
-			}
-			if (logProblems) {
-				Util.log(e, "Exception while retrieving " + this.getPath() //$NON-NLS-1$
-						+ "/.buildpath, will mark buildpath as invalid"); //$NON-NLS-1$
-			}
-			return INVALID_BUILDPATH;
-		}
-		IBuildpathEntry[] entries = new IBuildpathEntry[paths.size()];
-		paths.toArray(entries);
-		return entries;
 	}
 
 	/*
@@ -1548,22 +1541,15 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 * @return boolean Return whether the .buildpath file was modified.
 	 * @throws ModelException
 	 */
-	public boolean saveBuildpath(IBuildpathEntry[] newBuildpath)
+	public boolean writeFileEntries(IBuildpathEntry[] newBuildpath)
 			throws ModelException {
 		if (!this.project.isAccessible())
 			return false;
 		Map unknownElements = new HashMap();
-		IBuildpathEntry[] fileEntries = readBuildpathFile(false /*
-																 * don't create
-																 * markers
-																 */, false/*
-																		 * don't
-																		 * log
-																		 * problems
-																		 */,
-				unknownElements);
-		if (fileEntries != null
-				&& isBuildpathEqualsTo(newBuildpath, fileEntries)) {
+		IBuildpathEntry[] fileEntries = readFileEntries(unknownElements);
+		if (fileEntries != INVALID_BUILDPATH
+				&& areBuildpathsEqual(newBuildpath, fileEntries)
+				&& this.project.getFile(BUILDPATH_FILENAME).exists()) {
 			// no need to save it, it is the same
 			return false;
 		}
@@ -1574,9 +1560,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 			return true;
 		} catch (CoreException e) {
 			throw new ModelException(e);
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-			throw e;
 		}
 	}
 
@@ -1626,34 +1609,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 		} else {
 			rscFile.create(inputStream, IResource.FORCE, null);
 		}
-	}
-
-	/**
-	 * Compare current buildpath with given one to see if any different. Note
-	 * that the argument buildpath contains its binary output.
-	 * 
-	 * @param newBuildpath
-	 *            IBuildpathEntry[]
-	 * @param newOutputLocation
-	 *            IPath
-	 * @param otherBuildpathWithOutput
-	 *            IBuildpathEntry[]
-	 * @return boolean
-	 */
-	public boolean isBuildpathEqualsTo(IBuildpathEntry[] newBuildpath,
-			IBuildpathEntry[] otherBuildpath) {
-		if (otherBuildpath == null || otherBuildpath.length == 0)
-			return false;
-		int length = otherBuildpath.length;
-		if (length != newBuildpath.length)
-			// output is amongst file entries (last one)
-			return false;
-		// compare buildpath entries
-		for (int i = 0; i < length; i++) {
-			if (!otherBuildpath[i].equals(newBuildpath[i]))
-				return false;
-		}
-		return true;
 	}
 
 	/**
@@ -1734,6 +1689,17 @@ public class ScriptProject extends Openable implements IScriptProject,
 		return this.project.hashCode();
 	}
 
+	private boolean hasUTF8BOM(byte[] bytes) {
+		if (bytes.length > IContentDescription.BOM_UTF_8.length) {
+			for (int i = 0, length = IContentDescription.BOM_UTF_8.length; i < length; i++) {
+				if (IContentDescription.BOM_UTF_8[i] != bytes[i])
+					return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	/*
 	 * Returns the cycle marker associated with this project or null if none.
 	 */
@@ -1756,68 +1722,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 			// could not get markers: return null
 		}
 		return null;
-	}
-
-	/**
-	 * Update cycle markers for all projects
-	 * 
-	 * @param preferredBuildpaths
-	 *            Map
-	 * @throws ModelException
-	 */
-	public static void updateAllCycleMarkers(
-			Map<ScriptProject, IBuildpathEntry[]> preferredBuildpaths)
-			throws ModelException {
-		// long start = System.currentTimeMillis();
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		IProject[] rscProjects = workspaceRoot.getProjects();
-		int length = rscProjects.length;
-		ScriptProject[] projects = new ScriptProject[length];
-		HashSet<IPath> cycleParticipants = new HashSet<IPath>();
-		HashSet<IPath> traversed = new HashSet<IPath>();
-		// compute cycle participants
-		ArrayList<IPath> prereqChain = new ArrayList<IPath>();
-		for (int i = 0; i < length; i++) {
-			ScriptProject project = (projects[i] = (ScriptProject) DLTKCore
-					.create(rscProjects[i]));
-			if (!traversed.contains(project.getPath())) {
-				prereqChain.clear();
-				project.updateCycleParticipants(prereqChain, cycleParticipants,
-						workspaceRoot, traversed, preferredBuildpaths);
-			}
-		}
-		for (int i = 0; i < length; i++) {
-			ScriptProject project = projects[i];
-			if (project != null) {
-				if (cycleParticipants.contains(project.getPath())) {
-					IMarker cycleMarker = project.getCycleMarker();
-					String circularCPOption = project.getOption(
-							DLTKCore.CORE_CIRCULAR_BUILDPATH, true);
-					int circularCPSeverity = DLTKCore.ERROR
-							.equals(circularCPOption) ? IMarker.SEVERITY_ERROR
-							: IMarker.SEVERITY_WARNING;
-					if (cycleMarker != null) {
-						// update existing cycle marker if needed
-						try {
-							int existingSeverity = ((Integer) cycleMarker
-									.getAttribute(IMarker.SEVERITY)).intValue();
-							if (existingSeverity != circularCPSeverity) {
-								cycleMarker.setAttribute(IMarker.SEVERITY,
-										circularCPSeverity);
-							}
-						} catch (CoreException e) {
-							throw new ModelException(e);
-						}
-					} else {
-						// create new marker
-						project.createBuildpathProblemMarker(new ModelStatus(
-								IModelStatusConstants.BUILDPATH_CYCLE, project));
-					}
-				} else {
-					project.flushBuildpathProblemMarkers(true, false);
-				}
-			}
-		}
 	}
 
 	public String getOption(String optionName, boolean inheritCoreOptions) {
@@ -1949,45 +1853,29 @@ public class ScriptProject extends Openable implements IScriptProject,
 	}
 
 	/**
-	 * @see IScriptProject#setRawBuildpath(IBuildpathEntry[],IPath,boolean,IProgressMonitor)
-	 */
-	public void setRawBuildpath(IBuildpathEntry[] entries,
-			boolean canModifyResources, IProgressMonitor monitor)
-			throws ModelException {
-
-		_setRawBuildpath(
-				entries,
-				monitor,
-				canModifyResources); // save only if modifying resources is
-		// allowed
-	}
-
-	/**
-	 * @see IScriptProject#setRawClasspath(IClasspathEntry[],IPath,IProgressMonitor)
+	 * @see IScriptProject#setRawClasspath(IBuildpathEntry[],IPath,IProgressMonitor)
 	 */
 	public void setRawBuildpath(IBuildpathEntry[] entries,
 			IProgressMonitor monitor) throws ModelException {
 
-		_setRawBuildpath(entries, monitor, true); // need to save
+		setRawBuildpath(entries, true, monitor); // need to save
 	}
 
-	public void _setRawBuildpath(IBuildpathEntry[] newEntries,
-			IProgressMonitor monitor, boolean canChangeResource)
+	protected void setRawBuildpath(IBuildpathEntry[] newRawBuildpath,
+			boolean canModifyResources, IProgressMonitor monitor)
 			throws ModelException {
 
-		ModelManager manager = ModelManager.getModelManager();
 		try {
-			IBuildpathEntry[] newRawPath = newEntries;
-			if (newRawPath == null) { // are we already with the default
+			if (newRawBuildpath == null) { // are we already with the default
 				// buildpath
-				newRawPath = defaultBuildpath();
+				newRawBuildpath = defaultBuildpath();
 			}
 			SetBuildpathOperation op = new SetBuildpathOperation(this,
-					newRawPath, canChangeResource);
+					newRawBuildpath, canModifyResources);
 			op.runOperation(monitor);
 
 		} catch (ModelException e) {
-			manager.getDeltaProcessor().flush();
+			ModelManager.getModelManager().getDeltaProcessor().flush();
 			throw e;
 		}
 	}
@@ -2035,42 +1923,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 		};
 		eclipsePreferences.addPreferenceChangeListener(preferenceListener);
 		return eclipsePreferences;
-	}
-
-	/*
-	 * Update .buildpath format markers.
-	 */
-	public void updateBuildpathMarkers(
-			Map<ScriptProject, IBuildpathEntry[]> preferredBuildpaths) {
-
-		this.flushBuildpathProblemMarkers(false/* cycle */, true/* format */);
-		this.flushBuildpathProblemMarkers(false/* cycle */, false/* format */);
-
-		IBuildpathEntry[] buildpath = this.readBuildpathFile(true/* marker */,
-				false/* log */);
-		// remember invalid path so as to avoid reupdating it again later on
-		if (preferredBuildpaths != null) {
-			preferredBuildpaths.put(this, buildpath == null ? INVALID_BUILDPATH
-					: buildpath);
-		}
-
-		// force buildpath marker refresh
-		if (buildpath != null) {
-			for (int i = 0; i < buildpath.length; i++) {
-				IModelStatus status = BuildpathEntry.validateBuildpathEntry(
-						this, buildpath[i], true /* recurse in container */);
-				if (!status.isOK()) {
-					if (status.getCode() == IModelStatusConstants.INVALID_BUILDPATH
-							&& ((BuildpathEntry) buildpath[i]).isOptional())
-						continue; // ignore this entry
-					this.createBuildpathProblemMarker(status);
-				}
-			}
-			IModelStatus status = BuildpathEntry.validateBuildpath(this,
-					buildpath);
-			if (!status.isOK())
-				this.createBuildpathProblemMarker(status);
-		}
 	}
 
 	/**
@@ -2222,20 +2074,10 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 */
 	public IBuildpathEntry[] readFileEntriesWithException(Map unknownElements)
 			throws CoreException, IOException, AssertionFailedException {
-		String xmlBuildpath;
 		IFile rscFile = this.project.getFile(BUILDPATH_FILENAME);
+		byte[] bytes;
 		if (rscFile.exists()) {
-			byte[] bytes = Util.getResourceContentsAsByteArray(rscFile);
-			try {
-				xmlBuildpath = new String(bytes, Util.UTF_8); // .buildpath
-				// always
-				// encoded with
-				// UTF-8
-			} catch (UnsupportedEncodingException e) {
-				Util.log(e, "Could not read .buildpath with UTF-8 encoding"); //$NON-NLS-1$
-				// fallback to default
-				xmlBuildpath = new String(bytes);
-			}
+			bytes = Util.getResourceContentsAsByteArray(rscFile);
 		} else {
 			// when a project is imported, we get a first delta for the addition
 			// of the .project, but the .buildpath is not accessible
@@ -2251,7 +2093,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 														 */);
 			if (file == null)
 				throw new IOException("Unable to fetch file from " + location); //$NON-NLS-1$
-			byte[] bytes;
 			try {
 				bytes = org.eclipse.dltk.compiler.util.Util
 						.getFileByteContent(file);
@@ -2260,29 +2101,43 @@ public class ScriptProject extends Openable implements IScriptProject,
 					return defaultBuildpath();
 				throw e;
 			}
-			try {
-				xmlBuildpath = new String(bytes, Util.UTF_8); // .buildpath
-				// always
-				// encoded with
-				// UTF-8
-			} catch (UnsupportedEncodingException e) {
-				Util.log(e, "Could not read .buildpath with UTF-8 encoding"); //$NON-NLS-1$
-				// fallback to default
-				xmlBuildpath = new String(bytes);
-			}
+		}
+		if (hasUTF8BOM(bytes)) { // see https://bugs.eclipse.org/bugs/show_bug.cgi?id=240034
+			int length = bytes.length-IContentDescription.BOM_UTF_8.length;
+			System.arraycopy(bytes, IContentDescription.BOM_UTF_8.length, bytes = new byte[length], 0, length);
+		}
+		String xmlBuildpath;
+		try {
+			xmlBuildpath = new String(bytes, Util.UTF_8); // .buildpath
+			// always
+			// encoded with
+			// UTF-8
+		} catch (UnsupportedEncodingException e) {
+			Util.log(e, "Could not read .buildpath with UTF-8 encoding"); //$NON-NLS-1$
+			// fallback to default
+			xmlBuildpath = new String(bytes);
 		}
 		return decodeBuildpath(xmlBuildpath, unknownElements);
 	}
 
-	public static boolean areBuildpathsEqual(IBuildpathEntry[] firstBuildpath,
-			IBuildpathEntry[] secondBuildpath) {
-		if (secondBuildpath == null || secondBuildpath.length == 0)
+	/**
+	 * Compare current buildpath with given one to see if any different.
+	 * 
+	 * @param newBuildpath
+	 *            IBuildpathEntry[]
+	 * @param otherBuildpath
+	 *            IBuildpathEntry[]
+	 * @return boolean
+	 */
+	public static boolean areBuildpathsEqual(IBuildpathEntry[] newBuildpath,
+			IBuildpathEntry[] otherBuildpath) {
+		if (otherBuildpath == null /* || otherBuildpath.length == 0 */)
 			return false;
-		int length = firstBuildpath.length;
-		if (length != secondBuildpath.length)
+		int length = newBuildpath.length;
+		if (length != otherBuildpath.length)
 			return false;
 		for (int i = 0; i < length; i++) {
-			if (!firstBuildpath[i].equals(secondBuildpath[i]))
+			if (!newBuildpath[i].equals(otherBuildpath[i]))
 				return false;
 		}
 		return true;
@@ -2513,13 +2368,8 @@ public class ScriptProject extends Openable implements IScriptProject,
 				if (buildpath[i].equals(entry)) { // entry may need to be
 					// resolved
 					return computeProjectFragments(
-							getResolvedBuildpath(
-									new IBuildpathEntry[] { entry }, true,
-									false, null/* no reverse map */), false, // don
-							// 't
-							// retrieve
-							// exported
-							// roots
+							resolveBuildpath(new IBuildpathEntry[] { entry }),
+							false, // don't retrieve exported roots
 							null); /* no reverse map */
 				}
 			}
@@ -2937,6 +2787,19 @@ public class ScriptProject extends Openable implements IScriptProject,
 		return new SearchableEnvironment(this, owner);
 	}
 
+	/*
+	 * Returns a PerProjectInfo that doesn't register buildpath change and that
+	 * should be used as a temporary info.
+	 */
+	public PerProjectInfo newTemporaryInfo() {
+		return new PerProjectInfo(this.project.getProject()) {
+			@Override
+			protected BuildpathChange addBuildpathChange() {
+				return null;
+			}
+		};
+	}
+
 	/**
 	 * @see IJavaProject
 	 */
@@ -3007,13 +2870,20 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 */
 	public IBuildpathEntry getBuildpathEntryFor(IPath path)
 			throws ModelException {
-		IBuildpathEntry[] entries = getExpandedBuildpath(true);
-		for (int i = 0; i < entries.length; i++) {
-			if (entries[i].getPath().equals(path)) {
-				return entries[i];
-			}
+		getResolvedBuildpath(); // force resolution
+		PerProjectInfo perProjectInfo = getPerProjectInfo();
+		if (perProjectInfo == null)
+			return null;
+		Map<IPath, IBuildpathEntry> rootPathToResolvedEntries = perProjectInfo.rootPathToResolvedEntries;
+		if (rootPathToResolvedEntries == null)
+			return null;
+		IBuildpathEntry classpathEntry = rootPathToResolvedEntries.get(path);
+		if (classpathEntry == null) {
+			path = getProject().getWorkspace().getRoot().getLocation()
+					.append(path);
+			classpathEntry = rootPathToResolvedEntries.get(path);
 		}
-		return null;
+		return classpathEntry;
 	}
 
 	/*
@@ -3039,116 +2909,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 		return newNameLookup(workingCopies);
 	}
 
-	/*
-	 * Force the project to reload its <code>.buildpath</code> file from disk
-	 * and update the buildpath accordingly. Usually, a change to the
-	 * <code>.buildpath</code> file is automatically noticed and reconciled at
-	 * the next resource change notification event. If required to consider such
-	 * a change prior to the next automatic refresh, then this functionnality
-	 * should be used to trigger a refresh. In particular, if a change to the
-	 * file is performed, during an operation where this change needs to be
-	 * reflected before the operation ends, then an explicit refresh is
-	 * necessary. Note that buildpath markers are NOT created.
-	 * 
-	 * @param monitor a progress monitor for reporting operation progress
-	 * 
-	 * @exception ModelException if the buildpath could not be updated. Reasons
-	 * include: <ul> <li> This Script element does not exist
-	 * (ELEMENT_DOES_NOT_EXIST)</li> <li> Two or more entries specify source
-	 * roots with the same or overlapping paths (NAME_COLLISION) <li> A entry of
-	 * kind <code>CPE_PROJECT</code> refers to this project (INVALID_PATH)
-	 * <li>This Script element does not exist (ELEMENT_DOES_NOT_EXIST)</li>
-	 * <li>The output location path refers to a location not contained in this
-	 * project (<code>PATH_OUTSIDE_PROJECT</code>) <li>The output location path
-	 * is not an absolute path (<code>RELATIVE_PATH</code>) <li>The output
-	 * location path is nested inside a package fragment root of this project
-	 * (<code>INVALID_PATH</code>) <li> The buildpath is being modified during
-	 * resource change event notification (CORE_EXCEPTION) </ul>
-	 */
-	protected void forceBuildpathReload(IProgressMonitor monitor)
-			throws ModelException {
-
-		if (monitor != null && monitor.isCanceled())
-			return;
-
-		// check if any actual difference
-		boolean wasSuccessful = false; // flag recording if .buildpath file
-		// change got reflected
-		try {
-			// force to (re)read the property file
-			IBuildpathEntry[] fileEntries = readBuildpathFile(false/*
-																	 * don't
-																	 * create
-																	 * markers
-																	 */, false/*
-																			 * don't
-																			 * log
-																			 * problems
-																			 */);
-			if (fileEntries == null) {
-				return; // could not read, ignore
-			}
-			ModelManager.PerProjectInfo info = getPerProjectInfo();
-			if (info.rawBuildpath != null) { // if there is an in-memory
-				// buildpath
-				if (isBuildpathEqualsTo(info.rawBuildpath, fileEntries)) {
-					wasSuccessful = true;
-					return;
-				}
-			}
-
-			// will force an update of the buildpath/output location based on
-			// the file information
-			// extract out the output location
-			_setRawBuildpath(fileEntries, monitor, !ResourcesPlugin
-					.getWorkspace().isTreeLocked() // canChangeResource
-			);
-
-			// if reach that far, the buildpath file change got absorbed
-			wasSuccessful = true;
-		} catch (RuntimeException e) {
-			// setRawBuildpath might fire a delta, and a listener may throw an
-			// exception
-			if (this.project.isAccessible()) {
-				Util.log(e, "Could not set buildpath for " + getPath()); //$NON-NLS-1$
-			}
-			throw e; // rethrow
-		} catch (ModelException e) { // CP failed validation
-			if (!ResourcesPlugin.getWorkspace().isTreeLocked()) {
-				if (this.project.isAccessible()) {
-					if (e.getModelStatus().getException() instanceof CoreException) {
-						// happens if the .buildpath could not be written to
-						// disk
-						createBuildpathProblemMarker(new ModelStatus(
-								IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-								Messages.bind(
-										Messages.buildpath_couldNotWriteBuildpathFile,
-										new String[] { getElementName(),
-												e.getMessage() })));
-					} else {
-						createBuildpathProblemMarker(new ModelStatus(
-								IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
-								Messages.bind(
-										Messages.buildpath_invalidBuildpathInBuildpathFile,
-										new String[] { getElementName(),
-												e.getMessage() })));
-					}
-				}
-			}
-			throw e; // rethrow
-		} finally {
-			if (!wasSuccessful) {
-				try {
-					this.getPerProjectInfo().updateBuildpathInformation(
-							ScriptProject.INVALID_BUILDPATH);
-					updateProjectFragments();
-				} catch (ModelException e) {
-					// ignore
-				}
-			}
-		}
-	}
-
 	public IProjectFragment[] getAllProjectFragments() throws ModelException {
 		return getAllProjectFragments(null /* no reverse map */);
 	}
@@ -3157,13 +2917,7 @@ public class ScriptProject extends Openable implements IScriptProject,
 			Map<IProjectFragment, BuildpathEntry> rootToResolvedEntries)
 			throws ModelException {
 		IProjectFragment[] computed = computeProjectFragments(
-				getResolvedBuildpath(true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-						false/*
-							 * don't returnResolutionInProgress
-							 */), true/* retrieveExportedRoots */,
+				getResolvedBuildpath(), true/* retrieveExportedRoots */,
 				rootToResolvedEntries);
 		// Add all user project fragments
 		List<IModelElement> fragments = new ArrayList<IModelElement>();
@@ -3227,6 +2981,6 @@ public class ScriptProject extends Openable implements IScriptProject,
 		}
 		rawBuildpath = rawEntries
 				.toArray(new IBuildpathEntry[rawEntries.size()]);
-		return getResolvedBuildpath(rawBuildpath, true, false, null);
+		return resolveBuildpath(rawBuildpath);
 	}
 }

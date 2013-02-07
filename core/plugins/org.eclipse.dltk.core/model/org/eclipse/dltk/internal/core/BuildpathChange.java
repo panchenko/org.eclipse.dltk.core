@@ -10,22 +10,17 @@
  *******************************************************************************/
 package org.eclipse.dltk.internal.core;
 
-import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.IModelElementDelta;
 import org.eclipse.dltk.core.IProjectFragment;
+import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.core.search.indexing.IndexManager;
 import org.eclipse.dltk.internal.core.ModelManager.PerProjectInfo;
@@ -75,7 +70,8 @@ public class BuildpathChange {
 	private int buildpathContains(IBuildpathEntry[] list, IBuildpathEntry entry) {
 		IPath[] exclusionPatterns = entry.getExclusionPatterns();
 		IPath[] inclusionPatterns = entry.getInclusionPatterns();
-		nextEntry: for (int i = 0; i < list.length; i++) {
+		int listLen = list == null ? 0 : list.length;
+		nextEntry: for (int i = 0; i < listLen; i++) {
 			IBuildpathEntry other = list[i];
 			if (other.getContentKind() == entry.getContentKind()
 					&& other.getEntryKind() == entry.getEntryKind()
@@ -136,7 +132,7 @@ public class BuildpathChange {
 	 * whether a delta was generated, and whether project reference have
 	 * changed.
 	 */
-	public int generateDelta(ModelElementDelta delta) {
+	public int generateDelta(ModelElementDelta delta, boolean addBuildpathChange) {
 		ModelManager manager = ModelManager.getModelManager();
 		DeltaProcessingState state = manager.deltaState;
 		if (state.findProject(this.project.getElementName()) == null)
@@ -154,23 +150,34 @@ public class BuildpathChange {
 			PerProjectInfo perProjectInfo = this.project.getPerProjectInfo();
 
 			// get new info
-			this.project.getResolvedBuildpath();
+			this.project.resolveBuildpath(perProjectInfo, false/*
+																 * don't use
+																 * previous
+																 * session
+																 * values
+																 */,
+					addBuildpathChange);
 			IBuildpathEntry[] newRawBuildpath;
 
 			// use synchronized block to ensure consistency
 			synchronized (perProjectInfo) {
 				newRawBuildpath = perProjectInfo.rawBuildpath;
-				newResolvedBuildpath = perProjectInfo.resolvedBuildpath;
+				newResolvedBuildpath = perProjectInfo.getResolvedBuildpath();
 			}
 
 			if (newResolvedBuildpath == null) {
 				// another thread reset the resolved buildpath, use a temporary
 				// PerProjectInfo
-				PerProjectInfo temporaryInfo = new PerProjectInfo(
-						this.project.getProject());
-				this.project.getResolvedBuildpath();
+				PerProjectInfo temporaryInfo = this.project.newTemporaryInfo();
+				this.project.resolveBuildpath(temporaryInfo, false/*
+																 * don't use
+																 * previous
+																 * session
+																 * values
+																 */,
+						addBuildpathChange);
 				newRawBuildpath = temporaryInfo.rawBuildpath;
-				newResolvedBuildpath = temporaryInfo.resolvedBuildpath;
+				newResolvedBuildpath = temporaryInfo.getResolvedBuildpath();
 			}
 
 			// check if raw buildpath has changed
@@ -225,14 +232,14 @@ public class BuildpathChange {
 		// ensure external jars are refreshed for this project (see
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=212769 )
 
-		Map removedRoots = null;
+		Map<IPath, IProjectFragment> removedRoots = null;
 		IProjectFragment[] roots = null;
-		Map allOldRoots;
+		Map<IScriptProject, IProjectFragment[]> allOldRoots;
 		if ((allOldRoots = deltaProcessor.oldRoots) != null) {
-			roots = (IProjectFragment[]) allOldRoots.get(this.project);
+			roots = allOldRoots.get(this.project);
 		}
 		if (roots != null) {
-			removedRoots = new HashMap();
+			removedRoots = new HashMap<IPath, IProjectFragment>();
 			for (int i = 0; i < roots.length; i++) {
 				IProjectFragment root = roots[i];
 				removedRoots.put(root.getPath(), root);
@@ -257,7 +264,7 @@ public class BuildpathChange {
 
 				IProjectFragment[] pkgFragmentRoots = null;
 				if (removedRoots != null) {
-					IProjectFragment oldRoot = (IProjectFragment) removedRoots
+					IProjectFragment oldRoot = removedRoots
 							.get(this.oldResolvedBuildpath[i].getPath());
 					if (oldRoot != null) { // use old root if any (could be
 						// none
@@ -273,8 +280,9 @@ public class BuildpathChange {
 						this.project.computeProjectFragments(
 								this.oldResolvedBuildpath[i], accumulatedRoots,
 								rootIDs, null, // inside original project
+								false, // don't check existence
 								false, // don't retrieve exported roots
-								false, null); /* no reverse map */
+								null); /* no reverse map */
 						pkgFragmentRoots = accumulatedRoots
 								.toArray(new IProjectFragment[accumulatedRoots
 										.size()]);
@@ -284,42 +292,6 @@ public class BuildpathChange {
 				}
 				addBuildpathDeltas(delta, pkgFragmentRoots,
 						IModelElementDelta.F_REMOVED_FROM_BUILDPATH);
-
-				// remember timestamp of jars that were removed (in case they
-				// are added as external jar in the same operation)
-				for (int j = 0, length = pkgFragmentRoots.length; j < length; j++) {
-					IProjectFragment root = pkgFragmentRoots[j];
-					if (root.isArchive() && !root.isExternal()) {
-						Object resource = null;
-						if (root instanceof ProjectFragment) {
-							resource = ((ProjectFragment) root).resource;
-						} else {
-							resource = root.getResource();
-						}
-						File file = null;
-						if (resource instanceof File) {
-							file = (File) resource;
-						} else if (resource instanceof IResource) {
-							URI location = ((IResource) resource)
-									.getLocationURI();
-							try {
-								IFileStore fileStore = EFS.getStore(location);
-								file = fileStore.toLocalFile(EFS.NONE, null);
-							} catch (CoreException e) {
-								// continue
-							}
-
-						}
-						if (file == null)
-							continue;
-						// long timeStamp = DeltaProcessor.getTimeStamp(file);
-						// IPath externalPath = new
-						// org.eclipse.core.runtime.Path(
-						// file.getAbsolutePath());
-						// state.getExternalLibTimeStamps().put(externalPath,
-						// new Long(timeStamp));
-					}
-				}
 			} else {
 				// remote project changes
 				if (this.oldResolvedBuildpath[i].getEntryKind() == IBuildpathEntry.BPE_PROJECT) {
@@ -333,6 +305,7 @@ public class BuildpathChange {
 									.computeProjectFragments(this.oldResolvedBuildpath[i]),
 							IModelElementDelta.F_REORDER);
 				}
+				// TODO (alex) check source attachment
 			}
 		}
 
@@ -386,7 +359,8 @@ public class BuildpathChange {
 		DeltaProcessingState state = manager.deltaState;
 
 		int newLength = newResolvedBuildpath.length;
-		int oldLength = this.oldResolvedBuildpath.length;
+		int oldLength = this.oldResolvedBuildpath == null ? 0
+				: this.oldResolvedBuildpath.length;
 		for (int i = 0; i < oldLength; i++) {
 			int index = buildpathContains(newResolvedBuildpath,
 					this.oldResolvedBuildpath[i]);
@@ -428,7 +402,8 @@ public class BuildpathChange {
 		for (int i = 0; i < newLength; i++) {
 			int index = buildpathContains(this.oldResolvedBuildpath,
 					newResolvedBuildpath[i]);
-			if (index == -1) {
+			if (index == -1
+					|| newResolvedBuildpath[i].getEntryKind() == IBuildpathEntry.BPE_LIBRARY) {
 				// remote projects are not indexed in this project
 				if (newResolvedBuildpath[i].getEntryKind() == IBuildpathEntry.BPE_PROJECT) {
 					continue;

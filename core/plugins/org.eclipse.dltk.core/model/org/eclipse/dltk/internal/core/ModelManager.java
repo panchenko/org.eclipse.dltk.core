@@ -41,6 +41,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.AssertionFailedException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
@@ -75,6 +76,7 @@ import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.IModelStatus;
+import org.eclipse.dltk.core.IModelStatusConstants;
 import org.eclipse.dltk.core.IParent;
 import org.eclipse.dltk.core.IProblemRequestor;
 import org.eclipse.dltk.core.IProjectFragment;
@@ -164,18 +166,25 @@ public class ModelManager implements ISaveParticipant {
 	 * A HashSet that contains the IScriptProject whose buildpath is being
 	 * resolved.
 	 */
-	private ThreadLocal buildpathsBeingResolved = new ThreadLocal();
+	private ThreadLocal<HashSet<IScriptProject>> buildpathsBeingResolved = new ThreadLocal<HashSet<IScriptProject>>();
 
 	public static class PerProjectInfo {
+		static final IModelStatus NEED_RESOLUTION = new ModelStatus();
+
 		public IProject project;
 		public Object savedState;
 		public boolean triedRead;
 		public IBuildpathEntry[] rawBuildpath;
 		public IModelStatus rawBuildpathStatus;
+		public int rawTimeStamp = 0;
+		public boolean writtingRawClasspath = false;
 		public IBuildpathEntry[] resolvedBuildpath;
 		public IModelStatus unresolvedEntryStatus;
-		public Map resolvedPathToRawEntries; // reverse map from resolved
-		// path to raw entries
+		// reverse map from a package fragment root's path to the raw entry
+		public Map<IPath, IBuildpathEntry> rootPathToRawEntries;
+		// map from a package fragment root's path to the resolved entry
+		public Map<IPath, IBuildpathEntry> rootPathToResolvedEntries;
+
 		public IEclipsePreferences preferences;
 		public Hashtable options;
 
@@ -183,6 +192,12 @@ public class ModelManager implements ISaveParticipant {
 			this.triedRead = false;
 			this.savedState = null;
 			this.project = project;
+		}
+
+		public synchronized IBuildpathEntry[] getResolvedBuildpath() {
+			if (this.unresolvedEntryStatus == NEED_RESOLUTION)
+				return null;
+			return this.resolvedBuildpath;
 		}
 
 		public void rememberExternalLibTimestamps() {
@@ -229,10 +244,8 @@ public class ModelManager implements ISaveParticipant {
 		}
 
 		public synchronized BuildpathChange resetResolvedBuildpath() {
-			final BuildpathChange change = addBuildpathChange();
-			// null out resolved information
-			resolvedBuildpath = null;
-			return change;
+			return setResolvedBuildpath(null, null, null, null, rawTimeStamp,
+					true);
 		}
 
 		protected BuildpathChange addBuildpathChange() {
@@ -247,37 +260,102 @@ public class ModelManager implements ISaveParticipant {
 		public synchronized BuildpathChange setRawBuildpath(
 				IBuildpathEntry[] newRawBuildpath,
 				IModelStatus newRawBuildpathStatus) {
-			// this.rawTimeStamp++;
+			this.rawTimeStamp++;
 			return setBuildpath(newRawBuildpath, newRawBuildpathStatus,
-					null/* resolved classpath */, null/* root to raw map */,
+					null/* resolved classpath */, null/* rootPathToRawEntries */,
+					null/* rootPathToResolvedEntries */,
 					null/* unresolved status */, true/* add classpath change */);
+		}
+
+		public synchronized BuildpathChange setResolvedBuildpath(
+				IBuildpathEntry[] newResolvedClasspath,
+				Map<IPath, IBuildpathEntry> newRootPathToRawEntries,
+				Map<IPath, IBuildpathEntry> newRootPathToResolvedEntries,
+				IModelStatus newUnresolvedEntryStatus, int timeStamp,
+				boolean addBuildpathChange) {
+			if (this.rawTimeStamp != timeStamp)
+				return null;
+			return setBuildpath(this.rawBuildpath, this.rawBuildpathStatus,
+					newResolvedClasspath, newRootPathToRawEntries,
+					newRootPathToResolvedEntries, newUnresolvedEntryStatus,
+					addBuildpathChange);
 		}
 
 		private BuildpathChange setBuildpath(IBuildpathEntry[] newRawBuildpath,
 				IModelStatus newRawBuildpathStatus,
 				IBuildpathEntry[] newResolvedBuildpath,
-				Map newRootPathToRawEntries,
+				Map<IPath, IBuildpathEntry> newRootPathToRawEntries,
+				Map<IPath, IBuildpathEntry> newRootPathToResolvedEntries,
 				IModelStatus newUnresolvedEntryStatus,
-				boolean addClasspathChange) {
-			BuildpathChange classpathChange = addClasspathChange ? addBuildpathChange()
+				boolean addBuildpathChange) {
+			BuildpathChange classpathChange = addBuildpathChange ? addBuildpathChange()
 					: null;
 			this.rawBuildpath = newRawBuildpath;
 			this.rawBuildpathStatus = newRawBuildpathStatus;
 			this.resolvedBuildpath = newResolvedBuildpath;
-			this.resolvedPathToRawEntries = newRootPathToRawEntries;
+			this.rootPathToRawEntries = newRootPathToRawEntries;
+			this.rootPathToResolvedEntries = newRootPathToResolvedEntries;
 			this.unresolvedEntryStatus = newUnresolvedEntryStatus;
 			return classpathChange;
 		}
 
-		// updating raw buildpath need to flush obsoleted cached information
-		// about resolved entries
-		public synchronized void updateBuildpathInformation(
-				IBuildpathEntry[] newRawBuildpath) {
-			this.rawBuildpath = newRawBuildpath;
-			this.resolvedBuildpath = null;
-			this.resolvedPathToRawEntries = null;
+		/**
+		 * Reads the buildpath and caches the entries. Returns an array of raw
+		 * buildpath entries.
+		 */
+		public synchronized IBuildpathEntry[] readAndCacheBuildpath(
+				ScriptProject javaProject) {
+			// read file entries and update status
+			IBuildpathEntry[] classpath;
+			IModelStatus status;
+			try {
+				classpath = javaProject.readFileEntriesWithException(null/*
+																		 * not
+																		 * interested
+																		 * in
+																		 * unknown
+																		 * elements
+																		 */);
+				status = ModelStatus.VERIFIED_OK;
+			} catch (CoreException e) {
+				classpath = ScriptProject.INVALID_BUILDPATH;
+				status = new ModelStatus(
+						IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
+						Messages.bind(
+								Messages.buildpath_cannotReadBuildpathFile,
+								javaProject.getElementName()));
+			} catch (IOException e) {
+				classpath = ScriptProject.INVALID_BUILDPATH;
+				if (Messages.file_badFormat.equals(e.getMessage()))
+					status = new ModelStatus(
+							IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
+							Messages.bind(Messages.buildpath_xmlFormatError,
+									javaProject.getElementName(),
+									Messages.file_badFormat));
+				else
+					status = new ModelStatus(
+							IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
+							Messages.bind(
+									Messages.buildpath_cannotReadBuildpathFile,
+									javaProject.getElementName()));
+			} catch (/* BuildpathEntry. */AssertionFailedException e) {
+				classpath = ScriptProject.INVALID_BUILDPATH;
+				status = new ModelStatus(
+						IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT,
+						Messages.bind(
+								Messages.buildpath_illegalEntryInBuildpathFile,
+								new String[] { javaProject.getElementName(),
+										e.getMessage() }));
+			}
+
+			// store new raw buildpath and new status, and null out
+			// resolved info
+			setRawBuildpath(classpath, status);
+
+			return classpath;
 		}
 
+		@Override
 		public String toString() {
 			StringBuffer buffer = new StringBuffer();
 			buffer.append("Info for "); //$NON-NLS-1$
@@ -304,6 +382,24 @@ public class ModelManager implements ISaveParticipant {
 				}
 			}
 			return buffer.toString();
+		}
+
+		public boolean writeAndCacheBuildpath(ScriptProject scriptProject,
+				final IBuildpathEntry[] newRawBuildpath) throws ModelException {
+			try {
+				this.writtingRawClasspath = true;
+
+				// write .classpath
+				if (!scriptProject.writeFileEntries(newRawBuildpath)) {
+					return false;
+				}
+				// store new raw classpath, new output and new status, and null
+				// out resolved info
+				setRawBuildpath(newRawBuildpath, ModelStatus.VERIFIED_OK);
+			} finally {
+				this.writtingRawClasspath = false;
+			}
+			return true;
 		}
 
 	}
@@ -361,6 +457,7 @@ public class ModelManager implements ISaveParticipant {
 
 	public static boolean VERBOSE = DLTKCore.VERBOSE_MODEL_MANAGER;
 	public static boolean BP_RESOLVE_VERBOSE = DLTKCore.VERBOSE_BP_RESOLVE;
+	public static final boolean BP_RESOLVE_VERBOSE_ADVANCED = false;
 	/**
 	 * Name of the extension point for contributing buildpath variable
 	 * initializers
@@ -424,7 +521,7 @@ public class ModelManager implements ISaveParticipant {
 	/*
 	 * Pools of symbols used in the model. Used as a replacement for
 	 * String#intern() that could prevent garbage collection of strings on some
-	 * Interpreters.
+	 * VMs.
 	 */
 	private WeakHashSet stringSymbols = new WeakHashSet(5);
 	Map workspaceScope = null;
@@ -433,6 +530,8 @@ public class ModelManager implements ISaveParticipant {
 
 	private ExternalFoldersManager externalFoldersManager = new ExternalFoldersManager();
 	private DLTKCoreCache coreCache = null;
+
+	final boolean resolveReferencedLibrariesForContainers = false;
 
 	public IContentCache getCoreCache() {
 		if (coreCache == null) {
@@ -1086,10 +1185,10 @@ public class ModelManager implements ISaveParticipant {
 		}
 	}
 
-	private HashSet getBuildpathBeingResolved() {
-		HashSet result = (HashSet) this.buildpathsBeingResolved.get();
+	private HashSet<IScriptProject> getBuildpathBeingResolved() {
+		HashSet<IScriptProject> result = this.buildpathsBeingResolved.get();
 		if (result == null) {
-			result = new HashSet();
+			result = new HashSet<IScriptProject>();
 			this.buildpathsBeingResolved.set(result);
 		}
 		return result;
@@ -2071,6 +2170,35 @@ public class ModelManager implements ISaveParticipant {
 			initializations.remove(project);
 		}
 		this.containers.remove(project);
+	}
+
+	void verbose_missbehaving_container(IScriptProject project,
+			IPath containerPath, IBuildpathEntry[] classpathEntries) {
+		Util.verbose("CPContainer GET - missbehaving container (returning null classpath entry)\n" + //$NON-NLS-1$
+				"	project: " + project.getElementName() + '\n' + //$NON-NLS-1$
+				"	container path: " + containerPath + '\n' + //$NON-NLS-1$
+				"	classpath entries: {\n" + //$NON-NLS-1$
+				Util.toString(classpathEntries, new Util.Displayable() {
+					public String displayString(Object o) {
+						StringBuffer buffer = new StringBuffer("		"); //$NON-NLS-1$
+						if (o == null) {
+							buffer.append("<null>"); //$NON-NLS-1$
+							return buffer.toString();
+						}
+						buffer.append(o);
+						return buffer.toString();
+					}
+				}) + "\n	}" //$NON-NLS-1$
+		);
+	}
+
+	void verbose_missbehaving_container_null_entries(IScriptProject project,
+			IPath containerPath) {
+		Util.verbose("CPContainer GET - missbehaving container (returning null as classpath entries)\n" + //$NON-NLS-1$
+				"	project: " + project.getElementName() + '\n' + //$NON-NLS-1$
+				"	container path: " + containerPath + '\n' + //$NON-NLS-1$
+				"	classpath entries: <null>" //$NON-NLS-1$
+		);
 	}
 
 	private void containerRemoveInitializationInProgress(

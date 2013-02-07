@@ -34,7 +34,6 @@ import org.eclipse.dltk.core.IScriptProjectFilenames;
 import org.eclipse.dltk.internal.core.util.Util;
 
 public class ExternalFoldersManager {
-	private static final boolean DEBUG = false;
 	private static final String EXTERNAL_PROJECT_NAME = ".org.eclipse.dltk.core.external.folders"; //$NON-NLS-1$
 	private static final String LINKED_FOLDER_NAME = ".link"; //$NON-NLS-1$
 	private HashMap folders;
@@ -65,16 +64,16 @@ public class ExternalFoldersManager {
 	public static boolean isExternalFolderPath(IPath externalPath) {
 		if (externalPath == null)
 			return false;
-		if (ResourcesPlugin.getWorkspace().getRoot().getProject(
-				externalPath.segment(0)).exists())
+		if (ResourcesPlugin.getWorkspace().getRoot()
+				.getProject(externalPath.segment(0)).exists())
 			return false;
 		File externalFolder = externalPath.toFile();
 		if (externalFolder.isFile())
 			return false;
 		if (externalPath.getFileExtension() != null/*
-		 * likely a .jar, .zip, .rar
-		 * or other file
-		 */
+													 * likely a .jar, .zip, .rar
+													 * or other file
+													 */
 				&& !externalFolder.exists())
 			return false;
 		return true;
@@ -85,6 +84,12 @@ public class ExternalFoldersManager {
 	}
 
 	public IFolder addFolder(IPath externalFolderPath) {
+		return addFolder(externalFolderPath, getExternalFoldersProject());
+	}
+
+	public IFolder addFolder(IPath externalFolderPath,
+			boolean scheduleForCreation) {
+		// TODO (alex) port not completed - scheduleForCreation not used
 		return addFolder(externalFolderPath, getExternalFoldersProject());
 	}
 
@@ -148,16 +153,16 @@ public class ExternalFoldersManager {
 		}
 		IProject project = getExternalFoldersProject();
 		if (project.isAccessible() && project.members().length == 1/*
-		 * remaining
-		 * member is
-		 * .project
-		 */)
+																	 * remaining
+																	 * member is
+																	 * .project
+																	 */)
 			project.delete(true, monitor);
 	}
 
 	public IProject getExternalFoldersProject() {
-		return ResourcesPlugin.getWorkspace().getRoot().getProject(
-				EXTERNAL_PROJECT_NAME);
+		return ResourcesPlugin.getWorkspace().getRoot()
+				.getProject(EXTERNAL_PROJECT_NAME);
 	}
 
 	private IProject createExternalFoldersProject(IProgressMonitor monitor) {
@@ -171,21 +176,15 @@ public class ExternalFoldersManager {
 							.getStateLocation();
 					desc.setLocation(stateLocation
 							.append(EXTERNAL_PROJECT_NAME));
-					// TODO(alon): Figure out the best compatibility mode for
-					// 3.3 vs 3.4
-					project.create(DEBUG ? null : desc, monitor);
-					// project.create(DEBUG ? null : desc, DEBUG ?
-					// IResource.NONE
-					// : IResource.HIDDEN, monitor);
+					project.create(desc, IResource.HIDDEN, monitor);
 				}
 				try {
 					project.open(monitor);
 				} catch (CoreException e1) {
 					// .project or folder on disk have been deleted, recreate
 					// them
-					IPath stateLocation = DEBUG ? ResourcesPlugin
-							.getWorkspace().getRoot().getLocation() : DLTKCore
-							.getPlugin().getStateLocation();
+					IPath stateLocation = DLTKCore.getPlugin()
+							.getStateLocation();
 					IPath projectPath = stateLocation
 							.append(EXTERNAL_PROJECT_NAME);
 					projectPath.toFile().mkdirs();
@@ -193,19 +192,18 @@ public class ExternalFoldersManager {
 							.append(IScriptProjectFilenames.PROJECT_FILENAME)
 							.toOSString());
 					try {
-						output
-								.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + //$NON-NLS-1$
-										"<projectDescription>\n" //$NON-NLS-1$
-										+ "	<name>" //$NON-NLS-1$
-										+ EXTERNAL_PROJECT_NAME + "</name>\n" + //$NON-NLS-1$
-										"	<comment></comment>\n" + //$NON-NLS-1$
-										"	<projects>\n" + //$NON-NLS-1$
-										"	</projects>\n" + //$NON-NLS-1$
-										"	<buildSpec>\n" + //$NON-NLS-1$
-										"	</buildSpec>\n" + //$NON-NLS-1$
-										"	<natures>\n" + //$NON-NLS-1$
-										"	</natures>\n" + //$NON-NLS-1$
-								"</projectDescription>").getBytes()); //$NON-NLS-1$
+						output.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + //$NON-NLS-1$
+								"<projectDescription>\n" //$NON-NLS-1$
+								+ "	<name>" //$NON-NLS-1$
+								+ EXTERNAL_PROJECT_NAME + "</name>\n" + //$NON-NLS-1$
+								"	<comment></comment>\n" + //$NON-NLS-1$
+								"	<projects>\n" + //$NON-NLS-1$
+								"	</projects>\n" + //$NON-NLS-1$
+								"	<buildSpec>\n" + //$NON-NLS-1$
+								"	</buildSpec>\n" + //$NON-NLS-1$
+								"	<natures>\n" + //$NON-NLS-1$
+								"	</natures>\n" + //$NON-NLS-1$
+						"</projectDescription>").getBytes()); //$NON-NLS-1$
 					} finally {
 						output.close();
 					}
@@ -246,9 +244,7 @@ public class ExternalFoldersManager {
 						}
 					}
 				} catch (CoreException e) {
-					Util
-							.log(e,
-									"Exception while initializing external folders"); //$NON-NLS-1$
+					Util.log(e, "Exception while initializing external folders"); //$NON-NLS-1$
 				}
 			}
 		}
@@ -273,10 +269,7 @@ public class ExternalFoldersManager {
 			final Iterator iterator = externalFolders.iterator();
 			Job refreshJob = new Job(Messages.refreshing_external_folders) {
 				public boolean belongsTo(Object family) {
-					// TODO(alon): Figure out the best compatibility mode for
-					// 3.3 vs 3.4
-					return family == ResourcesPlugin.FAMILY_AUTO_REFRESH;
-					// return family == ResourcesPlugin.FAMILY_MANUAL_REFRESH;
+					return family == ResourcesPlugin.FAMILY_MANUAL_REFRESH;
 				}
 
 				protected IStatus run(IProgressMonitor pm) {

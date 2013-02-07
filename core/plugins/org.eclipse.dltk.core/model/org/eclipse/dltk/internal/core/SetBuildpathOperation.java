@@ -60,7 +60,9 @@ public class SetBuildpathOperation extends ChangeBuildpathOperation {
 											 */);
 
 			// write .classpath file
-			if (this.canChangeResources && project.saveBuildpath(newRawPath))
+			if (this.canChangeResources
+					&& perProjectInfo.writeAndCacheBuildpath(this.project,
+							this.newRawPath))
 				setAttribute(HAS_MODIFIED_RESOURCE_ATTR, TRUE);
 		} finally {
 			done();

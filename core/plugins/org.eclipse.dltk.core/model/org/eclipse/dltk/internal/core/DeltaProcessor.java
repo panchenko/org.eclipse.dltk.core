@@ -56,6 +56,7 @@ import org.eclipse.dltk.core.environment.IEnvironment;
 import org.eclipse.dltk.core.environment.IFileHandle;
 import org.eclipse.dltk.core.search.indexing.IndexManager;
 import org.eclipse.dltk.core.search.indexing.SourceIndexerRequestor;
+import org.eclipse.dltk.internal.core.ModelManager.PerProjectInfo;
 import org.eclipse.dltk.internal.core.builder.ScriptBuilder;
 import org.eclipse.dltk.internal.core.search.DLTKWorkspaceScope;
 import org.eclipse.dltk.internal.core.search.ProjectIndexerManager;
@@ -230,12 +231,7 @@ public class DeltaProcessor {
 	 * A table from IScriptProject to an array of IProjectFragment. This table
 	 * contains the pkg fragment roots of the project that are being deleted.
 	 */
-	public Map removedRoots;
-	/*
-	 * A table from IDylanProject to an array of IProjectFragment. This table
-	 * contains the pkg fragment roots of the project that are being deleted.
-	 */
-	public Map oldRoots;
+	public Map<IScriptProject, IProjectFragment[]> oldRoots;
 
 	/* A set of IDylanProject whose package fragment roots need to be refreshed */
 	private HashSet<IScriptProject> rootsToRefresh = new HashSet<IScriptProject>();
@@ -412,19 +408,12 @@ public class DeltaProcessor {
 
 				// workaround for bug 15168 circular errors not reported
 				if (DLTKLanguageManager.hasScriptNature(project)) {
-					this.addToParentInfo(scriptProject);
-
-					// ensure project references are updated (see
-					// https://bugs.eclipse.org/bugs/show_bug.cgi?id=121569)
-					try {
-						this.state.updateProjectReferences(scriptProject,
-								null/* no old buildpath */, false/*
-																 * cannot change
-																 * resources
-																 */);
-					} catch (ModelException e1) {
-						// project always exists
-					}
+					addToParentInfo(scriptProject);
+					readRawBuildpath(scriptProject);
+					// ensure project references are updated
+					checkProjectReferenceChange(project, scriptProject);
+					// and external folders as well
+					// checkExternalFolderChange(project, scriptProject);
 				}
 
 				this.state.rootsAreStale = true;
@@ -441,11 +430,10 @@ public class DeltaProcessor {
 					// workaround for bug 15168 circular errors not reported
 					if (project.isOpen()) {
 						if (DLTKLanguageManager.hasScriptNature(project)) {
-							this.addToParentInfo(scriptProject);
-							// readRawBuildpath(scriptProject);
+							addToParentInfo(scriptProject);
+							readRawBuildpath(scriptProject);
 							// ensure project references are updated
-							this.checkProjectReferenceChange(project,
-									scriptProject);
+							checkProjectReferenceChange(project, scriptProject);
 						}
 					} else {
 						try {
@@ -473,12 +461,11 @@ public class DeltaProcessor {
 						// workaround for bug 15168 circular errors not reported
 						if (isScriptProject) {
 							this.addToParentInfo(scriptProject);
-							// readRawClasspath(scriptProject);
+							readRawBuildpath(scriptProject);
 							// ensure project references are updated (see
 							// https://bugs.eclipse.org/bugs/show_bug.cgi?id=
 							// 172666)
-							this.checkProjectReferenceChange(project,
-									scriptProject);
+							checkProjectReferenceChange(project, scriptProject);
 						} else {
 							// remove buildpath cache so that initializeRoots()
 							// will not consider the project has a buildpath
@@ -538,8 +525,26 @@ public class DeltaProcessor {
 			/* buildpath file change */
 			if (file.getName().equals(ScriptProject.BUILDPATH_FILENAME)) {
 				this.manager.batchContainerInitializations = true;
-				this.reconcileBuildpathFileUpdate(delta,
-						(ScriptProject) DLTKCore.create(file.getProject()));
+				switch (delta.getKind()) {
+				case IResourceDelta.CHANGED:
+					int flags = delta.getFlags();
+					if ((flags & IResourceDelta.CONTENT) == 0
+					// only consider content change
+							&& (flags & IResourceDelta.ENCODING) == 0
+							// and encoding change
+							&& (flags & IResourceDelta.MOVED_FROM) == 0) {
+						// and also move and overide scenario (see
+						// http://dev.eclipse.org/bugs/show_bug.cgi?id=21420)
+						break;
+					}
+					// fall through
+				case IResourceDelta.ADDED:
+				case IResourceDelta.REMOVED:
+					scriptProject = (ScriptProject) DLTKCore.create(file
+							.getProject());
+					readRawBuildpath(scriptProject);
+					break;
+				}
 				this.state.rootsAreStale = true;
 			}
 			break;
@@ -558,39 +563,16 @@ public class DeltaProcessor {
 				: change.oldResolvedBuildpath);
 	}
 
-	private void reconcileBuildpathFileUpdate(IResourceDelta delta,
-			ScriptProject project) {
-
-		switch (delta.getKind()) {
-		case IResourceDelta.REMOVED: // recreate one based on in-memory
-			// buildpath
-			break;
-		case IResourceDelta.CHANGED:
-			int flags = delta.getFlags();
-			if ((flags & IResourceDelta.CONTENT) == 0 // only consider content
-					// change
-					&& (flags & IResourceDelta.ENCODING) == 0 // and encoding
-					// change
-					&& (flags & IResourceDelta.MOVED_FROM) == 0) {// and also
-				// move and
-				// overide
-				// scenario
-				// (see
-				// http://dev.eclipse.org/bugs/show_bug.cgi?id=21420)
-				break;
-			}
-			// fall through
-		case IResourceDelta.ADDED:
-			try {
-				project.forceBuildpathReload(null);
-			} catch (RuntimeException e) {
-				if (VERBOSE) {
-					e.printStackTrace();
-				}
-			} catch (ModelException e) {
-				if (VERBOSE) {
-					e.printStackTrace();
-				}
+	private void readRawBuildpath(ScriptProject javaProject) {
+		// force to (re)read the .classpath file
+		try {
+			PerProjectInfo perProjectInfo = javaProject.getPerProjectInfo();
+			if (!perProjectInfo.writtingRawClasspath) // to avoid deadlock, see
+														// https://bugs.eclipse.org/bugs/show_bug.cgi?id=221680
+				perProjectInfo.readAndCacheBuildpath(javaProject);
+		} catch (ModelException e) {
+			if (VERBOSE) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -1047,28 +1029,20 @@ public class DeltaProcessor {
 					.create(project);
 
 			// remember roots of this project
-			if (this.removedRoots == null) {
-				this.removedRoots = new HashMap();
+			if (this.oldRoots == null) {
+				this.oldRoots = new HashMap<IScriptProject, IProjectFragment[]>();
 			}
 			if (scriptProject.isOpen()) {
-				this.removedRoots.put(scriptProject,
+				this.oldRoots.put(scriptProject,
 						scriptProject.getProjectFragments());
 			} else {
 				// compute roots without opening project
-				this.removedRoots.put(scriptProject, scriptProject
-						.computeProjectFragments(scriptProject
-								.getResolvedBuildpath(
-										true/* ignoreUnresolvedEntry */,
-										false/*
-											 * don't generateMarkerOnError
-											 */, false/*
-													 * don't
-													 * returnResolutionInProgress
-													 */), false, null /*
-																	 * no
-																	 * reverse
-																	 * map
-																	 */));
+				this.oldRoots.put(scriptProject, scriptProject
+						.computeProjectFragments(
+								scriptProject.getResolvedBuildpath(), false,
+								null /*
+									 * no reverse map
+									 */));
 			}
 
 			scriptProject.close();
@@ -1966,7 +1940,8 @@ public class DeltaProcessor {
 									.values().iterator();
 							while (changes.hasNext()) {
 								BuildpathChange change = changes.next();
-								int result = change.generateDelta(javaDelta);
+								int result = change.generateDelta(javaDelta,
+										false/* don't add buildpath change */);
 								if ((result & BuildpathChange.HAS_DELTA) != 0) {
 									hasDelta = true;
 
@@ -2025,7 +2000,7 @@ public class DeltaProcessor {
 				} finally {
 					// workaround for bug 15168 circular errors not reported
 					this.state.resetOldScriptProjectNames();
-					this.removedRoots = null;
+					this.oldRoots = null;
 				}
 			}
 			return;

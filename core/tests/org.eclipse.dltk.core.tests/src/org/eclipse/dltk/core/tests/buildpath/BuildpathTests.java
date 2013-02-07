@@ -1148,7 +1148,7 @@ public class BuildpathTests extends ModifyingResourceTests {
 
 			// ensure the deltas are correct
 			assertDeltas("Unexpected delta",
-					"P[*]: {CHILDREN | BUILDPATH CHANGED}\n"
+					"P[*]: {CHILDREN | CONTENT | BUILDPATH CHANGED | RESOLVED BUILDPATH CHANGED}\n"
 							+ "	<project root>[*]: {REMOVED FROM BUILDPATH}\n"
 							+ "	ResourceDelta(/P/.buildpath)[*]");
 		} finally {

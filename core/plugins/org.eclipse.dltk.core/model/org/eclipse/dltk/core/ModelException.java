@@ -104,5 +104,19 @@ public class ModelException extends CoreException {
 	public boolean isDoesNotExist() {
 		IModelStatus modelStatus = getModelStatus();
 		return modelStatus != null && modelStatus.isDoesNotExist();
-	}	
+	}
+
+	/**
+	 * Propagates {@code exception} as-is if it is an instance of
+	 * {@link ModelException}, otherwise wraps it in a {@link ModelException}
+	 * then propagates.
+	 */
+	public static ModelException propagate(CoreException exception)
+			throws ModelException {
+		if (exception instanceof ModelException) {
+			throw (ModelException) exception;
+		} else {
+			throw new ModelException(exception);
+		}
+	}
 }

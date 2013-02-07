@@ -74,21 +74,12 @@ public class IndexSelector {
 			IScriptProject[] allProjects = model.getScriptProjects();
 			for (int i = 0, length = allProjects.length; i < length; i++) {
 				ScriptProject otherProject = (ScriptProject) allProjects[i];
-				IBuildpathEntry[] entries = otherProject.getResolvedBuildpath(
-						true/* ignoreUnresolvedEntry */, false/*
-															 * don't
-															 * generateMarkerOnError
-															 */, false/*
-																	 * don't
-																	 * returnResolutionInProgress
-																	 */);
-				for (int j = 0, length2 = entries.length; j < length2; j++) {
-					IBuildpathEntry entry = entries[j];
-					if (entry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY
-							&& entry.getPath().equals(projectOrArchivePath))
-						if (canSeeFocus(focus, otherProject, focusEntries))
-							return true;
-				}
+				IBuildpathEntry entry = otherProject
+						.getBuildpathEntryFor(projectOrArchivePath);
+				if (entry != null
+						&& entry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY)
+					if (canSeeFocus(focus, otherProject, focusEntries))
+						return true;
 			}
 			return false;
 		} catch (ModelException e) {
@@ -207,12 +198,7 @@ public class IndexSelector {
 				for (int i = 0; i < projectIndex
 						&& archivesToCheck.elementSize > 0; i++) {
 					IBuildpathEntry[] entries = projectsCanSeeFocus[i]
-							.getResolvedBuildpath(
-									true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-									false/* don't returnResolutionInProgress */);
+							.getResolvedBuildpath();
 					for (int j = entries.length; --j >= 0;) {
 						IBuildpathEntry entry = entries[j];
 						if (entry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY) {

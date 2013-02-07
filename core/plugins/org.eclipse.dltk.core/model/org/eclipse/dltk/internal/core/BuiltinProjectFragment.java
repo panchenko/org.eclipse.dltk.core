@@ -289,23 +289,21 @@ public class BuiltinProjectFragment extends ProjectFragment {
 	/*
 	 * @see IProjectFragment
 	 */
+	@Override
 	public IBuildpathEntry getRawBuildpathEntry() throws ModelException {
 		IBuildpathEntry rawEntry = null;
 		ScriptProject project = (ScriptProject) this.getScriptProject();
-		project.getResolvedBuildpath(true/* ignoreUnresolvedEntry */, false/*
-																		 * don't
-																		 * generateMarkerOnError
-																		 */,
-				false/* don't returnResolutionInProgress */); // force the
-		// reverse
-		// rawEntry
-		// cache to be
-		// populated
+		project.getResolvedBuildpath(); // force the reverse rawEntry cache to
 		// be populated
-		Map resolvedPathToRawEntries = project.getPerProjectInfo().resolvedPathToRawEntries;
-		if (resolvedPathToRawEntries != null) {
-			rawEntry = (IBuildpathEntry) resolvedPathToRawEntries.get(new Path(
-					this.getPath().segment(0)));
+		Map<IPath, IBuildpathEntry> rootPathToRawEntries = project
+				.getPerProjectInfo().rootPathToRawEntries;
+		if (rootPathToRawEntries != null) {
+			rawEntry = rootPathToRawEntries.get(new Path(this.getPath()
+					.segment(0)));
+		}
+		if (rawEntry == null) {
+			throw new ModelException(new ModelStatus(
+					IModelStatusConstants.ELEMENT_NOT_ON_BUILDPATH, this));
 		}
 		return rawEntry;
 	}

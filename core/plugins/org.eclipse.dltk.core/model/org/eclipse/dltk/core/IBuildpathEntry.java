@@ -279,8 +279,6 @@ public interface IBuildpathEntry {
 
 	boolean isExternal();
 
-	public boolean isContainerEntry();
-
 	/**
 	 * @since 2.0
 	 */

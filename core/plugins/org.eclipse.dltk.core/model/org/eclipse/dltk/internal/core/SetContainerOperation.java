@@ -58,7 +58,6 @@ public class SetContainerOperation extends ChangeBuildpathOperation {
 			System.arraycopy(affectedProjects, 0,
 					modifiedProjects = new IScriptProject[projectLength], 0,
 					projectLength);
-			final IBuildpathEntry[][] oldResolvedPaths = new IBuildpathEntry[projectLength][];
 
 			// filter out unmodified project containers
 			int remaining = 0;
@@ -124,14 +123,6 @@ public class SetContainerOperation extends ChangeBuildpathOperation {
 					continue;
 				}
 				remaining++;
-				oldResolvedPaths[i] = affectedProject.getResolvedBuildpath(
-						true/* ignoreUnresolvedEntry */, false/*
-															 * don't
-															 * generateMarkerOnError
-															 */, false/*
-																	 * don't
-																	 * returnResolutionInProgress
-																	 */);
 				manager.containerPut(affectedProject, containerPath,
 						newContainer);
 			}
@@ -180,11 +171,7 @@ public class SetContainerOperation extends ChangeBuildpathOperation {
 				if (ModelManager.BP_RESOLVE_VERBOSE) {
 					verboseFailure(e);
 				}
-				if (e instanceof ModelException) {
-					throw (ModelException) e;
-				} else {
-					throw new ModelException(e);
-				}
+				ModelException.propagate(e);
 			} finally {
 				for (int i = 0; i < projectLength; i++) {
 					if (respectiveContainers[i] == null) {

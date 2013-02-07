@@ -188,10 +188,9 @@ public class DLTKSearchScope extends AbstractSearchScope {
 			switch (entry.getEntryKind()) {
 			case IBuildpathEntry.BPE_LIBRARY:
 				IBuildpathEntry rawEntry = null;
-				Map resolvedPathToRawEntries = perProjectInfo.resolvedPathToRawEntries;
-				if (resolvedPathToRawEntries != null) {
-					rawEntry = (IBuildpathEntry) resolvedPathToRawEntries
-							.get(entry.getPath());
+				Map<IPath, IBuildpathEntry> rootPathToRawEntries = perProjectInfo.rootPathToRawEntries;
+				if (rootPathToRawEntries != null) {
+					rawEntry = rootPathToRawEntries.get(entry.getPath());
 				}
 				if (rawEntry == null) {
 					break;

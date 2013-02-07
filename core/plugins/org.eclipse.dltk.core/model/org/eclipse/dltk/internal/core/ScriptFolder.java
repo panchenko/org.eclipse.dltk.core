@@ -72,6 +72,32 @@ public class ScriptFolder extends Openable implements IScriptFolder {
 		}
 	}
 
+	public static String pathToString(String[] path) {
+		final int segmentCount = path.length;
+		if (segmentCount == 0) {
+			return org.eclipse.dltk.compiler.util.Util.EMPTY_STRING;
+		} else if (segmentCount == 1) {
+			return path[0];
+		} else {
+			int resultSize = (segmentCount - 1)
+			/* x PACKAGE_DELIMETER_STR.length() */;
+			for (int i = 0; i < segmentCount; ++i) {
+				resultSize += path[i].length();
+			}
+			char[] result = new char[resultSize];
+			int index = 0;
+			for (int i = 0; i < segmentCount; ++i) {
+				if (i != 0) {
+					result[index++] = PACKAGE_DELIMITER;
+				}
+				final String segment = path[i];
+				segment.getChars(0, segment.length(), result, index);
+				index += segment.length();
+			}
+			return new String(result);
+		}
+	}
+
 	/**
 	 * @see ModelElement
 	 */

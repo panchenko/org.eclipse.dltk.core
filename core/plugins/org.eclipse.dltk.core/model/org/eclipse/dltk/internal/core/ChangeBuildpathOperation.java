@@ -77,7 +77,8 @@ public abstract class ChangeBuildpathOperation extends ModelOperation {
 		} else {
 			DeltaProcessingState state = ModelManager.getDeltaState();
 			ModelElementDelta delta = new ModelElementDelta(getModel());
-			int result = change.generateDelta(delta);
+			int result = change
+					.generateDelta(delta, true/* add buildpath change */);
 			if ((result & BuildpathChange.HAS_DELTA) != 0) {
 				// create delta
 				addDelta(delta);

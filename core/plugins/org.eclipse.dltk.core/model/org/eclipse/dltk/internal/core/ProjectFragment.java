@@ -450,10 +450,10 @@ public class ProjectFragment extends Openable implements IProjectFragment {
 		ScriptProject project = (ScriptProject) this.getScriptProject();
 		project.getResolvedBuildpath(); // force the reverse rawEntry cache to
 		// be populated
-		Map rootPathToRawEntries = project.getPerProjectInfo().resolvedPathToRawEntries;
+		Map<IPath, IBuildpathEntry> rootPathToRawEntries = project
+				.getPerProjectInfo().rootPathToRawEntries;
 		if (rootPathToRawEntries != null) {
-			rawEntry = (IBuildpathEntry) rootPathToRawEntries.get(this
-					.getPath());
+			rawEntry = rootPathToRawEntries.get(this.getPath());
 		}
 		if (rawEntry == null) {
 			throw new ModelException(new ModelStatus(

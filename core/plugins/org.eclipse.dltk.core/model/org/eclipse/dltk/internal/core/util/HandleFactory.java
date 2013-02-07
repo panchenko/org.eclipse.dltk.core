@@ -265,23 +265,15 @@ public class HandleFactory {
 		for (int i = 0, projectCount = projects.length; i < projectCount; i++) {
 			try {
 				ScriptProject scriptProject = (ScriptProject) projects[i];
-				IBuildpathEntry[] classpathEntries = scriptProject
-						.getResolvedBuildpath(true/* ignoreUnresolvedEntry */,
-								false/* don't generateMarkerOnError */, false/*
-																			 * don't
-																			 * returnResolutionInProgress
-																			 */);
-				for (int j = 0, entryCount = classpathEntries.length; j < entryCount; j++) {
-					if (classpathEntries[j].getPath().equals(archivePath)) {
-						if (target instanceof IFile) {
-							// internal jar
-							return scriptProject
-									.getProjectFragment((IFile) target);
-						} else {
-							// external jar
-							return scriptProject
-									.getProjectFragment0(archivePath);
-						}
+				IBuildpathEntry classpathEntry = scriptProject
+						.getBuildpathEntryFor(archivePath);
+				if (classpathEntry != null) {
+					if (target instanceof IFile) {
+						// internal jar
+						return scriptProject.getProjectFragment((IFile) target);
+					} else {
+						// external jar
+						return scriptProject.getProjectFragment0(archivePath);
 					}
 				}
 			} catch (ModelException e) {

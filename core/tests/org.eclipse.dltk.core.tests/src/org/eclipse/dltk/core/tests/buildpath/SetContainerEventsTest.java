@@ -41,7 +41,8 @@ public class SetContainerEventsTest extends Assert {
 
 	@Rule
 	public final ProjectSetup project = new ProjectSetup(
-			ModelTestsPlugin.WORKSPACE, "SetContainerEvents");
+			ModelTestsPlugin.WORKSPACE, "SetContainerEvents",
+			ProjectSetup.Option.INDEXER_DISABLED);
 
 	@Rule
 	public final TemporaryFolder temp = new TemporaryFolder();
@@ -132,7 +133,11 @@ public class SetContainerEventsTest extends Assert {
 			DLTKCore.removeElementChangedListener(listener);
 		}
 
-		// (alex) not sure if it really should be like this.
+		// XXX (alex) results are not fully correct here, as
+		// BuildpathChange.generateDelta() calls
+		// ScriptProject.computeProjectFragments() with checkExistence=false and
+		// ScriptProjectFragment.getProjectFragment(IPath) can't return fragment
+		// for the external path.
 		assertEquals(0, added.size());
 		assertEquals(0, removed.size());
 		assertEquals(2, changed.size());

@@ -271,7 +271,7 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 	 */
 	protected ModelElementDelta createDeltaTree(IModelElement element, ModelElementDelta delta) {
 		ModelElementDelta childDelta = delta;
-		ArrayList ancestors= getAncestors(element);
+		ArrayList<IModelElement> ancestors = getAncestors(element);
 		if (ancestors == null) {
 			if (this.equalsAndSameParent(delta.getElement(), getElement())) { // handle case of two archives that can be equals but not in the same project
 				// the element being changed is the root element
@@ -282,7 +282,7 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 			}
 		} else {
 			for (int i = 0, size = ancestors.size(); i < size; i++) {
-				IModelElement ancestor = (IModelElement) ancestors.get(i);
+				IModelElement ancestor = ancestors.get(i);
 				ModelElementDelta ancestorDelta = new ModelElementDelta(ancestor);
 				ancestorDelta.addAffectedChild(childDelta);
 				childDelta = ancestorDelta;
@@ -290,8 +290,10 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 		}
 		return childDelta;
 	}
+
 	/**
-	 * Returns whether the twoscriptelements are equals and have the same parent.
+	 * Returns whether the two script elements are equals and have the same
+	 * parent.
 	 */
 	protected boolean equalsAndSameParent(IModelElement e1, IModelElement e2) {
 		IModelElement parent1;
@@ -313,12 +315,12 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 	 * element is not a descendant of the root of this tree, <code>null</code>
 	 * is returned.
 	 */
-	private ArrayList getAncestors(IModelElement element) {
+	private ArrayList<IModelElement> getAncestors(IModelElement element) {
 		IModelElement parent = element.getParent();
 		if (parent == null) {
 			return null;
 		}
-		ArrayList parents = new ArrayList();
+		ArrayList<IModelElement> parents = new ArrayList<IModelElement>();
 		while (!parent.equals(this.changedElement)) {
 			parents.add(parent);
 			parent = parent.getParent();
@@ -503,7 +505,8 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 		if (length == 0) {
 			return new IModelElementDelta[] {};
 		}
-		ArrayList children= new ArrayList(length);
+		ArrayList<IModelElementDelta> children = new ArrayList<IModelElementDelta>(
+				length);
 		for (int i = 0; i < length; i++) {
 			if (affectedChildren[i].getKind() == type) {
 				children.add(affectedChildren[i]);
@@ -568,6 +571,8 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 		}
 		return buffer.toString();
 	}
+
+	@Override
 	protected boolean toDebugString(StringBuffer buffer, int flags) {
 		boolean prev = super.toDebugString(buffer, flags);
 
@@ -637,6 +642,12 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 			buffer.append("BUILDPATH CHANGED"); //$NON-NLS-1$
 			prev = true;
 		}
+		if ((flags & IModelElementDelta.F_RESOLVED_BUILDPATH_CHANGED) != 0) {
+			if (prev)
+				buffer.append(" | "); //$NON-NLS-1$
+			buffer.append("RESOLVED BUILDPATH CHANGED"); //$NON-NLS-1$
+			prev = true;
+		}
 		if ((flags & IModelElementDelta.F_PRIMARY_RESOURCE) != 0) {
 			if (prev)
 				buffer.append(" | "); //$NON-NLS-1$
@@ -661,6 +672,7 @@ public class ModelElementDelta extends SimpleDelta implements IModelElementDelta
 	 * Returns a string representation of this delta's
 	 * structure suitable for debug purposes.
 	 */
+	@Override
 	public String toString() {
 		return toDebugString(0);
 	}

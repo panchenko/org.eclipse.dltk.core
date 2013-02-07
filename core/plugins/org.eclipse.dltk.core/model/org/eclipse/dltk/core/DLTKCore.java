@@ -1274,7 +1274,6 @@ public class DLTKCore extends Plugin {
 				accessRules, true, // comsbine access rules
 				extraAttributes, false);
 
-		entry.setIsContainerEntry(true);
 		return entry;
 	}
 

@@ -19,11 +19,11 @@ import org.eclipse.core.resources.IResourceProxyVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.dltk.core.IBuildpathEntry;
-import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.core.IModelStatus;
 import org.eclipse.dltk.core.IModelStatusConstants;
 import org.eclipse.dltk.core.IProjectFragment;
 import org.eclipse.dltk.core.IScriptModel;
+import org.eclipse.dltk.core.IScriptProject;
 import org.eclipse.dltk.core.ModelException;
 
 
@@ -42,6 +42,7 @@ public class DeleteProjectFragmentOperation extends ModelOperation {
 		this.updateModelFlags = updateModelFlags;
 	}
 
+	@Override
 	protected void executeOperation() throws ModelException {
 		
 		IProjectFragment root = (IProjectFragment)this.getElementToProcess();
@@ -50,7 +51,7 @@ public class DeleteProjectFragmentOperation extends ModelOperation {
 		// remember olds roots
 		DeltaProcessor deltaProcessor = ModelManager.getModelManager().getDeltaProcessor();
 		if (deltaProcessor.oldRoots == null)
-			deltaProcessor.oldRoots = new HashMap();
+			deltaProcessor.oldRoots = new HashMap<IScriptProject, IProjectFragment[]>();
 		
 		// update buildpath if needed
 		if ((updateModelFlags & IProjectFragment.ORIGINATING_PROJECT_BUILDPATH) != 0) {
@@ -111,7 +112,10 @@ public class DeleteProjectFragmentOperation extends ModelOperation {
 	/*
 	 * Deletes the buildpath entries equals to the given rootPath from all Script projects.
 	 */
-	protected void updateReferringProjectBuildpaths(IPath rootPath, IScriptProject projectOfRoot, Map oldRoots) throws ModelException {
+	protected void updateReferringProjectBuildpaths(IPath rootPath,
+			IScriptProject projectOfRoot,
+			Map<IScriptProject, IProjectFragment[]> oldRoots)
+			throws ModelException {
 		IScriptModel model = this.getModel();
 		IScriptProject[] projects = model.getScriptProjects();
 		for (int i = 0, length = projects.length; i < length; i++) {
@@ -124,7 +128,10 @@ public class DeleteProjectFragmentOperation extends ModelOperation {
 	/*
 	 * Deletes the buildpath entries equals to the given rootPath from the given project.
 	 */
-	protected void updateProjectBuildpath(IPath rootPath, IScriptProject project, Map oldRoots) throws ModelException {
+	protected void updateProjectBuildpath(IPath rootPath,
+			IScriptProject project,
+			Map<IScriptProject, IProjectFragment[]> oldRoots)
+			throws ModelException {
 		// remember old roots
 		oldRoots.put(project, project.getProjectFragments());
 		
@@ -151,6 +158,8 @@ public class DeleteProjectFragmentOperation extends ModelOperation {
 			project.setRawBuildpath(newBuildpath, progressMonitor);
 		}
 	}	
+
+	@Override
 	protected IModelStatus verify() {
 		IModelStatus status = super.verify();
 		if (!status.isOK()) {
