@@ -583,6 +583,9 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 				buildState
 						.recordStructuralChanges(((IncrementalProjectChange) buildChange)
 								.getAddedPaths());
+				buildState
+						.recordStructuralChanges(((IncrementalProjectChange) buildChange)
+								.getDeletedPaths());
 				for (;;) {
 					queue.addAll(this.lastState.dependenciesOf(changes,
 							buildState.getStructuralChanges(), true));

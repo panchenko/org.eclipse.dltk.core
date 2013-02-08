@@ -340,6 +340,21 @@ public class IncrementalProjectChange extends AbstractBuildChange implements
 		return paths;
 	}
 
+	protected Collection<IPath> getDeletedPaths() throws CoreException {
+		loadData();
+		final Set<IPath> paths = new HashSet<IPath>();
+		if (projectDeletes != null) {
+			paths.addAll(projectDeletes);
+		}
+		if (projectRenames != null) {
+			final IPath projectPath = project.getFullPath();
+			for (IRenameChange rename : projectRenames.getRenames()) {
+				paths.add(projectPath.append(rename.getSource()));
+			}
+		}
+		return paths;
+	}
+
 	protected Set<IPath> getChangedPaths() throws CoreException {
 		loadData();
 		final Set<IPath> paths = new HashSet<IPath>();
@@ -368,4 +383,5 @@ public class IncrementalProjectChange extends AbstractBuildChange implements
 		}
 		return paths;
 	}
+
 }

@@ -12,6 +12,7 @@
 package org.eclipse.dltk.internal.core.builder;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.dltk.compiler.problem.IProblem;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
 import org.eclipse.dltk.compiler.task.ITaskReporter;
@@ -61,4 +62,7 @@ public class ExternalModuleBuildContext extends AbstractBuildContext implements
 		return null;
 	}
 
+	public void recordDependency(IPath dependency, int flags) {
+		// NOP
+	}
 }

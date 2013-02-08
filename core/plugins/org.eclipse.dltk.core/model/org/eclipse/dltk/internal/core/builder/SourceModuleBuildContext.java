@@ -12,22 +12,27 @@
 package org.eclipse.dltk.internal.core.builder;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.dltk.compiler.problem.IProblemFactory;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
 import org.eclipse.dltk.compiler.task.ITaskReporter;
 import org.eclipse.dltk.core.ISourceModule;
+import org.eclipse.dltk.core.builder.IBuildState;
 import org.eclipse.dltk.core.environment.IFileHandle;
 
 public class SourceModuleBuildContext extends AbstractBuildContext {
 
+	final IBuildState buildState;
 	final BuildProblemReporter reporter;
 
 	/**
 	 * @param module
+	 * @param buildState
 	 */
 	public SourceModuleBuildContext(IProblemFactory problemFactory,
-			ISourceModule module, int buildType) {
+			ISourceModule module, int buildType, IBuildState buildState) {
 		super(module, buildType);
+		this.buildState = buildState;
 		final IResource resource = module.getResource();
 		reporter = resource != null ? new BuildProblemReporter(problemFactory,
 				resource) : null;
@@ -45,4 +50,10 @@ public class SourceModuleBuildContext extends AbstractBuildContext {
 		return reporter;
 	}
 
+	public void recordDependency(IPath dependency, int flags) {
+		if (reporter != null) {
+			buildState.recordDependency(reporter.resource.getFullPath(),
+					dependency, flags);
+		}
+	}
 }

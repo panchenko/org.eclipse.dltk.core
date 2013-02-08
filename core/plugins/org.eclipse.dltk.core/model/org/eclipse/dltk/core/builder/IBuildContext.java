@@ -12,6 +12,7 @@
 package org.eclipse.dltk.core.builder;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.dltk.ast.declarations.ModuleDeclaration;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
@@ -21,6 +22,8 @@ import org.eclipse.dltk.core.environment.IFileHandle;
 
 /**
  * The context of the building a module.
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
  */
 public interface IBuildContext extends IModuleSource {
 
@@ -92,5 +95,15 @@ public interface IBuildContext extends IModuleSource {
 	 * @param value
 	 */
 	void set(String attribute, Object value);
+
+	/**
+	 * Records the dependency on the current module on the specified file.
+	 * 
+	 * @param dependency
+	 * @param flags
+	 * @since 5.0
+	 * @see IBuildState#recordDependency(IPath, IPath, int)
+	 */
+	void recordDependency(IPath dependency, int flags);
 
 }

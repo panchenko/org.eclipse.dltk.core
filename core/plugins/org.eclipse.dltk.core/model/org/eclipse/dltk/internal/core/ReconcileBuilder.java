@@ -12,6 +12,7 @@
 package org.eclipse.dltk.internal.core;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.SafeRunner;
@@ -60,6 +61,9 @@ class ReconcileBuilder implements ISafeRunnable {
 			return reporter;
 		}
 
+		public void recordDependency(IPath dependency, int flags) {
+			// NOP
+		}
 	}
 
 	private final String natureId;

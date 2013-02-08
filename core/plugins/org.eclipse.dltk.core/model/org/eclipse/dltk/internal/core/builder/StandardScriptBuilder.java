@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.dltk.compiler.problem.DefaultProblemFactory;
 import org.eclipse.dltk.compiler.problem.IProblemFactory;
@@ -71,25 +72,13 @@ public class StandardScriptBuilder implements IScriptBuilder {
 		if (toolkit != null) {
 			buildNatureModules(change.getScriptProject(),
 					change.getBuildType(),
-					change.getSourceModules(IProjectChange.DEFAULT), monitor);
+					change.getSourceModules(IProjectChange.DEFAULT), state,
+					SubMonitor.convert(monitor, WORK_BUILD));
 		}
 		final List<IFile> resourceChanges = change
 				.getResources(IProjectChange.DEFAULT);
 		if (!resourceChanges.isEmpty()) {
 			buildResources(resourceChanges, new SubProgressMonitor(monitor, 10));
-		}
-	}
-
-	private IStatus buildModelElements(IScriptProject project,
-			List<ISourceModule> elements, IProgressMonitor monitor,
-			int buildType) {
-		monitor.beginTask(Util.EMPTY_STRING, WORK_BUILD);
-		try {
-			buildModules(project, elements, buildType,
-					BuildUtils.subMonitorFor(monitor, WORK_BUILD));
-			return Status.OK_STATUS;
-		} finally {
-			monitor.done();
 		}
 	}
 
@@ -157,28 +146,15 @@ public class StandardScriptBuilder implements IScriptBuilder {
 		return null;
 	}
 
-	private void buildModules(IScriptProject project,
-			List<ISourceModule> elements, int buildType,
-			IProgressMonitor monitor) {
-		final long startTime = DEBUG ? System.currentTimeMillis() : 0;
-		monitor.beginTask(Messages.ValidatorBuilder_buildingModules,
-				elements.size());
-		if (toolkit != null) {
-			buildNatureModules(project, buildType, elements, monitor);
-		}
-		monitor.done();
-		if (DEBUG) {
-			System.out.println("Build " + project.getElementName() + "(" //$NON-NLS-1$ //$NON-NLS-2$
-					+ elements.size() + ") in " //$NON-NLS-1$
-					+ (System.currentTimeMillis() - startTime) + "ms"); //$NON-NLS-1$
-		}
-	}
-
 	private List<IProblemReporter> reporters = null;
 
 	private void buildNatureModules(IScriptProject project, int buildType,
-			final List<ISourceModule> modules, IProgressMonitor monitor) {
+			final List<ISourceModule> modules, IBuildState state,
+			IProgressMonitor monitor) {
+		final long startTime = DEBUG ? System.currentTimeMillis() : 0;
 		beginBuild(buildType, monitor);
+		monitor.beginTask(Messages.ValidatorBuilder_buildingModules,
+				modules.size());
 		if (participants.length == 0) {
 			return;
 		}
@@ -195,13 +171,19 @@ public class StandardScriptBuilder implements IScriptBuilder {
 					String.valueOf(modules.size() - counter),
 					module.getElementName()));
 			final SourceModuleBuildContext context = new SourceModuleBuildContext(
-					problemFactory, module, buildType);
+					problemFactory, module, buildType, state);
 			if (context.reporter != null) {
 				buildModule(context);
 				reporters.add(context.reporter);
 			}
 			monitor.worked(1);
 			++counter;
+		}
+		monitor.done();
+		if (DEBUG) {
+			System.out.println("Build " + project.getElementName() + "(" //$NON-NLS-1$ //$NON-NLS-2$
+					+ modules.size() + ") in " //$NON-NLS-1$
+					+ (System.currentTimeMillis() - startTime) + "ms"); //$NON-NLS-1$
 		}
 	}
 
