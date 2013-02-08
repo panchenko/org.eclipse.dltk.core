@@ -223,6 +223,9 @@ public class IncrementalProjectChange extends AbstractBuildChange implements
 
 	private ChangeSet projectAdditions = null;
 	private ChangeSet projectChanges = null;
+	/**
+	 * Project-relative paths of the deleted files.
+	 */
 	private List<IPath> projectDeletes = null;
 	private RenameChangeSet projectRenames = null;
 
@@ -340,11 +343,17 @@ public class IncrementalProjectChange extends AbstractBuildChange implements
 		return paths;
 	}
 
+	/**
+	 * Returns full paths of the deleted files.
+	 */
 	protected Collection<IPath> getDeletedPaths() throws CoreException {
 		loadData();
 		final Set<IPath> paths = new HashSet<IPath>();
 		if (projectDeletes != null) {
-			paths.addAll(projectDeletes);
+			final IPath projectPath = project.getFullPath();
+			for (IPath path : projectDeletes) {
+				paths.add(projectPath.append(path));
+			}
 		}
 		if (projectRenames != null) {
 			final IPath projectPath = project.getFullPath();
