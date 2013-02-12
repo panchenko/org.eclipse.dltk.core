@@ -356,8 +356,7 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		ArrayList<IProject> projects = new ArrayList<IProject>();
 		try {
-			IBuildpathEntry[] entries = scriptProject
-					.getExpandedBuildpath(true);
+			IBuildpathEntry[] entries = scriptProject.getExpandedBuildpath();
 			for (int i = 0, l = entries.length; i < l; i++) {
 				IBuildpathEntry entry = entries[i];
 				IPath path = entry.getPath();

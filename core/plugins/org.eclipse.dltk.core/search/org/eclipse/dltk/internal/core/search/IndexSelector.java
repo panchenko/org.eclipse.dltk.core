@@ -59,7 +59,7 @@ public class IndexSelector {
 				ScriptProject focusProject = focus instanceof ArchiveProjectFragment ? (ScriptProject) focus
 						.getParent()
 						: (ScriptProject) focus;
-				focusEntries = focusProject.getExpandedBuildpath(true);
+				focusEntries = focusProject.getExpandedBuildpath();
 			}
 			IScriptModel model = focus.getModel();
 			IScriptProject project = getScriptProject(projectOrArchivePath,
@@ -107,7 +107,7 @@ public class IndexSelector {
 				// focus is part of a archive
 				IPath focusPath = focus.getPath();
 				IBuildpathEntry[] entries = scriptProject
-						.getExpandedBuildpath(true);
+						.getExpandedBuildpath();
 				for (int i = 0, length = entries.length; i < length; i++) {
 					IBuildpathEntry entry = entries[i];
 					if (entry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY
@@ -119,8 +119,7 @@ public class IndexSelector {
 			// look for dependent projects
 			IPath focusPath = ((ScriptProject) focus).getProject()
 					.getFullPath();
-			IBuildpathEntry[] entries = scriptProject
-					.getExpandedBuildpath(true);
+			IBuildpathEntry[] entries = scriptProject.getExpandedBuildpath();
 			for (int i = 0, length = entries.length; i < length; i++) {
 				IBuildpathEntry entry = entries[i];
 				if (entry.getEntryKind() == IBuildpathEntry.BPE_PROJECT
@@ -171,7 +170,7 @@ public class IndexSelector {
 					ScriptProject focusProject = focus instanceof ArchiveProjectFragment ? (ScriptProject) focus
 							.getParent()
 							: (ScriptProject) focus;
-					focusEntries = focusProject.getExpandedBuildpath(true);
+					focusEntries = focusProject.getExpandedBuildpath();
 				}
 
 				for (int i = 0; i < length; i++) {

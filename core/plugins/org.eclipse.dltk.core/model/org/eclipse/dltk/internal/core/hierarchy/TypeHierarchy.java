@@ -818,7 +818,7 @@ public class TypeHierarchy implements ITypeHierarchy, IElementChangedListener {
 				// if the added project is on the classpath, then the hierarchy
 				// has changed
 				IBuildpathEntry[] classpath = ((ScriptProject) this
-						.javaProject()).getExpandedBuildpath(false);
+						.javaProject()).getExpandedBuildpath();
 				for (int j = 0; j < classpath.length; j++) {
 					IBuildpathEntry element2 = classpath[j];
 					if (element2.getEntryKind() == IBuildpathEntry.BPE_PROJECT
@@ -830,7 +830,7 @@ public class TypeHierarchy implements ITypeHierarchy, IElementChangedListener {
 					// if the hierarchy's project is on the added project
 					// classpath, then the hierarchy has changed
 					classpath = ((ScriptProject) element)
-							.getExpandedBuildpath(true);
+							.getExpandedBuildpath();
 					IPath hierarchyProject = javaProject().getPath();
 					for (int j = 0; j < classpath.length; j++) {
 						IBuildpathEntry element2 = classpath[j];
