@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dltk.compiler.util.SimpleLookupTable;
 import org.eclipse.dltk.core.builder.IBuildState;
+import org.eclipse.dltk.utils.TextUtils;
 
 public class State {
 	// NOTE: this state cannot contain types that are not defined in this
@@ -66,7 +67,18 @@ public class State {
 
 		@Override
 		public String toString() {
-			return String.valueOf(flags);
+			final List<String> values = new ArrayList<String>();
+			if ((flags & IBuildState.STRUCTURAL) != 0) {
+				values.add("STRUCTURAL");
+			}
+			if ((flags & IBuildState.CONTENT) != 0) {
+				values.add("CONTENT");
+			}
+			if ((flags & IBuildState.EXPORTED) != 0) {
+				values.add("EXPORTED");
+			}
+			return String.valueOf(flags) + (!values.isEmpty() ? ":" : "")
+					+ TextUtils.join(values, '|');
 		}
 	}
 
@@ -320,17 +332,29 @@ public class State {
 	}
 
 	/**
-	 * Answers the files which should be rebuilt for the specified changes.
+	 * Finds the files which should be rebuilt for the specified changes and
+	 * adds them to the newDependencies and newStructuralDependencies
+	 * parameters.
 	 * 
 	 * @param paths
+	 *            input parameter - paths of all the changed files
 	 * @param structuralChanges
+	 *            input parameter - paths of the structurally changed files
+	 *            (subset of {@code paths})
 	 * @param includeImportProblems
+	 *            if all the files with import problems should be included
+	 * @param newDependencies
+	 *            output parameter - paths of the files which should be rebuilt
+	 * @param newStructuralDependencies
+	 *            output parameter - paths of the files which should be treated
+	 *            as structurally changed
 	 */
-	protected Set<IPath> dependenciesOf(Collection<IPath> paths,
-			Set<IPath> structuralChanges, boolean includeImportProblems) {
-		final Set<IPath> result = new HashSet<IPath>();
+	protected void findDependenciesOf(Collection<IPath> paths,
+			Set<IPath> structuralChanges, boolean includeImportProblems,
+			Collection<IPath> newDependencies,
+			Collection<IPath> newStructuralDependencies) {
 		if (includeImportProblems && !structuralChanges.isEmpty()) {
-			result.addAll(importProblems);
+			newDependencies.addAll(importProblems);
 		}
 		for (IPath path : paths) {
 			final boolean structuralChange = structuralChanges.contains(path);
@@ -339,12 +363,14 @@ public class State {
 				for (Map.Entry<IPath, DependencyInfo> entry : deps.entrySet()) {
 					if (structuralChange
 							|| ((entry.getValue().flags & IBuildState.CONTENT) != 0)) {
-						result.add(entry.getKey());
+						newDependencies.add(entry.getKey());
+						if ((entry.getValue().flags & IBuildState.EXPORTED) != 0) {
+							newStructuralDependencies.add(entry.getKey());
+						}
 					}
 				}
 			}
 		}
-		return result;
 	}
 
 	protected Collection<IPath> getAllStructuralDependencies(
@@ -378,5 +404,15 @@ public class State {
 			queue.addAll(nextQueue);
 		}
 		return result;
+	}
+
+	void dumpDependencies() {
+		System.out.println("Dependencies in " + scriptProjectName + ":");
+		for (Iterator<Map.Entry<IPath, Map<IPath, DependencyInfo>>> i = dependencies
+				.entrySet().iterator(); i.hasNext();) {
+			final Map.Entry<IPath, Map<IPath, DependencyInfo>> entry = i.next();
+			System.out.println("  " + entry.getKey() + " -> "
+					+ entry.getValue());
+		}
 	}
 }

@@ -563,6 +563,7 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 						.getChangedPaths();
 				processed.addAll(changes);
 				final Set<IPath> queue = new HashSet<IPath>();
+				final Set<IPath> newStructuralChanges = new HashSet<IPath>();
 				// TODO review cross-project dependency handling
 				for (IProjectChange projectChange : buildChange
 						.getRequiredProjectChanges()) {
@@ -574,8 +575,9 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 						projectChanges.addAll(projectState
 								.getAllStructuralDependencies(projectChanges));
 					}
-					queue.addAll(this.lastState.dependenciesOf(projectChanges,
-							buildState.getStructuralChanges(), false));
+					this.lastState.findDependenciesOf(projectChanges,
+							buildState.getStructuralChanges(), false, queue,
+							newStructuralChanges);
 				}
 				final IWorkspaceRoot root = ResourcesPlugin.getWorkspace()
 						.getRoot();
@@ -585,9 +587,10 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 				buildState
 						.recordStructuralChanges(((IncrementalProjectChange) buildChange)
 								.getDeletedPaths());
-				for (;;) {
-					queue.addAll(this.lastState.dependenciesOf(changes,
-							buildState.getStructuralChanges(), true));
+				for (int iterationNumber = 0;; ++iterationNumber) {
+					this.lastState.findDependenciesOf(changes,
+							buildState.getStructuralChanges(),
+							iterationNumber == 0, queue, newStructuralChanges);
 					queue.removeAll(processed);
 					if (queue.isEmpty()) {
 						break;
@@ -601,6 +604,8 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 						files.add(root.getFile(path));
 					}
 					buildState.resetStructuralChanges();
+					buildState.recordStructuralChanges(newStructuralChanges);
+					newStructuralChanges.clear();
 					final DependencyBuildChange qChange = new DependencyBuildChange(
 							currentProject, delta, files, monitor);
 					for (IScriptBuilder builder : builders) {
@@ -631,6 +636,9 @@ public class ScriptBuilder extends IncrementalProjectBuilder {
 			DLTKCore.error(e);
 		} finally {
 			resetBuilders(builders, buildState, monitor);
+			if (TRACE) {
+				// newState.dumpDependencies();
+			}
 			ModelManager.getModelManager().setLastBuiltState(currentProject,
 					newState);
 			monitor.done();

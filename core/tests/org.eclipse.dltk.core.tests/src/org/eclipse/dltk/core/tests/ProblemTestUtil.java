@@ -92,6 +92,7 @@ public class ProblemTestUtil extends Assert {
 	 */
 	public static String toString(IMarker marker) {
 		final StringBuilder sb = new StringBuilder();
+		sb.append(marker.getResource().getFullPath()).append(':');
 		final IProblemIdentifier id = getProblemId(marker);
 		if (id != null) {
 			sb.append(id.name()).append(":");

@@ -22,8 +22,25 @@ import org.eclipse.core.runtime.IPath;
  */
 public interface IBuildState {
 
+	/**
+	 * Specifies that rebuild should happen only on <em>structural change</em>
+	 * in the dependency. Structural change means change in the exported API of
+	 * the module and is reported by the builders using the
+	 * {@link IBuildState#recordStructuralChange(IPath)} call.
+	 */
 	static int STRUCTURAL = 1;
+
+	/**
+	 * Specifies that rebuild should happen on <em>any</em> change in the
+	 * dependency.
+	 */
 	static int CONTENT = 2;
+
+	/**
+	 * Specifies that if this dependency is triggered, then the change in the
+	 * original file should be treated as structural.
+	 */
+	static int EXPORTED = 4;
 
 	/**
 	 * @param path
