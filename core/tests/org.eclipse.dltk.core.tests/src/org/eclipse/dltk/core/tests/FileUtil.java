@@ -40,6 +40,8 @@ public class FileUtil {
 			final String name = sourceChild.getName();
 			if (name.equals("CVS") || name.equals(".svn"))
 				continue;
+			if (excludes.contains(sourceChild))
+				continue;
 			final File targetChild = new File(target, name);
 			if (sourceChild.isDirectory()) {
 				copyDirectory(sourceChild, targetChild, excludes);
