@@ -188,6 +188,10 @@ public class CodeAssistUtil {
 		return (IModuleSource) module.module;
 	}
 
+	/**
+	 * Value class for completion proposals returned by
+	 * {@link CodeAssistUtil#codeComplete()} methods.
+	 */
 	public class CodeCompletionResult {
 
 		private final List<CompletionProposal> proposals;
@@ -247,6 +251,37 @@ public class CodeAssistUtil {
 						.sort().toString(), exractProposalNames(false).sort()
 						.toString());
 			}
+		}
+
+		/**
+		 * Finds the proposal with the specified name or throws exception if no
+		 * such proposal found.
+		 */
+		public CompletionProposal get(String name)
+				throws IllegalArgumentException {
+			for (CompletionProposal proposal : proposals) {
+				if (name.equals(proposal.getName())) {
+					return proposal;
+				}
+			}
+			throw new IllegalArgumentException(NLS.bind(
+					"\"{0}\" completion proposal not found", name));
+		}
+
+		/**
+		 * Finds the proposal with the specified kind and name or throws
+		 * exception if no such proposal found.
+		 */
+		public CompletionProposal get(int kind, String name)
+				throws IllegalArgumentException {
+			for (CompletionProposal proposal : proposals) {
+				if (kind == proposal.getKind()
+						&& name.equals(proposal.getName())) {
+					return proposal;
+				}
+			}
+			throw new IllegalArgumentException(NLS.bind(
+					"\"{0}:{1}\" completion proposal not found", kind, name));
 		}
 	}
 
