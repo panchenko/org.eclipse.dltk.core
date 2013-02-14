@@ -247,7 +247,7 @@ public class CompletionProposal implements Cloneable {
 	private String[] parameterNames = null;
 
 	private IModelElement modelElement;
-	private Map<String, Object> attributes;
+	private Map<Object, Object> attributes;
 	private Object extraInfo;
 
 	private int accessibility = IAccessRule.K_ACCESSIBLE;
@@ -917,9 +917,13 @@ public class CompletionProposal implements Cloneable {
 	}
 
 	public void setAttribute(String key, Object value) {
+		internalSetAttribute(key, value);
+	}
+
+	private void internalSetAttribute(Object key, Object value) {
 		if (value != null) {
 			if (attributes == null) {
-				attributes = new HashMap<String, Object>(4);
+				attributes = new HashMap<Object, Object>(4);
 			}
 			attributes.put(key, value);
 		} else if (attributes != null) {
@@ -929,6 +933,27 @@ public class CompletionProposal implements Cloneable {
 
 	public Object getAttribute(String key) {
 		return attributes != null ? attributes.get(key) : null;
+	}
+
+	/**
+	 * Sets the specified flag.
+	 */
+	public void setFlag(CompletionProposalFlag flag) {
+		internalSetAttribute(flag, Boolean.TRUE);
+	}
+
+	/**
+	 * Clears the specified flag.
+	 */
+	public void clearFlag(CompletionProposalFlag flag) {
+		internalSetAttribute(flag, null);
+	}
+
+	/**
+	 * Tests if the specified flag is set.
+	 */
+	public boolean hasFlag(CompletionProposalFlag flag) {
+		return attributes != null && attributes.containsKey(flag);
 	}
 
 	/**
@@ -992,7 +1017,7 @@ public class CompletionProposal implements Cloneable {
 			final CompletionProposal copy = (CompletionProposal) super.clone();
 			// parameterNames array is shared, don't want to copy it.
 			if (attributes != null) {
-				copy.attributes = new HashMap<String, Object>(attributes);
+				copy.attributes = new HashMap<Object, Object>(attributes);
 			}
 			return copy;
 		} catch (CloneNotSupportedException e) {
