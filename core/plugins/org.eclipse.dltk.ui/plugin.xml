@@ -1081,7 +1081,7 @@
 			icon="/icons/full/elcl16/scripttypeassist_co.gif"/>
 	</extension>
 	<extension
-		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		point="org.eclipse.dltk.ui.scriptCompletionProposalComputer"
 		id="templateProposalCategory"
 		name="%TemplateProposalCategory">
 		<proposalCategory
