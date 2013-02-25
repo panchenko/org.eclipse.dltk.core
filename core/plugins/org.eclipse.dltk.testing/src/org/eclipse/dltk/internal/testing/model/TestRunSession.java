@@ -923,7 +923,6 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 
 	public void registerTestEnded(TestElement testElement, boolean completed) {
 		if (testElement instanceof TestCaseElement) {
-			fTotalCount++;
 			if (! completed) {
 				return;
 			}
