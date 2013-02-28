@@ -42,6 +42,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.core.variables.IStringVariableManager;
@@ -908,11 +909,19 @@ public final class ScriptRuntime {
 	 */
 	private static boolean addPersistedInterpreters(
 			InterpreterDefinitionsContainer interpreterDefs) {
-		// Try retrieving the Interpreter preferences from the preference store
+		// Try retrieving the interpreter preferences from the preference store
 		String interpreterXMLString = getPreferences().get(
 				PREF_INTERPRETER_XML, "");
 
-		// If the preference was found, load Interpreters from it into memory
+		if (interpreterXMLString.length() == 0) {
+			// default scope value could be specified in the
+			// plugin_customization.ini file
+			interpreterXMLString = DefaultScope.INSTANCE.getNode(
+					DLTKLaunchingPlugin.PLUGIN_ID)
+					.get(PREF_INTERPRETER_XML, "");
+		}
+
+		// If the preference was found, load interpreters from it into memory
 		if (interpreterXMLString.length() > 0) {
 			try {
 				Reader inputStream = new StringReader(interpreterXMLString);
