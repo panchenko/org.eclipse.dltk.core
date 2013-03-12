@@ -40,7 +40,11 @@ import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.VerifyKeyListener;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetAdapter;
+import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.KeyEvent;
@@ -555,42 +559,47 @@ public class ScriptConsoleViewer extends TextConsoleViewer implements
 						.disableWhile(new Runnable() {
 
 							public void run() {
-								// ssanders: Process the lines one-by-one in
-								// order to have the proper prompting
-								console.getDocumentListener().handleSynchronously = true;
-								try {
-									checkWidget();
-									Clipboard clipboard = new Clipboard(
-											getDisplay());
-									TextTransfer plainTextTransfer = TextTransfer
-											.getInstance();
-									String text = (String) clipboard
-											.getContents(plainTextTransfer,
-													DND.CLIPBOARD);
-									clipboard.dispose();
-									if (text != null && text.length() > 0) {
-										if (text.indexOf("\n") == -1) {
-											Point selectedRange = getSelectedRange();
-											getTextWidget().insert(text);
-											setCaretOffset(selectedRange.x
-													+ text.length());
-
-										} else {
-											StringTokenizer tokenizer = new StringTokenizer(
-													text, "\n\r"); //$NON-NLS-1$
-											while (tokenizer.hasMoreTokens() == true) {
-												final String finText = tokenizer
-														.nextToken();
-												insertText(finText + "\n"); //$NON-NLS-1$
-											}
-										}
-									}
-								} finally {
-									console.getDocumentListener().handleSynchronously = false;
-								}
+								checkWidget();
+								Clipboard clipboard = new Clipboard(
+										getDisplay());
+								TextTransfer plainTextTransfer = TextTransfer
+										.getInstance();
+								String text = (String) clipboard.getContents(
+										plainTextTransfer, DND.CLIPBOARD);
+								clipboard.dispose();
+								paste(text);
 							}
 
 						});
+			}
+		}
+
+		/**
+		 * @param text
+		 */
+		private void paste(String text) {
+			if (text != null && text.length() > 0) {
+				// ssanders: Process the lines one-by-one in
+				// order to have the proper prompting
+				console.getDocumentListener().handleSynchronously = true;
+				try {
+
+					if (text.indexOf("\n") == -1) {
+						Point selectedRange = getSelectedRange();
+						getTextWidget().insert(text);
+						setCaretOffset(selectedRange.x + text.length());
+
+					} else {
+						StringTokenizer tokenizer = new StringTokenizer(text,
+								"\n\r"); //$NON-NLS-1$
+						while (tokenizer.hasMoreTokens() == true) {
+							final String finText = tokenizer.nextToken();
+							insertText(finText + "\n"); //$NON-NLS-1$
+						}
+					}
+				} finally {
+					console.getDocumentListener().handleSynchronously = false;
+				}
 			}
 		}
 
@@ -675,7 +684,24 @@ public class ScriptConsoleViewer extends TextConsoleViewer implements
 
 			}
 		});
+		DropTarget target = new DropTarget(styledText, DND.DROP_DEFAULT
+				| DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_LINK);
+		target.setTransfer(new Transfer[] { TextTransfer.getInstance() });
+		target.addDropListener(new DropTargetAdapter() {
+			public void dragEnter(DropTargetEvent e) {
+				if (e.detail == DND.DROP_DEFAULT)
+					e.detail = DND.DROP_COPY;
+			}
 
+			public void dragOperationChanged(DropTargetEvent e) {
+				if (e.detail == DND.DROP_DEFAULT)
+					e.detail = DND.DROP_COPY;
+			}
+
+			public void drop(DropTargetEvent e) {
+				((ScriptConsoleStyledText) styledText).paste((String) e.data);
+			}
+		});
 		styledText.setKeyBinding('X' | SWT.MOD1, ST.COPY);
 		styledText.addVerifyKeyListener(new VerifyKeyListener() {
 			public void verifyKey(VerifyEvent event) {
