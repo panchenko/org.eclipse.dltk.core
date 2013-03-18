@@ -168,4 +168,18 @@ public interface ITestElement {
 	 */
 	public ITestRunSession getTestRunSession();
 	
+	/**
+	 * Returns the estimated total time elapsed in seconds while executing this test element.
+	 * The total time for a test suite includes the time used for all tests in that suite.
+	 * The total time for a test session includes the time used for all tests in that session.
+	 * <p>
+	 * <strong>NOTE</strong>: The elapsed time is only valid for {@link ITestElement.ProgressState#COMPLETED}
+	 * test elements.
+	 * </p>
+	 * 
+	 * @return total execution time for the test element in seconds, or {@link Double#NaN}</code>
+	 * if the state of the element is not {@link ITestElement.ProgressState#COMPLETED}
+	 */
+	public double getElapsedTimeInSeconds();
+	
 }

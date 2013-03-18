@@ -975,4 +975,14 @@ public class TestRunSession implements ITestRunSession, ITestSession {
 	public final ITestRunnerUI getTestRunnerUI() {
 		return testRunnerUI;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.junit.model.ITestElement#getElapsedTimeInSeconds()
+	 */
+	public double getElapsedTimeInSeconds() {
+		if (fTestRoot == null)
+			return Double.NaN;
+
+		return fTestRoot.getElapsedTimeInSeconds();
+	}
 }

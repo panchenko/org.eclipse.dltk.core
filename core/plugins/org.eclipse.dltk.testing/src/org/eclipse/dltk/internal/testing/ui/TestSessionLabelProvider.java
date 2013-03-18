@@ -24,18 +24,32 @@ import org.eclipse.dltk.testing.model.ITestCategoryElement;
 import org.eclipse.dltk.testing.model.ITestElement;
 import org.eclipse.dltk.testing.model.ITestRunSession;
 import org.eclipse.dltk.testing.model.ITestSuiteElement;
+import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StyledCellLabelProvider;
+import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.swt.graphics.Image;
+import java.text.NumberFormat;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 
-public class TestSessionLabelProvider extends LabelProvider {
+public class TestSessionLabelProvider extends LabelProvider  implements IStyledLabelProvider {
 
 	private final TestRunnerViewPart fTestRunnerPart;
 	private final int fLayoutMode;
-
+	private final NumberFormat timeFormat;
+	private boolean fShowTime;
+	
 	public TestSessionLabelProvider(TestRunnerViewPart testRunnerPart,
 			int layoutMode) {
 		fTestRunnerPart = testRunnerPart;
 		fLayoutMode = layoutMode;
+		fShowTime= true;
+					
+		timeFormat= NumberFormat.getNumberInstance();
+		timeFormat.setGroupingUsed(true);
+		timeFormat.setMinimumFractionDigits(3);
+		timeFormat.setMaximumFractionDigits(3);
+		timeFormat.setMinimumIntegerDigits(1);
 	}
 
 	private String getSimpleLabel(Object element) {
@@ -48,6 +62,51 @@ public class TestSessionLabelProvider extends LabelProvider {
 			return ((ITestCategoryElement) element).getCategoryName();
 		}
 		return element.toString();
+	}
+	
+	private String addElapsedTime(String string, double time) {
+		if (!fShowTime || Double.isNaN(time)) {
+			return string;
+		}
+		String formattedTime= timeFormat.format(time);
+		return Messages.format(DLTKTestingMessages.TestSessionLabelProvider_testName_elapsedTimeInSeconds, new String[] { string, formattedTime});
+	}
+	
+	private StyledString addElapsedTime(StyledString styledString, double time) {
+		String string= styledString.getString();
+		String decorated= addElapsedTime(string, time);
+		return StyledCellLabelProvider.styleDecoratedString(decorated, StyledString.COUNTER_STYLER, styledString);
+	}
+	
+	
+	public StyledString getStyledText(Object element) {
+		
+		String label= getSimpleLabel(element);
+		StyledString text= new StyledString(label);
+		if ( element instanceof ITestCaseElement) {
+			text =  StyledCellLabelProvider.styleDecoratedString(label, StyledString.QUALIFIER_STYLER, text);
+		}
+
+		ITestElement testElement= (ITestElement) element;
+		if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL
+				&& element instanceof ITestElement
+				&& !(element instanceof ITestCategoryElement)) {
+			final ITestElement parent = ((ITestElement) element)
+					.getParentContainer();
+			if (parent instanceof ITestRunSession
+					|| parent instanceof ITestCategoryElement) {
+				final String runnerDisplayName = getTestRunnerUI()
+						.getDisplayName();
+				if (runnerDisplayName != null) {
+					String decorated =  Messages
+							.format(
+									DLTKTestingMessages.TestSessionLabelProvider_testName_JUnitVersion,
+									new Object[] { label, runnerDisplayName });
+					text= StyledCellLabelProvider.styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER, text);
+				}
+			}
+		}
+		return addElapsedTime(text, testElement.getElapsedTimeInSeconds());
 	}
 
 	public String getText(Object element) {
@@ -167,6 +226,11 @@ public class TestSessionLabelProvider extends LabelProvider {
 		} else {
 			throw new IllegalArgumentException(String.valueOf(element));
 		}
+	}
+	
+	public void setShowTime(boolean showTime) {
+		fShowTime= showTime;
+		fireLabelProviderChanged(new LabelProviderChangedEvent(this));
 	}
 
 }

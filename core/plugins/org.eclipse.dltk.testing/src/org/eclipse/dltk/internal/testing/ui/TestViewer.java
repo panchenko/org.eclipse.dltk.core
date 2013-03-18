@@ -39,6 +39,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.DecoratingStyledCellLabelProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
@@ -179,7 +180,7 @@ public class TestViewer {
 		fTreeViewer.setContentProvider(fTreeContentProvider);
 		fTreeLabelProvider = new TestSessionLabelProvider(fTestRunnerPart,
 				TestRunnerViewPart.LAYOUT_HIERARCHICAL);
-		fTreeViewer.setLabelProvider(fTreeLabelProvider);
+		fTreeViewer.setLabelProvider(new DecoratingStyledCellLabelProvider(fTreeLabelProvider,null,null));
 		fTreeViewer.setComparator(new TestTreeComparator());
 
 		fTableViewer = new TableViewer(fViewerbook, SWT.V_SCROLL | SWT.H_SCROLL
@@ -190,7 +191,7 @@ public class TestViewer {
 		fTableViewer.setContentProvider(fTableContentProvider);
 		fTableLabelProvider = new TestSessionLabelProvider(fTestRunnerPart,
 				TestRunnerViewPart.LAYOUT_FLAT);
-		fTableViewer.setLabelProvider(fTableLabelProvider);
+		fTableViewer.setLabelProvider(new DecoratingStyledCellLabelProvider(fTableLabelProvider,null,null));
 
 		fSelectionProvider = new SelectionProviderMediator(
 				new StructuredViewer[] { fTreeViewer, fTableViewer },
@@ -330,6 +331,16 @@ public class TestViewer {
 		fHierarchyIcon.dispose();
 	}
 
+	public synchronized void setShowTime(boolean showTime) {
+		try {
+			fViewerbook.setRedraw(false);
+			fTreeLabelProvider.setShowTime(showTime);
+			fTableLabelProvider.setShowTime(showTime);
+		} finally {
+			fViewerbook.setRedraw(true);
+		}			
+	}
+	
 	public synchronized void setShowFailuresOnly(boolean failuresOnly,
 			int layoutMode) {
 		/*

@@ -259,6 +259,7 @@ public final class DLTKTestingMessages extends NLS {
 	public static String TestRunnerViewPart_cannotrerurn_message;
 	public static String TestRunnerViewPart_configName;
 	public static String TestRunnerViewPart_error_cannotrerun;
+	public static String TestRunnerViewPart_show_execution_time;
 
 	public static String TestRunnerViewPart_ExportTestRunSessionAction_error_title;
 
@@ -306,7 +307,7 @@ public final class DLTKTestingMessages extends NLS {
 	public static String TestSearchEngine_message_searching;
 
 	public static String TestSessionLabelProvider_testName_JUnitVersion;
-
+	public static String TestSessionLabelProvider_testName_elapsedTimeInSeconds;
 	public static String TypeRenameParticipant_change_name;
 	public static String TypeRenameParticipant_name;
 

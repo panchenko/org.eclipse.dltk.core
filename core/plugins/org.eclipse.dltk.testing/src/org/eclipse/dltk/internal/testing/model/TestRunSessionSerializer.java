@@ -30,6 +30,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 public class TestRunSessionSerializer implements XMLReader {
 
@@ -41,6 +43,8 @@ public class TestRunSessionSerializer implements XMLReader {
 	private final TestRunSession fTestRunSession;
 	private ContentHandler fHandler;
 	private ErrorHandler fErrorHandler;
+	
+	private final NumberFormat timeFormat= new DecimalFormat("0.0##"); //$NON-NLS-1$ // not localized, parseable by Double.parseDouble(..)
 	
 	/**
 	 * @param testRunSession the test run session to serialize
@@ -72,6 +76,7 @@ public class TestRunSessionSerializer implements XMLReader {
 		addCDATA(atts, IXMLTags.ATTR_IGNORED, fTestRunSession.getIgnoredCount());
 		startElement(IXMLTags.NODE_TESTRUN, atts);
 		
+		
 		TestRoot testRoot= fTestRunSession.getTestRoot();
 		ITestElement[] topSuites= testRoot.getChildren();
 		for (int i= 0; i < topSuites.length; i++) {
@@ -99,7 +104,8 @@ public class TestRunSessionSerializer implements XMLReader {
 			
 			AttributesImpl atts= new AttributesImpl();
 			addCDATA(atts, IXMLTags.ATTR_NAME, testSuiteElement.getSuiteTypeName());
-//			addCDATA(atts, IXMLTags.ATTR_TIME, Integer.toString(testCaseElement.getTime()));
+			if (! Double.isNaN(testSuiteElement.getElapsedTimeInSeconds()))
+									addCDATA(atts, IXMLTags.ATTR_TIME, timeFormat.format(testSuiteElement.getElapsedTimeInSeconds()));
 			if (testElement.getProgressState() != ProgressState.COMPLETED || testElement.getTestResult(false) != Result.UNDEFINED)
 				addCDATA(atts, IXMLTags.ATTR_INCOMPLETE, Boolean.TRUE.toString());
 			
@@ -117,10 +123,9 @@ public class TestRunSessionSerializer implements XMLReader {
 			
 			AttributesImpl atts= new AttributesImpl();
 			addCDATA(atts, IXMLTags.ATTR_NAME, testCaseElement.getTestName());
-			// addCDATA(atts, IXMLTags.ATTR_CLASSNAME,
-			// testCaseElement.getClassName());
-			// addCDATA(atts, IXMLTags.ATTR_TIME,
-			// Integer.toString(testCaseElement.getTime()));
+			if (! Double.isNaN(testCaseElement.getElapsedTimeInSeconds()))
+									addCDATA(atts, IXMLTags.ATTR_TIME, timeFormat.format(testCaseElement.getElapsedTimeInSeconds()));
+			
 			if (testElement.getProgressState() != ProgressState.COMPLETED)
 				addCDATA(atts, IXMLTags.ATTR_INCOMPLETE, Boolean.TRUE.toString());
 			if (testCaseElement.isIgnored())

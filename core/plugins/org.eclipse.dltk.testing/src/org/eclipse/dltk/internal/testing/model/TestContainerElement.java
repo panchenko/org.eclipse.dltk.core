@@ -139,6 +139,20 @@ public abstract class TestContainerElement extends TestElement implements
 	private void internalSetChildrenStatus(Status status) {
 		if (fChildrenStatus == status)
 			return;
+		
+		if (status == Status.RUNNING) {
+			if (fTime >= 0.0d) {
+				// re-running child: ignore change
+			} else {
+				fTime = -System.currentTimeMillis() / 1000d;
+			}
+		} else if (status.convertToProgressState() == ProgressState.COMPLETED) {
+			if (fTime < 0) { // assert ! Double.isNaN(fTime)
+				double endTime = System.currentTimeMillis() / 1000d;
+				fTime = endTime + fTime;
+			}
+		}
+		
 		fChildrenStatus = status;
 		TestContainerElement parent = getParent();
 		if (parent != null)

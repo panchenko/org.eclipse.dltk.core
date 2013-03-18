@@ -185,6 +185,7 @@ public class TestRunnerViewPart extends ViewPart {
 	private ScrollLockAction fScrollLockAction;
 	private ToggleOrientationAction[] fToggleOrientationActions;
 	private ShowTestHierarchyAction fShowTestHierarchyAction;
+	private ShowTimeAction fShowTimeAction;
 	private ActivateOnErrorAction fActivateOnErrorAction;
 	private IMenuListener fViewMenuListener;
 
@@ -284,6 +285,8 @@ public class TestRunnerViewPart extends ViewPart {
 	 * @since 3.2
 	 */
 	static final String TAG_FAILURES_ONLY = "failuresOnly"; //$NON-NLS-1$
+	
+	static final String TAG_SHOW_TIME= "time";
 
 	// orientations
 	static final int VIEW_ORIENTATION_VERTICAL = 0;
@@ -942,6 +945,16 @@ public class TestRunnerViewPart extends ViewPart {
 			setShowFailuresOnly(isChecked());
 		}
 	}
+	private class ShowTimeAction extends Action {
+		
+		public ShowTimeAction() {
+			super(DLTKTestingMessages.TestRunnerViewPart_show_execution_time, IAction.AS_CHECK_BOX);
+		}
+		
+		public void run() {
+			setShowExecutionTime(isChecked());
+		}
+	}
 
 	private class ShowTestHierarchyAction extends Action {
 
@@ -1018,6 +1031,7 @@ public class TestRunnerViewPart extends ViewPart {
 		memento.putString(TAG_FAILURES_ONLY, fFailuresOnlyFilterAction
 				.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
 		memento.putInteger(TAG_LAYOUT, fLayout);
+		memento.putString(TAG_SHOW_TIME, fShowTimeAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	private void restoreLayoutState(IMemento memento) {
@@ -1054,7 +1068,13 @@ public class TestRunnerViewPart extends ViewPart {
 		if (failuresOnly != null)
 			showFailuresOnly = failuresOnly.equals("true"); //$NON-NLS-1$
 
-		setFilterAndLayout(showFailuresOnly, layoutValue);
+		String time= memento.getString(TAG_SHOW_TIME);
+		boolean showTime= true;
+		if (time != null)
+			showTime= time.equals("true"); //$NON-NLS-1$
+		
+		setFilterAndLayout(showFailuresOnly, layoutValue);	
+		setShowExecutionTime(showTime);
 	}
 
 	/**
@@ -1653,6 +1673,7 @@ public class TestRunnerViewPart extends ViewPart {
 		getViewSite().getPage().addPartListener(fPartListener);
 
 		setFilterAndLayout(false, LAYOUT_HIERARCHICAL);
+		setShowExecutionTime(true);
 		if (fMemento != null) {
 			restoreLayoutState(fMemento);
 		}
@@ -1736,7 +1757,8 @@ public class TestRunnerViewPart extends ViewPart {
 				new ToggleOrientationAction(VIEW_ORIENTATION_AUTOMATIC) };
 
 		fShowTestHierarchyAction = new ShowTestHierarchyAction();
-
+		fShowTimeAction= new ShowTimeAction();
+		
 		toolBar.add(fNextAction);
 		toolBar.add(fPreviousAction);
 		toolBar.add(fFailuresOnlyFilterAction);
@@ -1748,6 +1770,7 @@ public class TestRunnerViewPart extends ViewPart {
 		toolBar.add(fViewHistory.createHistoryDropDownAction());
 
 		viewMenu.add(fShowTestHierarchyAction);
+		viewMenu.add(fShowTimeAction);
 		viewMenu.add(new Separator());
 
 		MenuManager layoutSubMenu = new MenuManager(
@@ -1973,6 +1996,12 @@ public class TestRunnerViewPart extends ViewPart {
 
 	void setShowFailuresOnly(boolean failuresOnly) {
 		setFilterAndLayout(failuresOnly, fLayout);
+	}
+	
+	private void setShowExecutionTime(boolean showTime) {
+		fTestViewer.setShowTime(showTime);
+		fShowTimeAction.setChecked(showTime);
+		
 	}
 
 	private void setLayoutMode(int mode) {

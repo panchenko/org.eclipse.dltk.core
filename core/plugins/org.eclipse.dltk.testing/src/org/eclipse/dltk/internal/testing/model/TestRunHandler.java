@@ -101,6 +101,7 @@ public class TestRunHandler extends DefaultHandler {
 			String pack= attributes.getValue(IXMLTags.ATTR_PACKAGE);
 			String suiteName= pack == null ? name : pack + "." + name; //$NON-NLS-1$
 			fTestSuite= (TestSuiteElement) fTestRunSession.createTestElement(fTestSuite, getNextId(), suiteName, true, 0);
+			readTime(fTestSuite, attributes);
 			fNotRun.push(Boolean.valueOf(attributes.getValue(IXMLTags.ATTR_INCOMPLETE)));
 			
 		} else if (qName.equals(IXMLTags.NODE_PROPERTIES) || qName.equals(IXMLTags.NODE_PROPERTY)) {
@@ -112,6 +113,7 @@ public class TestRunHandler extends DefaultHandler {
 			fTestCase= (TestCaseElement) fTestRunSession.createTestElement(fTestSuite, getNextId(), name, false, 0);
 			fNotRun.push(Boolean.valueOf(attributes.getValue(IXMLTags.ATTR_INCOMPLETE)));
 			fTestCase.setIgnored(Boolean.valueOf(attributes.getValue(IXMLTags.ATTR_IGNORED)).booleanValue());
+			readTime(fTestCase, attributes);
 			
 		} else if (qName.equals(IXMLTags.NODE_ERROR)) {
 			//TODO: multiple failures: https://bugs.eclipse.org/bugs/show_bug.cgi?id=125296
@@ -138,7 +140,15 @@ public class TestRunHandler extends DefaultHandler {
 			throw new SAXParseException("unknown node '" + qName + "'", fLocator);  //$NON-NLS-1$//$NON-NLS-2$
 		}
 	}
-	
+	private void readTime(TestElement testElement, Attributes attributes) {
+			String timeString= attributes.getValue(IXMLTags.ATTR_TIME);
+			if (timeString != null) {
+				try {
+					testElement.setElapsedTimeInSeconds(Double.parseDouble(timeString));
+				} catch (NumberFormatException e) {
+				}
+			}
+	}
 	public void characters(char[] ch, int start, int length) throws SAXException {
 		if (fInExpected) {
 			fExpectedBuffer.append(ch, start, length);

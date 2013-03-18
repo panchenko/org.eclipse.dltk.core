@@ -17,6 +17,7 @@ import org.eclipse.dltk.testing.model.ITestElement;
 import org.eclipse.dltk.testing.model.ITestElementContainer;
 import org.eclipse.dltk.testing.model.ITestRunSession;
 
+
 public abstract class TestElement implements ITestElement {
 	public final static class Status {
 		public static final Status RUNNING_ERROR = new Status(
@@ -217,6 +218,16 @@ public abstract class TestElement implements ITestElement {
 	private String fTrace;
 	private String fExpected;
 	private String fActual;
+	
+	/**
+	 * Running time in seconds. Contents depend on the current {@link #getProgressState()}:
+	 * <ul>
+	 * <li>{@link org.eclipse.dltk.testing.model.ITestElement.ProgressState#NOT_STARTED}: {@link Double#NaN}</li>
+	 * <li>{@link org.eclipse.dltk.testing.model.ITestElement.ProgressState#RUNNING}: negated start time</li>
+	 * <li>{@link org.eclipse.dltk.testing.model.ITestElement.ProgressState#STOPPED}: elapsed time</li>
+	 * <li>{@link org.eclipse.dltk.testing.model.ITestElement.ProgressState#COMPLETED}: elapsed time</li>
+	 * </ul>
+	 *//* default */ double fTime= Double.NaN;
 
 	/**
 	 * @param parent
@@ -235,6 +246,7 @@ public abstract class TestElement implements ITestElement {
 		fStatus = Status.NOT_RUN;
 		if (parent != null)
 			parent.addChild(this);
+		
 	}
 
 	/*
@@ -308,7 +320,14 @@ public abstract class TestElement implements ITestElement {
 		// TODO: notify about change?
 		// TODO: multiple errors/failures per test
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=125296
-
+		if (status == Status.RUNNING) {
+			fTime= - System.currentTimeMillis() / 1000d ;
+		} else if (status.convertToProgressState() == ProgressState.COMPLETED) {
+			if (fTime < 0) { // assert ! Double.isNaN(fTime)
+				double endTime= System.currentTimeMillis() / 1000.0d;
+				fTime= endTime + fTime;
+			}
+		}
 		fStatus = status;
 		TestContainerElement parent = getParent();
 		if (parent != null)
@@ -324,6 +343,18 @@ public abstract class TestElement implements ITestElement {
 		fExpected = expected;
 		fActual = actual;
 		setStatus(status);
+	}
+	
+	public void setElapsedTimeInSeconds(double time) {
+		fTime= time;
+	}
+	
+	public double getElapsedTimeInSeconds() {
+		if (Double.isNaN(fTime) || fTime < 0.0d) {
+			return Double.NaN;
+		}
+		
+		return fTime;
 	}
 
 	public Status getStatus() {
