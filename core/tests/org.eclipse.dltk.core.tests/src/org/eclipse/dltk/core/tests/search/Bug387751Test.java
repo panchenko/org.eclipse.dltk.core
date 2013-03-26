@@ -13,6 +13,7 @@ package org.eclipse.dltk.core.tests.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -200,7 +201,16 @@ public class Bug387751Test extends Assert {
 	private void addExternalLibraryFromFile(IFile file, String filename)
 			throws IOException, CoreException {
 		final File externalFile = new File(temp.getRoot(), filename);
-		Util.copy(externalFile, file.getContents());
+		final InputStream input = file.getContents();
+		try {
+			Util.copy(externalFile, input);
+		} finally {
+			try {
+				input.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
 		addBuildpathEntry(project.getScriptProject(),
 				DLTKCore.newExtLibraryEntry(getFullPath(externalFile
 						.getParentFile())));

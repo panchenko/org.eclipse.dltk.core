@@ -142,8 +142,8 @@ public class Util {
 		try {
 			stream = file.openInputStream(EFS.NONE, new NullProgressMonitor());
 			IFileInfo info = file.fetchInfo();
-			byte[] data = getInputStreamAsByteArray(stream, (int) info
-					.getLength());
+			byte[] data = getInputStreamAsByteArray(stream,
+					(int) info.getLength());
 			p.done("#", RuntimePerformanceMonitor.IOREAD, data.length);
 			return data;
 		} finally {
@@ -380,10 +380,16 @@ public class Util {
 
 	public static void copy(File file, InputStream input) throws IOException {
 		PerformanceNode p = RuntimePerformanceMonitor.begin();
-		OutputStream fos = new BufferedOutputStream(new FileOutputStream(file),
-				8096);
-		copy(input, fos);
-		fos.close();
+		OutputStream fos = new BufferedOutputStream(new FileOutputStream(file));
+		try {
+			copy(input, fos);
+		} finally {
+			try {
+				fos.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
 		p.done("#", RuntimePerformanceMonitor.IOWRITE, file.length());
 	}
 

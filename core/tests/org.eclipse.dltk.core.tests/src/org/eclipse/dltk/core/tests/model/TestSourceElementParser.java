@@ -20,7 +20,7 @@ public class TestSourceElementParser implements ISourceElementParser {
 	private ISourceElementRequestor requestor;
 
 	public void parseSourceModule(IModuleSource module) {
-		String file = module.getSourceContents();
+		String file = module.getSourceContents().replace("\r\n", "\n");
 		if (file.startsWith(PARSEME_HEADER)) {
 			parsePseudo(file);
 			return;

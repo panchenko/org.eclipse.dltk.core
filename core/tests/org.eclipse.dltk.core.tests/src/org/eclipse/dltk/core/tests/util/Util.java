@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.eclipse.dltk.core.DLTKContentTypeManager;
 import org.eclipse.dltk.core.DLTKCore;
 
 public class Util {
@@ -264,7 +263,7 @@ public class Util {
 				BufferedInputStream input;
 				try {
 					input = new BufferedInputStream(new FileInputStream(
-							files[i]), 4096);
+							files[i]));
 					org.eclipse.dltk.compiler.util.Util.copy(child, input);
 					input.close();
 				} catch (FileNotFoundException e) {
