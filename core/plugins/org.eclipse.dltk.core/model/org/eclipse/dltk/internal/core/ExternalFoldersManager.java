@@ -28,9 +28,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.dltk.annotations.Nullable;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.IScriptProjectFilenames;
+import org.eclipse.dltk.core.environment.EnvironmentPathUtils;
 import org.eclipse.dltk.internal.core.util.Util;
 
 public class ExternalFoldersManager {
@@ -43,18 +45,23 @@ public class ExternalFoldersManager {
 	 * Returns a set of external path to external folders referred to on the
 	 * given buildpath. Returns null if none.
 	 */
-	public static HashSet getExternalFolders(IBuildpathEntry[] buildpath) {
+	@Nullable
+	public static HashSet<IPath> getExternalFolders(IBuildpathEntry[] buildpath) {
 		if (buildpath == null)
 			return null;
-		HashSet folders = null;
+		HashSet<IPath> folders = null;
 		for (int i = 0; i < buildpath.length; i++) {
 			IBuildpathEntry entry = buildpath[i];
 			if (entry.getEntryKind() == IBuildpathEntry.BPE_LIBRARY) {
 				IPath entryPath = entry.getPath();
-				if (isExternalFolderPath(entryPath)) {
-					if (folders == null)
-						folders = new HashSet();
-					folders.add(entryPath);
+				if (EnvironmentPathUtils.isLocalEnvironment(entryPath)) {
+					final IPath local = EnvironmentPathUtils
+							.getLocalPath(entryPath);
+					if (isExternalFolderPath(local)) {
+						if (folders == null)
+							folders = new HashSet<IPath>();
+						folders.add(local);
+					}
 				}
 			}
 		}

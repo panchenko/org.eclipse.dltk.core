@@ -229,4 +229,19 @@ public class EnvironmentPathUtils {
 		}
 	}
 
+	/**
+	 * Answers if the specified full path belongs to the local environment.
+	 */
+	public static boolean isLocalEnvironment(IPath fullPath) {
+		final String device = fullPath.getDevice();
+		if (device != null) {
+			final int pos = device.indexOf(SEPARATOR);
+			if (pos >= 0) {
+				return LocalEnvironment.ENVIRONMENT_ID.equals(device.substring(
+						0, pos));
+			}
+		}
+		return false;
+	}
+
 }

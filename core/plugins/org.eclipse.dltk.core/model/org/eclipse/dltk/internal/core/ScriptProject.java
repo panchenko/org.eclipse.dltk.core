@@ -942,11 +942,11 @@ public class ScriptProject extends Openable implements IScriptProject,
 		ExternalFoldersManager externalFoldersManager = ModelManager
 				.getExternalManager();
 		ResolvedBuildpath result = new ResolvedBuildpath();
-		Map knownDrives = new HashMap();
+		Map<String, Boolean> knownDrives = new HashMap<String, Boolean>();
 
 		Map referencedEntriesMap = new HashMap();
 		List<IPath> rawLibrariesPath = new ArrayList<IPath>();
-		LinkedHashSet resolvedEntries = new LinkedHashSet();
+		LinkedHashSet<IBuildpathEntry> resolvedEntries = new LinkedHashSet<IBuildpathEntry>();
 
 		if (resolveChainedLibraries) {
 			for (int index = 0; index < rawClasspath.length; index++) {
@@ -1125,9 +1125,10 @@ public class ScriptProject extends Openable implements IScriptProject,
 
 	private void addToResult(IBuildpathEntry rawEntry,
 			IBuildpathEntry resolvedEntry, ResolvedBuildpath result,
-			LinkedHashSet resolvedEntries,
+			LinkedHashSet<IBuildpathEntry> resolvedEntries,
 			ExternalFoldersManager externalFoldersManager,
-			Map oldChainedEntriesMap, boolean addAsChainedEntry, Map knownDrives) {
+			Map oldChainedEntriesMap, boolean addAsChainedEntry,
+			Map<String, Boolean> knownDrives) {
 
 		IPath resolvedPath;
 		// If it's already been resolved, do not add to resolvedEntries
@@ -1192,11 +1193,12 @@ public class ScriptProject extends Openable implements IScriptProject,
 	 * File#exists() takes lot of time for an unmapped drive. Hence, cache the
 	 * info. https://bugs.eclipse.org/bugs/show_bug.cgi?id=338649
 	 */
-	private boolean driveExists(IPath sourcePath, Map knownDrives) {
+	private boolean driveExists(IPath sourcePath,
+			Map<String, Boolean> knownDrives) {
 		String drive = sourcePath.getDevice();
 		if (drive == null)
 			return true;
-		Boolean good = (Boolean) knownDrives.get(drive);
+		Boolean good = knownDrives.get(drive);
 		if (good == null) {
 			if (new File(drive).exists()) {
 				knownDrives.put(drive, Boolean.TRUE);

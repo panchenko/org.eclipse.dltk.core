@@ -11,7 +11,6 @@
 package org.eclipse.dltk.internal.core;
 
 import java.util.HashSet;
-import java.util.Iterator;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -35,25 +34,23 @@ public class ExternalFolderChange {
 	 */
 	public void updateExternalFoldersIfNecessary(boolean refreshIfExistAlready,
 			IProgressMonitor monitor) throws ModelException {
-		HashSet oldFolders = ExternalFoldersManager
+		HashSet<IPath> oldFolders = ExternalFoldersManager
 				.getExternalFolders(this.oldResolvedBuildpath);
 		IBuildpathEntry[] newResolvedBuildpath = this.project
 				.getResolvedBuildpath();
-		HashSet newFolders = ExternalFoldersManager
+		HashSet<IPath> newFolders = ExternalFoldersManager
 				.getExternalFolders(newResolvedBuildpath);
 		if (newFolders == null)
 			return;
 		ExternalFoldersManager foldersManager = ModelManager
 				.getExternalManager();
-		Iterator iterator = newFolders.iterator();
-		while (iterator.hasNext()) {
-			Object folderPath = iterator.next();
+		for (IPath folderPath : newFolders) {
 			if (oldFolders == null || !oldFolders.remove(folderPath)) {
 				try {
-					foldersManager.createLinkFolder((IPath) folderPath,
+					foldersManager.createLinkFolder(folderPath,
 							refreshIfExistAlready, monitor);
 				} catch (CoreException e) {
-					throw new ModelException(e);
+					ModelException.propagate(e);
 				}
 			}
 		}
