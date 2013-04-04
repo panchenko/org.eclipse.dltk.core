@@ -26,19 +26,30 @@ import org.eclipse.dltk.debug.core.model.IScriptStackFrame;
 import org.eclipse.dltk.debug.core.model.IScriptThread;
 import org.eclipse.dltk.debug.ui.DLTKDebugUIPlugin;
 import org.eclipse.dltk.internal.debug.ui.ScriptEvaluationContextManager;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.custom.StyledTextDropTargetEffect;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.texteditor.IUpdate;
@@ -63,6 +74,10 @@ public class DebugConsolePage extends ScriptConsolePage {
 
 	private IAction runAction;
 	private IAction resetOnLaunchAction;
+	private IAction normalPasteAction;
+	private IAction normalCopyAction;
+	private IAction normalCutAction;
+	private IAction normalSelectAllAction;
 
 	private boolean resetOnLaunch;
 
@@ -78,10 +93,21 @@ public class DebugConsolePage extends ScriptConsolePage {
 		resetOnLaunchAction.setChecked(resetOnLaunch);
 		actionBars.getMenuManager().add(resetOnLaunchAction);
 		updateActions();
+
+		normalPasteAction = (IAction) fGlobalActions.get(ActionFactory.PASTE
+				.getId());
+		normalCopyAction = (IAction) fGlobalActions.get(ActionFactory.COPY
+				.getId());
+		normalCutAction = (IAction) fGlobalActions.get(ActionFactory.CUT
+				.getId());
+		normalSelectAllAction = (IAction) fGlobalActions
+				.get(ActionFactory.SELECT_ALL.getId());
+
 	}
 
 	private SashForm sash;
 	private StyledText inputField;
+	private boolean focus = false;
 	private boolean enabled = true;
 
 	/**
@@ -110,6 +136,41 @@ public class DebugConsolePage extends ScriptConsolePage {
 	public void createControl(Composite parent) {
 		sash = new SashForm(parent, SWT.VERTICAL | SWT.SMOOTH);
 		inputField = new StyledText(sash, SWT.V_SCROLL | SWT.H_SCROLL);
+		inputField.addFocusListener(new FocusListener() {
+
+			public void focusLost(FocusEvent e) {
+				focus = false;
+				updateInputFieldActions();
+			}
+
+			public void focusGained(FocusEvent e) {
+				focus = true;
+				updateInputFieldActions();
+			}
+		});
+		DropTarget target = new DropTarget(inputField, DND.DROP_DEFAULT
+				| DND.DROP_MOVE | DND.DROP_COPY | DND.DROP_LINK);
+		target.setTransfer(new Transfer[] { TextTransfer.getInstance() });
+		target.addDropListener(new StyledTextDropTargetEffect(inputField) {
+			public void dragEnter(DropTargetEvent e) {
+				super.dragEnter(e);
+				if (e.detail == DND.DROP_DEFAULT)
+					e.detail = DND.DROP_COPY;
+			}
+
+			public void dragOperationChanged(DropTargetEvent e) {
+				super.dragOperationChanged(e);
+				if (e.detail == DND.DROP_DEFAULT)
+					e.detail = DND.DROP_COPY;
+			}
+
+			public void drop(DropTargetEvent e) {
+				super.drop(e);
+				Point selection = inputField.getSelectionRange();
+				inputField.replaceTextRange(selection.x, selection.y,
+						(String) e.data);
+			}
+		});
 		inputField.setEditable(true);
 		super.createControl(sash);
 		inputField.setFont(getViewer().getControl().getFont());
@@ -127,6 +188,30 @@ public class DebugConsolePage extends ScriptConsolePage {
 			DebugPlugin.getDefault().addDebugEventListener(debugEventListener);
 		}
 		enableUpdateJob.schedule(500);
+	}
+
+	private void updateInputFieldActions() {
+		IActionBars actionBars = getSite().getActionBars();
+		if (focus) {
+			setGlobalAction(actionBars, ActionFactory.PASTE.getId(),
+					new PasteAction(inputField));
+			setGlobalAction(actionBars, ActionFactory.COPY.getId(),
+					new CopyAction(inputField));
+			setGlobalAction(actionBars, ActionFactory.CUT.getId(),
+					new CutAction(inputField));
+			setGlobalAction(actionBars, ActionFactory.SELECT_ALL.getId(),
+					new SelectAllAction(inputField));
+		} else {
+			setGlobalAction(actionBars, ActionFactory.PASTE.getId(),
+					normalPasteAction);
+			setGlobalAction(actionBars, ActionFactory.COPY.getId(),
+					normalCopyAction);
+			setGlobalAction(actionBars, ActionFactory.CUT.getId(),
+					normalCutAction);
+			setGlobalAction(actionBars, ActionFactory.SELECT_ALL.getId(),
+					normalSelectAllAction);
+		}
+		updateSelectionDependentActions();
 	}
 
 	private boolean isDebuggerAvailable() {
@@ -181,7 +266,7 @@ public class DebugConsolePage extends ScriptConsolePage {
 
 	public void closeInputField() {
 		if (sash != null) {
-			final Control consoleControl = getControl();
+			final Control consoleControl = getViewer().getControl();
 			sash.setMaximizedControl(consoleControl);
 			consoleControl.setFocus();
 		}
@@ -253,4 +338,57 @@ public class DebugConsolePage extends ScriptConsolePage {
 	public void setResetOnLaunch(boolean resetOnLaunch) {
 		this.resetOnLaunch = resetOnLaunch;
 	}
+
+	private static class PasteAction extends Action {
+		private StyledText text;
+
+		public PasteAction(StyledText text) {
+			this.text = text;
+		}
+
+		@Override
+		public void run() {
+			text.paste();
+		}
+	}
+
+	private static class CopyAction extends Action {
+		private StyledText text;
+
+		public CopyAction(StyledText text) {
+			this.text = text;
+		}
+
+		@Override
+		public void run() {
+			text.copy();
+		}
+	}
+
+	private static class CutAction extends Action {
+		private StyledText text;
+
+		public CutAction(StyledText text) {
+			this.text = text;
+		}
+
+		@Override
+		public void run() {
+			text.cut();
+		}
+	}
+
+	private static class SelectAllAction extends Action {
+		private StyledText text;
+
+		public SelectAllAction(StyledText text) {
+			this.text = text;
+		}
+
+		@Override
+		public void run() {
+			text.selectAll();
+		}
+	}
+
 }
