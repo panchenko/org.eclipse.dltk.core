@@ -509,6 +509,8 @@ public class ScriptConsoleViewer extends TextConsoleViewer implements
 						} else {
 							setCaretOffset(caret);
 						}
+						Point selectedRange = getSelectedRange();
+						selectionChanged(selectedRange.x, selectedRange.y);
 						return;
 					}
 					break;
