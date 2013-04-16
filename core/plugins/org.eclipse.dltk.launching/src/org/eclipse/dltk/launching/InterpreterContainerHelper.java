@@ -1,6 +1,7 @@
 package org.eclipse.dltk.launching;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -110,19 +111,25 @@ public class InterpreterContainerHelper {
 
 	public static IBuildpathEntry createPackagesContainer(Set<String> names,
 			Set<String> autoPackages, IPath containerName) {
-		String pkgs = pkgsToString(names);
-		String autoPkgs = pkgsToString(autoPackages);
-		IBuildpathAttribute attr = DLTKCore.newBuildpathAttribute(
-				PACKAGES_ATTR, pkgs);
-		IBuildpathAttribute attr2 = DLTKCore.newBuildpathAttribute(
-				PACKAGES_AUTO_ATTR, autoPkgs);
-		IBuildpathEntry container = DLTKCore.newContainerEntry(containerName,
-				BuildpathEntry.NO_ACCESS_RULES, new IBuildpathAttribute[] {
-						attr, attr2 }, false/* not exported */);
-		return container;
+		final List<IBuildpathAttribute> attributes = new ArrayList<IBuildpathAttribute>(
+				2);
+		if (names != null && !names.isEmpty()) {
+			attributes.add(DLTKCore.newBuildpathAttribute(PACKAGES_ATTR,
+					pkgsToString(names)));
+		}
+		if (autoPackages != null && !autoPackages.isEmpty()) {
+			attributes.add(DLTKCore.newBuildpathAttribute(PACKAGES_AUTO_ATTR,
+					pkgsToString(autoPackages)));
+		}
+		return DLTKCore.newContainerEntry(containerName,
+				BuildpathEntry.NO_ACCESS_RULES,
+				attributes.toArray(new IBuildpathAttribute[attributes.size()]),
+				false/* not exported */);
 	}
 
 	private static String pkgsToString(Set<String> names) {
-		return TextUtils.join(names, SEPARATOR);
+		final List<String> sorted = new ArrayList<String>(names);
+		Collections.sort(sorted);
+		return TextUtils.join(sorted, SEPARATOR);
 	}
 }
