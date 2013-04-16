@@ -136,8 +136,8 @@ public class BuiltinProjectFragment extends ProjectFragment {
 		}
 		try {
 			BuiltinScriptFolderInfo fragInfo = new BuiltinScriptFolderInfo();
-			fldr.computeChildren(fragInfo, this.builtinProvider
-					.getBuiltinModules());
+			fldr.computeChildren(fragInfo,
+					this.builtinProvider.getBuiltinModules());
 			fldr.computeForeignResources(fragInfo);
 			newElements.put(fldr, fragInfo);
 		} catch (IllegalArgumentException e) {
@@ -298,8 +298,7 @@ public class BuiltinProjectFragment extends ProjectFragment {
 		Map<IPath, IBuildpathEntry> rootPathToRawEntries = project
 				.getPerProjectInfo().rootPathToRawEntries;
 		if (rootPathToRawEntries != null) {
-			rawEntry = rootPathToRawEntries.get(new Path(this.getPath()
-					.segment(0)));
+			rawEntry = rootPathToRawEntries.get(this.getPath());
 		}
 		if (rawEntry == null) {
 			throw new ModelException(new ModelStatus(
