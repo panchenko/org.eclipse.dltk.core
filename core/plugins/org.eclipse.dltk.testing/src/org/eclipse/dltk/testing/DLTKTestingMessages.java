@@ -329,4 +329,9 @@ public final class DLTKTestingMessages extends NLS {
 
 	public static String InternalError;
 	public static String TestingNoEngineConfigured;
+
+	public static String TestRunnerViewPart_sort_direction_menu;
+	public static String TestRunnerViewPart_toggle_sort_ascending;
+	public static String TestRunnerViewPart_toggle_sort_no_sort;
+	public static String TestRunnerViewPart_toggle_sort_descending;
 }

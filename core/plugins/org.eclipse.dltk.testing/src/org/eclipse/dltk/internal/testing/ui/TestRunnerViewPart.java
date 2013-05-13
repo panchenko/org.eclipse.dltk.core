@@ -149,6 +149,8 @@ public class TestRunnerViewPart extends ViewPart {
 	 */
 	private int fLayout = LAYOUT_HIERARCHICAL;
 
+	
+	private int fSortDirection = SORT_DIRECTION_NO_SORT;
 	// private boolean fTestIsRunning= false;
 
 	protected DLTKTestingProgressBar fProgressBar;
@@ -184,6 +186,7 @@ public class TestRunnerViewPart extends ViewPart {
 	private Action fFailuresOnlyFilterAction;
 	private ScrollLockAction fScrollLockAction;
 	private ToggleOrientationAction[] fToggleOrientationActions;
+	private ToggleSortDirectionAction[] fToggleSortDirectionActions;
 	private ShowTestHierarchyAction fShowTestHierarchyAction;
 	private ShowTimeAction fShowTimeAction;
 	private ActivateOnErrorAction fActivateOnErrorAction;
@@ -276,6 +279,8 @@ public class TestRunnerViewPart extends ViewPart {
 	static final String TAG_PAGE = "page"; //$NON-NLS-1$
 	static final String TAG_RATIO = "ratio"; //$NON-NLS-1$
 	static final String TAG_ORIENTATION = "orientation"; //$NON-NLS-1$
+	static final String TAG_SORT_DIRECTION = "sort_direction"; //$NON-NLS-1$
+	
 	static final String TAG_SCROLL = "scroll"; //$NON-NLS-1$
 	/**
 	 * @since 3.2
@@ -293,6 +298,11 @@ public class TestRunnerViewPart extends ViewPart {
 	static final int VIEW_ORIENTATION_HORIZONTAL = 1;
 	static final int VIEW_ORIENTATION_AUTOMATIC = 2;
 
+	//sort direction
+	static final int SORT_DIRECTION_NO_SORT = 0;
+	static final int SORT_DIRECTION_ASCENDING = 1;
+	static final int SORT_DIRECTION_DESCENDING = 2;
+	
 	private IMemento fMemento;
 
 	Image fOriginalViewImage;
@@ -879,6 +889,36 @@ public class TestRunnerViewPart extends ViewPart {
 			}
 		}
 	}
+	
+	private class ToggleSortDirectionAction extends Action {
+		private final int fActionSortDirection;
+
+		public ToggleSortDirectionAction(int sortDirection) {
+			super("", AS_RADIO_BUTTON); //$NON-NLS-1$
+			if (sortDirection == TestRunnerViewPart.SORT_DIRECTION_NO_SORT) {
+				setText(DLTKTestingMessages.TestRunnerViewPart_toggle_sort_no_sort);
+//				setImageDescriptor(DLTKTestingPlugin
+//						.getImageDescriptor("elcl16/th_horizontal.gif")); //$NON-NLS-1$				
+			} else if (sortDirection == TestRunnerViewPart.SORT_DIRECTION_ASCENDING) {
+				setText(DLTKTestingMessages.TestRunnerViewPart_toggle_sort_ascending);
+//				setImageDescriptor(DLTKTestingPlugin
+//						.getImageDescriptor("elcl16/th_vertical.gif")); //$NON-NLS-1$				
+			} else if (sortDirection == TestRunnerViewPart.SORT_DIRECTION_DESCENDING) {
+				setText(DLTKTestingMessages.TestRunnerViewPart_toggle_sort_descending);
+//				setImageDescriptor(DLTKTestingPlugin
+//						.getImageDescriptor("elcl16/th_automatic.gif")); //$NON-NLS-1$				
+			}
+			fActionSortDirection = sortDirection;			
+		}
+		public int getSortDirection(){
+			return fActionSortDirection;
+		}
+
+		public void run() {
+			fSortDirection =fActionSortDirection;
+			fTestViewer.setSortDirection(fActionSortDirection);
+		}
+	}
 
 	/**
 	 * Listen for for modifications to Java elements
@@ -1027,11 +1067,13 @@ public class TestRunnerViewPart extends ViewPart {
 		int ratio = (weigths[0] * 1000) / (weigths[0] + weigths[1]);
 		memento.putInteger(TAG_RATIO, ratio);
 		memento.putInteger(TAG_ORIENTATION, fOrientation);
-
+		memento.putInteger(TAG_SORT_DIRECTION, fSortDirection);
+		
 		memento.putString(TAG_FAILURES_ONLY, fFailuresOnlyFilterAction
 				.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
 		memento.putInteger(TAG_LAYOUT, fLayout);
 		memento.putString(TAG_SHOW_TIME, fShowTimeAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+
 	}
 
 	private void restoreLayoutState(IMemento memento) {
@@ -1052,6 +1094,18 @@ public class TestRunnerViewPart extends ViewPart {
 		if (orientation != null)
 			fOrientation = orientation.intValue();
 		computeOrientation();
+		Integer sortDirection = memento.getInteger(TAG_SORT_DIRECTION);
+		if(sortDirection !=null) {
+			fSortDirection = sortDirection.intValue();
+			fTestViewer.setSortDirection(fSortDirection);
+			for(ToggleSortDirectionAction act :fToggleSortDirectionActions){
+				if(act.getSortDirection() ==fSortDirection){
+					act.setChecked(true);
+					break;
+				}
+			}
+		}
+		
 		String scrollLock = memento.getString(TAG_SCROLL);
 		if (scrollLock != null) {
 			fScrollLockAction.setChecked(scrollLock.equals("true")); //$NON-NLS-1$
@@ -1756,6 +1810,12 @@ public class TestRunnerViewPart extends ViewPart {
 				new ToggleOrientationAction(VIEW_ORIENTATION_HORIZONTAL),
 				new ToggleOrientationAction(VIEW_ORIENTATION_AUTOMATIC) };
 
+		fToggleSortDirectionActions =  new ToggleSortDirectionAction[]{
+				new ToggleSortDirectionAction(SORT_DIRECTION_NO_SORT),
+				new ToggleSortDirectionAction(SORT_DIRECTION_ASCENDING),
+				new ToggleSortDirectionAction(SORT_DIRECTION_DESCENDING)
+		};
+		
 		fShowTestHierarchyAction = new ShowTestHierarchyAction();
 		fShowTimeAction= new ShowTimeAction();
 		
@@ -1777,6 +1837,12 @@ public class TestRunnerViewPart extends ViewPart {
 				DLTKTestingMessages.TestRunnerViewPart_layout_menu);
 		for (int i = 0; i < fToggleOrientationActions.length; ++i) {
 			layoutSubMenu.add(fToggleOrientationActions[i]);
+		}
+		viewMenu.add(layoutSubMenu);
+		layoutSubMenu = new MenuManager(
+				DLTKTestingMessages.TestRunnerViewPart_sort_direction_menu);
+		for (int i = 0; i < fToggleSortDirectionActions.length; ++i) {
+			layoutSubMenu.add(fToggleSortDirectionActions[i]);
 		}
 		viewMenu.add(layoutSubMenu);
 		viewMenu.add(new Separator());

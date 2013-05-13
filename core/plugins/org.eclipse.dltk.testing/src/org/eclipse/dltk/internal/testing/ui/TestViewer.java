@@ -48,6 +48,7 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
@@ -729,6 +730,12 @@ public class TestViewer {
 
 	public void expandFirstLevel() {
 		fTreeViewer.expandToLevel(2);
+	}
+	public void setSortDirection(int sortDirection){
+		ViewerComparator comparator = fTreeViewer.getComparator();
+		if(comparator instanceof TestTreeComparator){
+			((TestTreeComparator) comparator).setSortDirection(sortDirection);
+		}
 	}
 
 }
