@@ -1104,6 +1104,8 @@ public class TestRunnerViewPart extends ViewPart {
 					break;
 				}
 			}
+		}else{
+			fToggleSortDirectionActions[0].setChecked(true);
 		}
 		
 		String scrollLock = memento.getString(TAG_SCROLL);
