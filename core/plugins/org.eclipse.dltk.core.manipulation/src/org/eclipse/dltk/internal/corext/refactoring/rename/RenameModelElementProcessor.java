@@ -217,7 +217,7 @@ public abstract class RenameModelElementProcessor extends ScriptRenameProcessor 
 					IModelElement elem = (IModelElement)match.getElement();
 					ISourceModule cu = (ISourceModule)elem.getAncestor(IModelElement.SOURCE_MODULE);
 					if (cu != null) {
-						ReplaceEdit edit = new ReplaceEdit(match.getOffset(), fCurrentName.length(), getNewElementName());
+						ReplaceEdit edit = createReplaceEdit(match);
 						addTextEdit(fChangeManager.get(cu), getProcessorName(), edit);
 					}
 					//if (match.getResource().equals(fCu.getCorrespondingResource()))
@@ -244,6 +244,17 @@ public abstract class RenameModelElementProcessor extends ScriptRenameProcessor 
 		//	fChange.addTextEditGroup(new TextEditGroup(RefactoringCoreMessages.RenameTempRefactoring_changeName, edit));
 		//}
 	}
+	
+    /**
+     * Creates {@link ReplaceEdit} for the specified {@link SearchMatch}
+     * 
+     * @param match
+     * @return
+     * @since 5.0.0
+     */
+	protected ReplaceEdit createReplaceEdit(SearchMatch match) {
+        return new ReplaceEdit(match.getOffset(), fCurrentName.length(), getNewElementName());
+    }
 	
 	private static void addTextEdit(TextChange change, String name, TextEdit edit) throws MalformedTreeException {
 		TextEdit root= change.getEdit();
