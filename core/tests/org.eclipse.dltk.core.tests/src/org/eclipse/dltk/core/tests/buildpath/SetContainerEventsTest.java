@@ -14,6 +14,7 @@ package org.eclipse.dltk.core.tests.buildpath;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +97,7 @@ public class SetContainerEventsTest extends Assert {
 	};
 
 	@Test
-	public void setContainer() throws ModelException {
+	public void setContainer() throws ModelException,IOException {
 		final File folder1 = temp.newFolder("folder1");
 		DLTKCore.addElementChangedListener(listener,
 				IResourceChangeEvent.POST_CHANGE);
@@ -116,7 +117,7 @@ public class SetContainerEventsTest extends Assert {
 	}
 
 	@Test
-	public void changeContainer() throws ModelException {
+	public void changeContainer() throws ModelException,IOException {
 		final File folder1 = temp.newFolder("folder1");
 		final File folder2 = temp.newFolder("folder2");
 		DLTKCore.setBuildpathContainer(TestContainer2.CONTAINER_ID,
