@@ -53,7 +53,7 @@ public class AllTests {
 
 		final TestSuite serviceSuite = new TestSuite("DBGP Service tests");
 		serviceSuite.addTestSuite(DbgpServiceTests.class);
-		serviceSuite.addTestSuite(DbgpServiceDispatcherTests.class);
+//		serviceSuite.addTestSuite(DbgpServiceDispatcherTests.class);
 		suite.addTest(serviceSuite);
 
 		// Breakpoints

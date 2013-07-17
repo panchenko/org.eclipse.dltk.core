@@ -13,6 +13,24 @@
 	<artifactId>org.eclipse.dltk.ui.tests</artifactId>
 	<version>5.0.0-SNAPSHOT</version>
 	<packaging>eclipse-test-plugin</packaging>
+	<properties>
+		<os-jvm-flags></os-jvm-flags>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>macosx-jvm-flags</id>
+			<activation>
+				<os>
+					<family>mac</family>
+				</os>
+			</activation>
+			<properties>
+				<os-jvm-flags>-XstartOnFirstThread</os-jvm-flags>
+			</properties>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -23,6 +41,8 @@
 					<testSuite>${project.artifactId}</testSuite>
 					<testClass>org.eclipse.dltk.ui.tests.AllTests</testClass>
 					<useUIHarness>true</useUIHarness>
+					<useUIThread>true</useUIThread>
+					<argLine>-Xms40m -Xmx1G ${os-jvm-flags}</argLine>
 					<dependencies>
 						<dependency>
 							<type>p2-installable-unit</type>
