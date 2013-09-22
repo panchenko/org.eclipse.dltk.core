@@ -9,6 +9,8 @@
  *******************************************************************************/
 package org.eclipse.dltk.internal.core.search.processing;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -21,6 +23,10 @@ import org.eclipse.dltk.internal.core.util.Util;
 import org.eclipse.osgi.util.NLS;
 
 public abstract class JobManager implements Runnable {
+
+	/* enable delay between processing jobs if single core || multithreading */
+	private static final boolean ENABLE_DELAYS = Runtime.getRuntime()
+			.availableProcessors() <= 2;
 
 	/* queue of jobs to execute */
 	protected IJob[] awaitingJobs = new IJob[10];
@@ -42,7 +48,7 @@ public abstract class JobManager implements Runnable {
 	/* flag indicating that the activation has completed */
 	public boolean activated = false;
 
-	private int awaitingClients = 0;
+	private final AtomicInteger awaitingClients = new AtomicInteger();
 
 	/**
 	 * Invoked exactly once, in background, before starting processing any job
@@ -251,9 +257,7 @@ public abstract class JobManager implements Runnable {
 				try {
 					if (t != null)
 						t.setPriority(Thread.currentThread().getPriority());
-					synchronized (this) {
-						this.awaitingClients++;
-					}
+					this.awaitingClients.incrementAndGet();
 					IJob previousJob = null;
 					int awaitingWork;
 					while ((awaitingWork = awaitingJobsCount()) > 0) {
@@ -282,9 +286,7 @@ public abstract class JobManager implements Runnable {
 						}
 					}
 				} finally {
-					synchronized (this) {
-						this.awaitingClients--;
-					}
+					this.awaitingClients.decrementAndGet();
 					if (t != null && originalPriority > -1 && t.isAlive())
 						t.setPriority(originalPriority);
 				}
@@ -465,7 +467,7 @@ public abstract class JobManager implements Runnable {
 						if (VERBOSE)
 							Util.verbose("FINISHED background job - " + job); //$NON-NLS-1$
 						moveToNextJob();
-						if (this.awaitingClients == 0)
+						if (ENABLE_DELAYS && this.awaitingClients.get() == 0)
 							Thread.sleep(50);
 					}
 				} catch (InterruptedException e) { // background indexing was
