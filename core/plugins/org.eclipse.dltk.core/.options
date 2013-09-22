@@ -13,4 +13,5 @@ org.eclipse.dltk.core/debugScopes = false
 org.eclipse.dltk.core/debugPrintModel = false
 org.eclipse.dltk.core/traceAST/dltk = false
 org.eclipse.dltk.core/show_reindex = false
+org.eclipse.dltk.core/performanceMonitor = false
 
