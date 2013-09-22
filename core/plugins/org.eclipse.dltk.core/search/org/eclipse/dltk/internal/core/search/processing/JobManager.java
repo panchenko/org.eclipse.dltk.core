@@ -101,8 +101,7 @@ public abstract class JobManager implements Runnable {
 				while (this.processingThread != null && this.executing) {
 					try {
 						if (VERBOSE)
-							Util
-									.verbose("-> waiting end of current background job - " + currentJob); //$NON-NLS-1$
+							Util.verbose("-> waiting end of current background job - " + currentJob); //$NON-NLS-1$
 						Thread.sleep(50);
 					} catch (InterruptedException e) {
 						// ignore
@@ -123,8 +122,7 @@ public abstract class JobManager implements Runnable {
 							this.awaitingJobs[++loc] = currentJob;
 						} else {
 							if (VERBOSE)
-								Util
-										.verbose("-> discarding background job  - " + currentJob); //$NON-NLS-1$
+								Util.verbose("-> discarding background job  - " + currentJob); //$NON-NLS-1$
 							currentJob.cancel();
 						}
 					}
@@ -136,8 +134,7 @@ public abstract class JobManager implements Runnable {
 			enable();
 		}
 		if (VERBOSE)
-			Util
-					.verbose("DISCARD   DONE with background job family - " + jobFamily); //$NON-NLS-1$
+			Util.verbose("DISCARD   DONE with background job family - " + jobFamily); //$NON-NLS-1$
 	}
 
 	public synchronized void enable() {
@@ -211,8 +208,7 @@ public abstract class JobManager implements Runnable {
 
 			case IJob.ForceImmediate:
 				if (VERBOSE)
-					Util
-							.verbose("-> NOT READY - forcing immediate - " + searchJob);//$NON-NLS-1$
+					Util.verbose("-> NOT READY - forcing immediate - " + searchJob);//$NON-NLS-1$
 				try {
 					disable(); // pause indexing
 					status = searchJob.execute(progress == null ? null
@@ -268,20 +264,18 @@ public abstract class JobManager implements Runnable {
 						// the queue but job manager is not enabled
 						if (currentJob != null && currentJob != previousJob) {
 							if (VERBOSE)
-								Util
-										.verbose("-> NOT READY - waiting until ready - " + searchJob);//$NON-NLS-1$
+								Util.verbose("-> NOT READY - waiting until ready - " + searchJob);//$NON-NLS-1$
 							if (subProgress != null) {
 								subProgress.subTask(NLS.bind(
-										Messages.manager_filesToIndex, Integer
-												.toString(awaitingWork)));
+										Messages.manager_filesToIndex,
+										Integer.toString(awaitingWork)));
 								subProgress.worked(1);
 							}
 							previousJob = currentJob;
 						}
 						try {
 							if (VERBOSE)
-								Util
-										.verbose("-> GOING TO SLEEP - " + searchJob);//$NON-NLS-1$
+								Util.verbose("-> GOING TO SLEEP - " + searchJob);//$NON-NLS-1$
 							Thread.sleep(50);
 						} catch (InterruptedException e) {
 							// ignore
@@ -396,8 +390,8 @@ public abstract class JobManager implements Runnable {
 					IProgressMonitor.UNKNOWN);
 			while (!monitor.isCanceled()
 					&& (awaitingJobsCount = awaitingJobsCount()) > 0) {
-				monitor.subTask(NLS.bind(Messages.manager_filesToIndex, Integer
-						.toString(awaitingJobsCount)));
+				monitor.subTask(NLS.bind(Messages.manager_filesToIndex,
+						Integer.toString(awaitingJobsCount)));
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
@@ -567,8 +561,7 @@ public abstract class JobManager implements Runnable {
 		int numJobs = this.jobEnd - this.jobStart + 1;
 		buffer.append("Jobs in queue:").append(numJobs).append('\n'); //$NON-NLS-1$
 		for (int i = 0; i < numJobs && i < 15; i++) {
-			buffer
-					.append(i)
+			buffer.append(i)
 					.append(" - job[" + i + "]: ").append(this.awaitingJobs[this.jobStart + i]).append('\n'); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return buffer.toString();
