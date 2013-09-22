@@ -20,6 +20,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeColumn;
+import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.part.ViewPart;
@@ -158,6 +160,11 @@ public class DLTKPerformanceViewPart extends ViewPart {
 	private IContextActivation fContextActivation;
 
 	public DLTKPerformanceViewPart() {
+	}
+
+	public void init(IViewSite site) throws PartInitException {
+		super.init(site);
+		RuntimePerformanceMonitor.setActive(true);
 	}
 
 	Runnable update = new Runnable() {

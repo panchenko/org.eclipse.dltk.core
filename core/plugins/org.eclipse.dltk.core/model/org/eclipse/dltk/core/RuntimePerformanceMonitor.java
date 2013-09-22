@@ -1,5 +1,7 @@
 package org.eclipse.dltk.core;
 
+import static org.eclipse.core.runtime.Platform.getDebugOption;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,7 +13,29 @@ public class RuntimePerformanceMonitor {
 	public static final String IOREAD = "IO Read";
 	public static final String IOWRITE = "IO Write";
 
+	/**
+	 * TODO (alex) This field was never used, remove in 6.0
+	 */
+	@Deprecated
 	public static boolean RUNTIME_PERFORMANCE = true;
+
+	private static volatile boolean active = Boolean.valueOf(
+			getDebugOption("org.eclipse.dltk.core/performanceMonitor")) //$NON-NLS-1$
+			.booleanValue();
+
+	/**
+	 * @since 5.1
+	 */
+	public static boolean isActive() {
+		return active;
+	}
+
+	/**
+	 * @since 5.1
+	 */
+	public static void setActive(boolean value) {
+		active = value;
+	}
 
 	public static class DataEntry {
 		long count = 0;
@@ -31,8 +55,11 @@ public class RuntimePerformanceMonitor {
 		}
 	}
 
-	private static Map<String, Map<String, DataEntry>> entries = new HashMap<String, Map<String, DataEntry>>();
+	private static final Map<String, Map<String, DataEntry>> entries = new HashMap<String, Map<String, DataEntry>>();
 
+	/**
+	 * @noreference This method is not intended to be referenced by clients.
+	 */
 	public static synchronized void updateData(String language, String kind,
 			long time, long value) {
 		Map<String, DataEntry> attrs = internalGetEntries(language);
@@ -46,6 +73,9 @@ public class RuntimePerformanceMonitor {
 		entry.time += time;
 	}
 
+	/**
+	 * @noreference This method is not intended to be referenced by clients.
+	 */
 	public static synchronized void updateData(String language, String kind,
 			long time, long value, IEnvironment env) {
 		if (env != null) {
@@ -79,7 +109,7 @@ public class RuntimePerformanceMonitor {
 	}
 
 	public static Map<String, Map<String, DataEntry>> getAllEntries() {
-		Set<String> keySet = null;
+		final Set<String> keySet;
 		synchronized (RuntimePerformanceMonitor.class) {
 			keySet = new HashSet<String>(entries.keySet());
 		}
@@ -119,7 +149,36 @@ public class RuntimePerformanceMonitor {
 		}
 	}
 
+	private static final class DummyPerformanceNode extends PerformanceNode {
+		@Override
+		public long done() {
+			// empty
+			return 0;
+		}
+
+		@Override
+		public void renew() {
+			// empty
+		}
+
+		@Override
+		public void done(String natureId, String kind, long value,
+				IEnvironment environment) {
+			// empty
+		}
+
+		@Override
+		public void done(String natureId, String string, long value) {
+			// empty
+		}
+	}
+
+	private static final DummyPerformanceNode dummyNode = new DummyPerformanceNode();
+
 	public static PerformanceNode begin() {
+		if (!active) {
+			return dummyNode;
+		}
 		PerformanceNode node = new PerformanceNode();
 		node.renew();
 		return node;
