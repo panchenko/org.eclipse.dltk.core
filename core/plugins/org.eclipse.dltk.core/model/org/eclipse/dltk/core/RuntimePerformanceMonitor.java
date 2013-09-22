@@ -23,10 +23,16 @@ public class RuntimePerformanceMonitor {
 			getDebugOption("org.eclipse.dltk.core/performanceMonitor")) //$NON-NLS-1$
 			.booleanValue();
 
+	/**
+	 * @since 5.1
+	 */
 	public static boolean isActive() {
 		return active;
 	}
 
+	/**
+	 * @since 5.1
+	 */
 	public static void setActive(boolean value) {
 		active = value;
 	}
