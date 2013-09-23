@@ -51,6 +51,8 @@ final public class ScriptTextMessages extends NLS {
 	public static String CompletionProposalComputerDescriptor_blame_message;
 	public static String CompletionProposalComputerRegistry_invalid_message;
 	public static String CompletionProposalComputerRegistry_error_dialog_title;
+	public static String CompletionProposalLabelProvider_qualifierSeparator;
+	public static String CompletionProposalLabelProvider_returnTypeSeparator;
 	public static String ContentAssistProcessor_defaultProposalCategory;
 	public static String ContentAssistProcessor_toggle_affordance_press_gesture;
 	public static String ContentAssistProcessor_toggle_affordance_click_gesture;

@@ -166,11 +166,11 @@ public class CompletionProposalLabelProvider {
 				if (!method.isConstructor()) {
 					String type = method.getType();
 					if (type != null) {
-						buffer.append(": ").append(type);
+						buffer.append(getReturnTypeSeparator()).append(type);
 					}
 					IType declaringType = method.getDeclaringType();
 					if (declaringType != null) {
-						buffer.append(" - ").append(
+						buffer.append(getQualifierSeparator()).append(
 								declaringType.getElementName());
 					}
 				}
@@ -230,7 +230,7 @@ public class CompletionProposalLabelProvider {
 			final ILocalVariable var = (ILocalVariable) element;
 			String type = var.getType();
 			if (type != null) {
-				return proposal.getName() + ": " + type;
+				return proposal.getName() + getReturnTypeSeparator() + type;
 			}
 		}
 		return proposal.getName();
@@ -244,7 +244,7 @@ public class CompletionProposalLabelProvider {
 			try {
 				String type = field.getType();
 				if (type != null) {
-					return proposal.getName() + ": " + type;
+					return proposal.getName() + getReturnTypeSeparator() + type;
 				}
 			} catch (ModelException e) {
 				// ignore
@@ -366,8 +366,7 @@ public class CompletionProposalLabelProvider {
 						.getFlags()), proposal);
 	}
 
-	public ImageDescriptor createTypeImageDescriptor(
-			CompletionProposal proposal) {
+	public ImageDescriptor createTypeImageDescriptor(CompletionProposal proposal) {
 		// boolean isInterfaceOrAnnotation= Flags.isInterface(flags) ||
 		// Flags.isAnnotation(flags);
 		return decorateImageDescriptor(
@@ -433,5 +432,25 @@ public class CompletionProposalLabelProvider {
 	 */
 	void setContext(CompletionContext context) {
 		// fContext = context;
+	}
+
+	/**
+	 * Returns an user-readable string for separating the return type (e.g.
+	 * " : ").
+	 * 
+	 * @since 5.1
+	 */
+	protected String getReturnTypeSeparator() {
+		return ScriptTextMessages.CompletionProposalLabelProvider_returnTypeSeparator;
+	}
+
+	/**
+	 * Returns an user-readable string for separating post qualified names (e.g.
+	 * " - ").
+	 * 
+	 * @since 5.1
+	 */
+	protected String getQualifierSeparator() {
+		return ScriptTextMessages.CompletionProposalLabelProvider_qualifierSeparator;
 	}
 }
