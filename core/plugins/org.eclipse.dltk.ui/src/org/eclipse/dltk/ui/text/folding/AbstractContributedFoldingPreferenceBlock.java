@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Group;
 
 /**
  * Abstract base class that may be used to create
- * <code>IFoldingPreferenceBlock</code> implenentations.
+ * <code>IFoldingPreferenceBlock</code> implementations.
  */
 public abstract class AbstractContributedFoldingPreferenceBlock extends
 		ImprovedAbstractConfigurationBlock implements IFoldingPreferenceBlock {
@@ -45,7 +45,7 @@ public abstract class AbstractContributedFoldingPreferenceBlock extends
 	}
 
 	/**
-	 * Create language speific folding options
+	 * Create language specific folding options
 	 * 
 	 * @param composite
 	 *            composite the option controls should be added to
