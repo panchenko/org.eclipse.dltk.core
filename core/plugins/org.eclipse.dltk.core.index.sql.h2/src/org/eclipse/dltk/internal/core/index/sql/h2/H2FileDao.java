@@ -69,8 +69,7 @@ public class H2FileDao implements IFileDao {
 
 		File file = H2Cache.selectFileByContainerIdAndPath(containerId, path);
 		if (file == null) {
-			PreparedStatement statement = connection.prepareStatement(Q_SELECT,
-					Statement.RETURN_GENERATED_KEYS);
+			PreparedStatement statement = connection.prepareStatement(Q_SELECT);
 			try {
 				int param = 0;
 				statement.setString(++param, path);
@@ -100,17 +99,17 @@ public class H2FileDao implements IFileDao {
 		if (files == null) {
 			files = new LinkedList<File>();
 
-			PreparedStatement statement = connection.prepareStatement(
-					Q_SELECT_BY_CONTAINER_ID, Statement.RETURN_GENERATED_KEYS);
+			PreparedStatement statement = connection
+					.prepareStatement(Q_SELECT_BY_CONTAINER_ID);
 			try {
 				int param = 0;
 				statement.setInt(++param, containerId);
 				ResultSet result = statement.executeQuery();
 				try {
 					while (result.next()) {
-						File file = new File(result.getInt(1), result
-								.getString(2), result.getLong(3), result
-								.getInt(4));
+						File file = new File(result.getInt(1),
+								result.getString(2), result.getLong(3),
+								result.getInt(4));
 
 						files.add(file);
 						H2Cache.addFile(file);
@@ -129,8 +128,8 @@ public class H2FileDao implements IFileDao {
 
 		File file = H2Cache.selectFileById(id);
 		if (file == null) {
-			PreparedStatement statement = connection.prepareStatement(
-					Q_SELECT_BY_ID, Statement.RETURN_GENERATED_KEYS);
+			PreparedStatement statement = connection
+					.prepareStatement(Q_SELECT_BY_ID);
 			try {
 				int param = 0;
 				statement.setInt(++param, id);
@@ -155,8 +154,7 @@ public class H2FileDao implements IFileDao {
 	public void delete(Connection connection, String path, int containerId)
 			throws SQLException {
 
-		PreparedStatement statement = connection.prepareStatement(Q_DELETE,
-				Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection.prepareStatement(Q_DELETE);
 		try {
 			int param = 0;
 			statement.setString(++param, path);
@@ -170,8 +168,8 @@ public class H2FileDao implements IFileDao {
 	}
 
 	public void deleteById(Connection connection, int id) throws SQLException {
-		PreparedStatement statement = connection.prepareStatement(
-				Q_DELETE_BY_ID, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(Q_DELETE_BY_ID);
 		try {
 			int param = 0;
 			statement.setInt(++param, id);

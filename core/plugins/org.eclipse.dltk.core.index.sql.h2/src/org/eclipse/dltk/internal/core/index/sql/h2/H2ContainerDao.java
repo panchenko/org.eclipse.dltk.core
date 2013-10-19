@@ -71,16 +71,16 @@ public class H2ContainerDao implements IContainerDao {
 			return container;
 		}
 
-		PreparedStatement statement = connection.prepareStatement(
-				Q_SELECT_BY_PATH, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(Q_SELECT_BY_PATH);
 		try {
 			int param = 0;
 			statement.setString(++param, path);
 			ResultSet result = statement.executeQuery();
 			try {
 				if (result.next()) {
-					container = new Container(result.getInt(1), result
-							.getString(2));
+					container = new Container(result.getInt(1),
+							result.getString(2));
 
 					H2Cache.addContainer(container);
 				}
@@ -101,16 +101,16 @@ public class H2ContainerDao implements IContainerDao {
 			return container;
 		}
 
-		PreparedStatement statement = connection.prepareStatement(
-				Q_SELECT_BY_ID, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(Q_SELECT_BY_ID);
 		try {
 			int param = 0;
 			statement.setInt(++param, id);
 			ResultSet result = statement.executeQuery();
 			try {
 				if (result.next()) {
-					container = new Container(result.getInt(1), result
-							.getString(2));
+					container = new Container(result.getInt(1),
+							result.getString(2));
 
 					H2Cache.addContainer(container);
 				}
@@ -124,8 +124,8 @@ public class H2ContainerDao implements IContainerDao {
 	}
 
 	public void deleteById(Connection connection, int id) throws SQLException {
-		PreparedStatement statement = connection.prepareStatement(
-				Q_DELETE_BY_ID, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(Q_DELETE_BY_ID);
 		try {
 			int param = 0;
 			statement.setInt(++param, id);
@@ -139,8 +139,8 @@ public class H2ContainerDao implements IContainerDao {
 
 	public void deleteByPath(Connection connection, String path)
 			throws SQLException {
-		PreparedStatement statement = connection.prepareStatement(
-				Q_DELETE_BY_PATH, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement statement = connection
+				.prepareStatement(Q_DELETE_BY_PATH);
 		try {
 			int param = 0;
 			statement.setString(++param, path);
