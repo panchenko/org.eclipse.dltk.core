@@ -7,7 +7,6 @@ import org.eclipse.dltk.ast.parser.IASTCache;
 import org.eclipse.dltk.ast.parser.IASTCache.ASTCacheEntry;
 import org.eclipse.dltk.ast.parser.IModuleDeclaration;
 import org.eclipse.dltk.ast.parser.ISourceParser;
-import org.eclipse.dltk.ast.parser.ISourceParserConstants;
 import org.eclipse.dltk.compiler.CharOperation;
 import org.eclipse.dltk.compiler.env.IModuleSource;
 import org.eclipse.dltk.compiler.problem.IProblemReporter;
@@ -164,35 +163,30 @@ public class SourceParserUtil {
 	}
 
 	public static ModuleDeclaration getModuleDeclaration(ISourceModule module) {
-		return getModuleDeclaration(module, null,
-				ISourceParserConstants.DEFAULT);
+		return getModuleDeclaration(module, null);
 	}
 
 	public static ModuleDeclaration getModuleDeclaration(ISourceModule module,
 			IProblemReporter reporter) {
-		return getModuleDeclaration(module, reporter,
-				ISourceParserConstants.DEFAULT);
+		return wrap(parse(module, reporter));
 	}
 
 	@Deprecated
 	public static ModuleDeclaration getModuleDeclaration(ISourceModule module,
 			IProblemReporter reporter, int flags) {
-		ISourceModuleInfoCache sourceModuleInfoCache = getCache();
-		return getModuleDeclaration(module, reporter,
-				sourceModuleInfoCache.get(module), flags);
+		return getModuleDeclaration(module, reporter);
 	}
 
 	@Deprecated
 	public static ModuleDeclaration getModuleDeclaration(ISourceModule module,
 			IProblemReporter reporter, ISourceModuleInfo mifo) {
-		return getModuleDeclaration(module, reporter, mifo,
-				ISourceParserConstants.DEFAULT);
+		return getModuleDeclaration(module, reporter);
 	}
 
 	@Deprecated
 	public static ModuleDeclaration getModuleDeclaration(ISourceModule module,
 			IProblemReporter reporter, ISourceModuleInfo mifo, int flags) {
-		return wrap(parse(module, reporter));
+		return getModuleDeclaration(module, reporter);
 	}
 
 	/**
