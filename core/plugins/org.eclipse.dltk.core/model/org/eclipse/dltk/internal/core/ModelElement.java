@@ -609,7 +609,7 @@ public abstract class ModelElement extends PlatformObject implements
 								}
 								child = --i >= 0 ? (SourceRefElement) children[i]
 										: null;
-							} while (child != null
+							} while (child instanceof IField
 									&& child.getSourceRange().getOffset() == declarationStart);
 							// position in field's type: use first field
 							return candidate.getSourceElementAt(position);
