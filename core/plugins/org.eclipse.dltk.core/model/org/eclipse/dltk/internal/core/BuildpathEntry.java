@@ -1385,6 +1385,7 @@ public class BuildpathEntry implements IBuildpathEntry {
 					}
 					IBuildpathEntry[] containerEntries = container
 							.getBuildpathEntries();
+					// TODO check container status
 					if (containerEntries != null) {
 						for (int i = 0, length = containerEntries.length; i < length; i++) {
 							IBuildpathEntry containerEntry = containerEntries[i];

@@ -142,6 +142,7 @@ public class BuildPathContainer extends ProjectFragmentContainer {
 	}
 
 	public ImageDescriptor getImageDescriptor() {
+		// TODO (alex) check status and decorate with error
 		return DLTKPluginImages.DESC_OBJS_LIBRARY;
 	}
 
