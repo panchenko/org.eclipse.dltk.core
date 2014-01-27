@@ -73,6 +73,7 @@ public class DbgpPacketReceiver extends DbgpWorkingThread {
 	}
 
 	private static class PacketWaiter {
+		private static final String DBGP_PACKET_RECEIVER_PACKET_WAITER_TERMINATED = Messages.DbgpPacketReceiver_packetWaiterTerminated;
 		private final LinkedList queue;
 		private boolean terminated;
 
@@ -93,7 +94,7 @@ public class DbgpPacketReceiver extends DbgpWorkingThread {
 
 			if (terminated) {
 				throw new InterruptedException(
-						Messages.DbgpPacketReceiver_packetWaiterTerminated);
+						DBGP_PACKET_RECEIVER_PACKET_WAITER_TERMINATED);
 			}
 
 			return (DbgpPacket) queue.removeFirst();
