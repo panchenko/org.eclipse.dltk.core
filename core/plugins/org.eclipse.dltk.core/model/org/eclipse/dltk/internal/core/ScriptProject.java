@@ -46,10 +46,12 @@ import org.eclipse.core.runtime.AssertionFailedException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.content.IContentDescription;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.dltk.compiler.CharOperation;
 import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.DLTKLanguageManager;
 import org.eclipse.dltk.core.IBuildpathAttribute;
@@ -1286,34 +1288,39 @@ public class ScriptProject extends Openable implements IScriptProject,
 	void createBuildpathProblemMarker(IModelStatus status) {
 		IMarker marker = null;
 		int severity;
-		String[] arguments = new String[0];
+		String[] arguments = CharOperation.NO_STRINGS;
 		boolean isCycleProblem = false, isBuildpathFileFormatProblem = false;
-		switch (status.getCode()) {
-		case IModelStatusConstants.BUILDPATH_CYCLE:
-			isCycleProblem = true;
-			if (DLTKCore.ERROR.equals(getOption(
-					DLTKCore.CORE_CIRCULAR_BUILDPATH, true))) {
+		if (DLTKCore.PLUGIN_ID.equals(status.getPlugin())) {
+			switch (status.getCode()) {
+			case IModelStatusConstants.BUILDPATH_CYCLE:
+				isCycleProblem = true;
+				if (DLTKCore.ERROR.equals(getOption(
+						DLTKCore.CORE_CIRCULAR_BUILDPATH, true))) {
+					severity = IMarker.SEVERITY_ERROR;
+				} else {
+					severity = IMarker.SEVERITY_WARNING;
+				}
+				break;
+			case IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT:
+				isBuildpathFileFormatProblem = true;
 				severity = IMarker.SEVERITY_ERROR;
-			} else {
-				severity = IMarker.SEVERITY_WARNING;
+				break;
+			default:
+				IPath path = status.getPath();
+				if (path != null) {
+					arguments = new String[] { path.toString() };
+				}
+				if (DLTKCore.ERROR.equals(getOption(
+						DLTKCore.CORE_INCOMPLETE_BUILDPATH, true))) {
+					severity = IMarker.SEVERITY_ERROR;
+				} else {
+					severity = IMarker.SEVERITY_WARNING;
+				}
+				break;
 			}
-			break;
-		case IModelStatusConstants.INVALID_BUILDPATH_FILE_FORMAT:
-			isBuildpathFileFormatProblem = true;
-			severity = IMarker.SEVERITY_ERROR;
-			break;
-		default:
-			IPath path = status.getPath();
-			if (path != null) {
-				arguments = new String[] { path.toString() };
-			}
-			if (DLTKCore.ERROR.equals(getOption(
-					DLTKCore.CORE_INCOMPLETE_BUILDPATH, true))) {
-				severity = IMarker.SEVERITY_ERROR;
-			} else {
-				severity = IMarker.SEVERITY_WARNING;
-			}
-			break;
+		} else {
+			severity = status.getSeverity() == IStatus.ERROR ? IMarker.SEVERITY_ERROR
+					: IMarker.SEVERITY_WARNING;
 		}
 		try {
 			marker = this.project
@@ -1324,11 +1331,11 @@ public class ScriptProject extends Openable implements IScriptProject,
 							IModelMarker.BUILDPATH_FILE_FORMAT,
 							IModelMarker.ID, IModelMarker.ARGUMENTS, },
 					new Object[] { status.getMessage(),
-							new Integer(severity),
+							Integer.valueOf(severity),
 							Messages.buildpath_buildPath,
-							isCycleProblem ? "true" : "false",//$NON-NLS-1$ //$NON-NLS-2$
-							isBuildpathFileFormatProblem ? "true" : "false",//$NON-NLS-1$ //$NON-NLS-2$
-							new Integer(status.getCode()),
+							Boolean.toString(isCycleProblem),
+							Boolean.toString(isBuildpathFileFormatProblem),
+							Integer.valueOf(status.getCode()),
 							Util.getProblemArgumentsForMarker(arguments), });
 		} catch (CoreException e) {
 			// could not create marker: cannot do much

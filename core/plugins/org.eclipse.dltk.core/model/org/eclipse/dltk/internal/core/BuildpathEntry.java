@@ -31,6 +31,7 @@ import org.eclipse.dltk.core.DLTKLanguageManager;
 import org.eclipse.dltk.core.IAccessRule;
 import org.eclipse.dltk.core.IBuildpathAttribute;
 import org.eclipse.dltk.core.IBuildpathContainer;
+import org.eclipse.dltk.core.IBuildpathContainerExtension2;
 import org.eclipse.dltk.core.IBuildpathEntry;
 import org.eclipse.dltk.core.IDLTKLanguageToolkit;
 import org.eclipse.dltk.core.IModelStatus;
@@ -1382,10 +1383,15 @@ public class BuildpathEntry implements IBuildpathEntry {
 						// don't create a marker if initialization is in
 						// progress (case of cp initialization batching)
 						return ModelStatus.VERIFIED_OK;
+					} else if (container instanceof IBuildpathContainerExtension2) {
+						final IModelStatus status = ((IBuildpathContainerExtension2) container)
+								.validate();
+						if (status != null && !status.isOK()) {
+							return status;
+						}
 					}
 					IBuildpathEntry[] containerEntries = container
 							.getBuildpathEntries();
-					// TODO check container status
 					if (containerEntries != null) {
 						for (int i = 0, length = containerEntries.length; i < length; i++) {
 							IBuildpathEntry containerEntry = containerEntries[i];

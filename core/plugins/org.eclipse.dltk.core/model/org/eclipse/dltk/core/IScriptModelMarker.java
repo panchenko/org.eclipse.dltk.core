@@ -15,7 +15,11 @@ package org.eclipse.dltk.core;
  * This interface declares constants only; it is not intended to be implemented
  * or extended.
  * </p>
+ * TODO (alex) merge into {@link IModelMarker}
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
  */
+@Deprecated
 public interface IScriptModelMarker {
 
 	/**
