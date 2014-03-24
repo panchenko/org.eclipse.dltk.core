@@ -264,6 +264,9 @@ public class StandardModelElementContentProvider implements
 						((IParent) element).getChildren());
 			}
 		} catch (CoreException e) {
+			if (DLTKCore.DEBUG) {
+				e.printStackTrace();
+			}
 			return NO_CHILDREN;
 		}
 		return getExtendedChildren(element, NO_CHILDREN);

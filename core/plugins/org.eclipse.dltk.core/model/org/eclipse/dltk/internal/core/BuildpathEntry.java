@@ -1458,8 +1458,10 @@ public class BuildpathEntry implements IBuildpathEntry {
 			break;
 		// library entry check
 		case IBuildpathEntry.BPE_LIBRARY:
-			if (path.toString().startsWith(
-					IBuildpathEntry.BUILTIN_EXTERNAL_ENTRY_STR)) {
+			if (path.segmentCount() >= 1
+					&& path.segment(0).startsWith(
+							IBuildpathEntry.BUILDPATH_SPECIAL)
+					&& !path.isAbsolute()) {
 				break;
 			}
 			if (path != null && path.isAbsolute() && !path.isEmpty()) {

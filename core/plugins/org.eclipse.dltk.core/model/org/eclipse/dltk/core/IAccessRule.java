@@ -53,6 +53,10 @@ import org.eclipse.core.runtime.IPath;
  */
 public interface IAccessRule {
 	
+	/**
+	 * @see IBuildpathEntry#NO_ACCESS_RULES
+	 */
+	@Deprecated
 	static IAccessRule[] EMPTY_RULES = new IAccessRule[0];
 	
 	/**

@@ -373,7 +373,12 @@ public class ScriptExplorerContentProvider extends
 		IProjectFragment[] roots = project.getProjectFragments();
 		for (int i = 0; i < roots.length; i++) {
 			IProjectFragment root = roots[i];
-			IBuildpathEntry classpathEntry = root.getRawBuildpathEntry();
+			final IBuildpathEntry classpathEntry;
+			try {
+				classpathEntry = root.getRawBuildpathEntry();
+			} catch (ModelException e) {
+				continue;
+			}
 			if (classpathEntry == null) {
 				continue;
 			}
