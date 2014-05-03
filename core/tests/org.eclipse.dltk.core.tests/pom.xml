@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>org.eclipse.dltk.core</groupId>
 	<artifactId>org.eclipse.dltk.core.tests</artifactId>
-	<version>5.0.0-SNAPSHOT</version>
+	<version>5.1.0-SNAPSHOT</version>
 	<packaging>eclipse-test-plugin</packaging>
 	<build>
 		<plugins>
@@ -24,7 +24,7 @@
 						<artifact>
 							<groupId>org.eclipse.dltk.core</groupId>
 							<artifactId>org.eclipse.dltk.core.targetplatform</artifactId>
-							<version>5.0.0-SNAPSHOT</version>
+							<version>5.1.0-SNAPSHOT</version>
 						</artifact>
 					</target>
 				</configuration>

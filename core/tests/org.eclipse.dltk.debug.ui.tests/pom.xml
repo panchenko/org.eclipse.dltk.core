@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>org.eclipse.dltk.core</groupId>
 	<artifactId>org.eclipse.dltk.debug.ui.tests</artifactId>
-	<version>5.0.0-SNAPSHOT</version>
+	<version>5.1.0-SNAPSHOT</version>
 	<packaging>eclipse-test-plugin</packaging>
 	<properties>
 		<os-jvm-flags></os-jvm-flags>
