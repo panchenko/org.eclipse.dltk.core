@@ -280,7 +280,7 @@ public class InterpreterTab extends CommonScriptLaunchTab {
 			configuration
 					.setAttribute(
 							ScriptLaunchConfigurationConstants.ATTR_INTERPRETER_INSTALL_TYPE_SPECIFIC_ATTRS_MAP,
-							(Map<?, ?>) null);
+							(Map<String, String>) null);
 		} else {
 			dynamicTab.performApply(configuration);
 		}
@@ -359,10 +359,9 @@ public class InterpreterTab extends CommonScriptLaunchTab {
 			}
 			if (!fIsInitializing) {
 				if (wc != null) {
-					wc
-							.setAttribute(
-									ScriptLaunchConfigurationConstants.ATTR_INTERPRETER_INSTALL_TYPE_SPECIFIC_ATTRS_MAP,
-									(Map<?, ?>) null);
+					wc.setAttribute(
+							ScriptLaunchConfigurationConstants.ATTR_INTERPRETER_INSTALL_TYPE_SPECIFIC_ATTRS_MAP,
+							(Map<String, String>) null);
 				}
 			}
 		} else {

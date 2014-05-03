@@ -588,7 +588,7 @@ public abstract class AbstractScriptLaunchConfigurationDelegate extends
 		Map<String, String> map = configuration
 				.getAttribute(
 						ScriptLaunchConfigurationConstants.ATTR_INTERPRETER_INSTALL_TYPE_SPECIFIC_ATTRS_MAP,
-						(Map<?, ?>) null);
+						(Map<String, String>) null);
 		return map;
 	}
 
@@ -798,7 +798,8 @@ public abstract class AbstractScriptLaunchConfigurationDelegate extends
 				ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true);
 		@SuppressWarnings("unchecked")
 		final Map<String, String> configEnv = configuration.getAttribute(
-				ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map<?, ?>) null);
+				ILaunchManager.ATTR_ENVIRONMENT_VARIABLES,
+				(Map<String, String>) null);
 		// build base environment
 		final Map<String, String> env = new HashMap<String, String>();
 		if (append || configEnv == null) {
