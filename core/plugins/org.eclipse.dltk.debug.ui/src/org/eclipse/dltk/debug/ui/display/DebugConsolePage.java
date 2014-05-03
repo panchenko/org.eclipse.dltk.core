@@ -11,6 +11,10 @@
  *******************************************************************************/
 package org.eclipse.dltk.debug.ui.display;
 
+import org.eclipse.core.expressions.EvaluationResult;
+import org.eclipse.core.expressions.Expression;
+import org.eclipse.core.expressions.ExpressionInfo;
+import org.eclipse.core.expressions.IEvaluationContext;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -29,6 +33,7 @@ import org.eclipse.dltk.internal.debug.ui.ScriptEvaluationContextManager;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.commands.ActionHandler;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
@@ -47,10 +52,13 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISources;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.console.IConsoleView;
+import org.eclipse.ui.handlers.IHandlerActivation;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.texteditor.IUpdate;
 
@@ -74,12 +82,12 @@ public class DebugConsolePage extends ScriptConsolePage {
 
 	private IAction runAction;
 	private IAction resetOnLaunchAction;
-	private IAction normalPasteAction;
-	private IAction normalCopyAction;
-	private IAction normalCutAction;
-	private IAction normalSelectAllAction;
 
 	private boolean resetOnLaunch;
+	private IHandlerActivation pasteHandler;
+	private IHandlerActivation copyHandler;
+	private IHandlerActivation cutHandler;
+	private IHandlerActivation selectAllHandler;
 
 	protected void createActions() {
 		super.createActions();
@@ -93,21 +101,10 @@ public class DebugConsolePage extends ScriptConsolePage {
 		resetOnLaunchAction.setChecked(resetOnLaunch);
 		actionBars.getMenuManager().add(resetOnLaunchAction);
 		updateActions();
-
-		normalPasteAction = (IAction) fGlobalActions.get(ActionFactory.PASTE
-				.getId());
-		normalCopyAction = (IAction) fGlobalActions.get(ActionFactory.COPY
-				.getId());
-		normalCutAction = (IAction) fGlobalActions.get(ActionFactory.CUT
-				.getId());
-		normalSelectAllAction = (IAction) fGlobalActions
-				.get(ActionFactory.SELECT_ALL.getId());
-
 	}
 
 	private SashForm sash;
 	private StyledText inputField;
-	private boolean focus = false;
 	private boolean enabled = true;
 
 	/**
@@ -139,13 +136,51 @@ public class DebugConsolePage extends ScriptConsolePage {
 		inputField.addFocusListener(new FocusListener() {
 
 			public void focusLost(FocusEvent e) {
-				focus = false;
-				updateInputFieldActions();
+				if (pasteHandler != null) {
+					IHandlerService service = (IHandlerService) getSite()
+							.getService(IHandlerService.class);
+					service.deactivateHandler(pasteHandler);
+					service.deactivateHandler(copyHandler);
+					service.deactivateHandler(cutHandler);
+					service.deactivateHandler(selectAllHandler);
+					pasteHandler = null;
+					copyHandler = null;
+					cutHandler = null;
+					selectAllHandler = null;
+				}
 			}
 
 			public void focusGained(FocusEvent e) {
-				focus = true;
-				updateInputFieldActions();
+				IHandlerService service = (IHandlerService) getSite()
+						.getService(IHandlerService.class);
+				Expression expression = new Expression() {
+					public final EvaluationResult evaluate(
+							final IEvaluationContext context) {
+						return EvaluationResult.TRUE;
+					}
+
+					public final void collectExpressionInfo(
+							final ExpressionInfo info) {
+						info.addVariableNameAccess(ISources.ACTIVE_EDITOR_NAME);
+						info.addVariableNameAccess(ISources.ACTIVE_CURRENT_SELECTION_NAME);
+					}
+				};
+				pasteHandler = service.activateHandler(
+						IWorkbenchCommandConstants.EDIT_PASTE,
+						new ActionHandler(new PasteAction(inputField)),
+						expression);
+				copyHandler = service.activateHandler(
+						IWorkbenchCommandConstants.EDIT_COPY,
+						new ActionHandler(new CopyAction(inputField)),
+						expression);
+				cutHandler = service.activateHandler(
+						IWorkbenchCommandConstants.EDIT_CUT, new ActionHandler(
+								new CutAction(inputField)), expression);
+				selectAllHandler = service.activateHandler(
+						IWorkbenchCommandConstants.EDIT_SELECT_ALL,
+						new ActionHandler(new SelectAllAction(inputField)),
+						expression);
+
 			}
 		});
 		DropTarget target = new DropTarget(inputField, DND.DROP_DEFAULT
@@ -190,30 +225,6 @@ public class DebugConsolePage extends ScriptConsolePage {
 		enableUpdateJob.schedule(500);
 	}
 
-	private void updateInputFieldActions() {
-		IActionBars actionBars = getSite().getActionBars();
-		if (focus) {
-			setGlobalAction(actionBars, ActionFactory.PASTE.getId(),
-					new PasteAction(inputField));
-			setGlobalAction(actionBars, ActionFactory.COPY.getId(),
-					new CopyAction(inputField));
-			setGlobalAction(actionBars, ActionFactory.CUT.getId(),
-					new CutAction(inputField));
-			setGlobalAction(actionBars, ActionFactory.SELECT_ALL.getId(),
-					new SelectAllAction(inputField));
-		} else {
-			setGlobalAction(actionBars, ActionFactory.PASTE.getId(),
-					normalPasteAction);
-			setGlobalAction(actionBars, ActionFactory.COPY.getId(),
-					normalCopyAction);
-			setGlobalAction(actionBars, ActionFactory.CUT.getId(),
-					normalCutAction);
-			setGlobalAction(actionBars, ActionFactory.SELECT_ALL.getId(),
-					normalSelectAllAction);
-		}
-		updateSelectionDependentActions();
-	}
-
 	private boolean isDebuggerAvailable() {
 		final IPageSite site = getSite();
 		if (site == null) {
@@ -246,6 +257,14 @@ public class DebugConsolePage extends ScriptConsolePage {
 			DebugPlugin.getDefault().removeDebugEventListener(
 					debugEventListener);
 			debugEventListener = null;
+		}
+		if (pasteHandler != null) {
+			IHandlerService service = (IHandlerService) getSite().getService(
+					IHandlerService.class);
+			service.deactivateHandler(pasteHandler);
+			service.deactivateHandler(copyHandler);
+			service.deactivateHandler(cutHandler);
+			service.deactivateHandler(selectAllHandler);
 		}
 		super.dispose();
 	}
